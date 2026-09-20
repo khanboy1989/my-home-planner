@@ -35,11 +35,20 @@ Both storeys on the sheet are modelled: **ZEMIN** (ground) and **BIRINCI KAT**
 (first). By default they render as two separate models side by side; `L` switches
 to stacking them in their real relative positions.
 
-## Stack
+## Stack and setup
 
-Plain ES modules, no bundler. `three` is installed from npm and reached through an
-import map in `index.html` pointing at `node_modules/`. Anything that serves the
-folder over HTTP works — `npm start` runs `python3 -m http.server 8080`.
+Plain ES modules, no bundler, no build step. `three` is installed from npm and
+reached through an import map in `index.html` pointing at `node_modules/`.
+
+```bash
+npm install     # three + pdfjs-dist; Node 18+ is the only prerequisite
+npm start       # http://localhost:8080 — node tools/serve.mjs, no Python needed
+npm run audit   # verify the model against the PDF
+```
+
+It must be served over HTTP: ES modules and the canvas read of the plan JPEG both
+fail on a `file://` origin. `README.md` has the full new-machine walkthrough and a
+troubleshooting table; `AGENTS.md` is the entry point for non-Claude agents.
 
 ## Layout
 

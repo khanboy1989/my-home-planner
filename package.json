@@ -5,8 +5,8 @@
   "description": "Three.js viewer that extrudes 3D walls over the Villa Khan 2D floor plan",
   "type": "module",
   "scripts": {
-    "start": "python3 -m http.server 8080",
-    "serve": "python3 -m http.server 8080",
+    "start": "node tools/serve.mjs",
+    "serve": "node tools/serve.mjs",
     "audit": "node tools/plan-audit.mjs"
   },
   "dependencies": {
