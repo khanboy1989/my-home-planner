@@ -1,0 +1,18 @@
+{
+  "name": "my-home-planner",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Three.js viewer that extrudes 3D walls over the Villa Khan 2D floor plan",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "serve": "python3 -m http.server 8080",
+    "audit": "node tools/plan-audit.mjs"
+  },
+  "dependencies": {
+    "three": "^0.186.0"
+  },
+  "devDependencies": {
+    "pdfjs-dist": "^6.3.289"
+  }
+}
