@@ -126,7 +126,7 @@ const KINDS = {
     g.add(box(w * 0.78, 0.3, d * 0.44, M.dark, 0, 0.78));
     for (const sx of [-1, 1]) {
       for (const sz of [-1, 1]) {
-        const wheel = cyl(0.33, 0.2, M.dark, sx * w * 0.44, -0.33, sz * d * 0.32);
+        const wheel = cyl(0.33, 0.2, M.dark, sx * w * 0.44, 0.23, sz * d * 0.32);
         wheel.rotation.z = Math.PI / 2;
         g.add(wheel);
       }
@@ -150,6 +150,38 @@ const KINDS = {
     g.add(cyl(0.05, 0.03, M.metal, 0, 2.15, -d * 0.3));
   },
 
+  /** Ocak — a glass hob set flush into the worktop, with four burners. */
+  hob(g, { w, d }, it) {
+    const top = it.y ?? 0.9;
+    g.add(box(w, 0.04, d, M.dark, 0, top - 0.03));
+    const rx = w * 0.22, rz = d * 0.22;
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      g.add(cyl(Math.min(w, d) * 0.15, 0.012, M.metal, sx * rx, top + 0.01, sz * rz));
+    }
+  },
+
+  /** Fırın — built-in oven; `face` is the side the door opens onto. */
+  oven(g, { w, d }, it) {
+    const h = it.h ?? 0.6;
+    const y = it.y ?? 0.1;
+    g.add(box(w, h, d, M.metal, 0, y));
+
+    const face = it.face ?? 'S';
+    const alongZ = face === 'N' || face === 'S';
+    const sign = face === 'N' || face === 'W' ? -1 : 1;
+    const off = (alongZ ? d : w) / 2 + 0.015;
+
+    const pw = alongZ ? w * 0.92 : 0.03;
+    const pd = alongZ ? 0.03 : d * 0.92;
+    const door = box(pw, h * 0.8, pd, M.dark, 0, y + h * 0.08);
+    const bar = box(alongZ ? w * 0.7 : 0.04, 0.04, alongZ ? 0.04 : d * 0.7,
+      M.metal, 0, y + h * 0.82);
+    for (const m of [door, bar]) {
+      if (alongZ) m.position.z = sign * off; else m.position.x = sign * off;
+      g.add(m);
+    }
+  },
+
   appliance(g, { w, d }, it) {
     const h = it.h ?? 0.85;
     g.add(box(w, h, d, M.ceramic));
@@ -171,7 +203,11 @@ const KINDS = {
   stairs(g, { w, d }, it) {
     const n = it.steps ?? 9;
     const riser = it.riser ?? 0.17;
-    const base = it.base ?? 0;
+    // `from` is the level the flight starts at, relative to its floor's slab —
+    // negative for a flight descending from the storey it is modelled on.
+    // `bottom` is how far the solid mass reaches down (defaults to `from`).
+    const from = it.from ?? 0;
+    const bottom = it.bottom ?? from;
     const vertical = it.dir === 'N' || it.dir === 'S';
     const span = vertical ? d : w;
     const run = span / n;
@@ -182,12 +218,14 @@ const KINDS = {
     const solid = it.solid !== false;
 
     for (let i = 0; i < n; i++) {
-      const top = base + riser * (i + 1);
+      const top = from + riser * (i + 1);
       const centre = sign * (-span / 2 + run * (i + 0.5));
       if (solid) {
+        const h = top - bottom;
+        if (h <= 0) continue;
         g.add(vertical
-          ? box(w, top, run, M.counter, 0, 0, centre)
-          : box(run, top, d, M.counter, centre, 0, 0));
+          ? box(w, h, run, M.counter, 0, bottom, centre)
+          : box(run, h, d, M.counter, centre, bottom, 0));
         continue;
       }
       const tread = 0.06;
@@ -217,7 +255,7 @@ function buildRailing(item, offsetPx) {
     if (len < 1e-3) continue;
 
     const seg = new THREE.Group();
-    seg.position.set(ax, 0, az);
+    seg.position.set(ax, item.y ?? 0, az);
     seg.rotation.y = Math.atan2(-(bz - az), bx - ax);
 
     seg.add(box(len, 0.06, 0.06, M.metal, len / 2, h - 0.06));

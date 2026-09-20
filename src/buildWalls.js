@@ -114,16 +114,21 @@ function buildOpening(cut, depth) {
     return g;
   }
 
-  // Door: hinge at the `from` jamb, swung back into the room.
+  // Door leaf, swung 78° open. `hinge` picks which jamb it turns on and
+  // `swing` which side it opens to (+1 = wall-local +Z); both are taken from
+  // the swing arcs in the PDF, so every leaf opens into the room the
+  // architect drew it opening into.
   const leafW = w - jamb * 2;
-  const swing = new THREE.Group();
-  swing.position.set(cut.from + jamb, 0, 0);
-  swing.rotation.y = -Math.PI * (78 / 180) * (cut.swing ?? 1);
-  swing.add(slab(leafW, h - jamb, 0.045, LEAF, leafW / 2, (h - jamb) / 2, 0));
+  const atTo = cut.hinge === 'to';
+  const dir = atTo ? -1 : 1;
+  const leaf = new THREE.Group();
+  leaf.position.set(atTo ? cut.to - jamb : cut.from + jamb, 0, 0);
+  leaf.rotation.y = -Math.PI * (78 / 180) * (cut.swing ?? 1) * dir;
+  leaf.add(slab(leafW, h - jamb, 0.045, LEAF, (dir * leafW) / 2, (h - jamb) / 2, 0));
   const knob = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), HANDLE);
-  knob.position.set(leafW - 0.09, 1.05, 0.05);
-  swing.add(knob);
-  g.add(swing);
+  knob.position.set(dir * (leafW - 0.09), 1.05, 0.05);
+  leaf.add(knob);
+  g.add(leaf);
   return g;
 }
 
@@ -138,6 +143,7 @@ function solidPieces(length, openings, wallHeight, mpp) {
       head: Math.min(o.head ?? PLAN.head, wallHeight),
       kind: o.kind,
       swing: o.swing,
+      hinge: o.hinge,
     }))
     .filter((o) => o.to > o.from)
     .sort((a, b) => a.from - b.from);

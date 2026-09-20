@@ -188,15 +188,22 @@ would not reproduce.
 
 ## The stair
 
-Modelled once, in full, on the **ground** floor — a switchback, `MÜ: 20 (17x30)`:
-flight 1 rises south (treads 1–9) at x 1033..1108, a half-landing at 1.70 m,
-then flight 2 rises north (treads 10–18) at x 946..1021, and a final riser
-lands at 3.40 m, exactly the floor-to-floor. The first floor carries a matching
-`Stair well` void so the flight arrives through the slab when stacked.
+Modelled on the **first** floor, not the ground floor — BIRINCI KAT is the plan
+that draws the whole flight, and the ZEMIN plan only draws treads 1–12 (which
+stay part of the texture). It hangs off the first-floor slab and descends:
+levels in its `stairs` items are relative to that slab, so `from: -3.40` is
+ground level. Flight 1 rises south (treads 1–9), a half-landing at -1.70 m,
+then flight 2 rises north (treads 10–18), and a final riser lands at 0 — the
+first floor slab, exactly 3.40 m above grade.
 
-Flight 2 passes over the W.C, so two things keep them out of each other: the
-flight is `solid: false` (treads and risers only, open soffit) and the W.C walls
-carry `height: 2.3`. Don't make either of them solid/full-height again.
+Because the stair descends from its own storey, **both layout modes keep each
+floor at its true level** (`placement()` returns `storey * floorToFloor` either
+way); `apart` only adds the sideways offset. Putting the first floor back at
+y=0 would bury the flight underground.
+
+Flight 2 passes over the ground-floor W.C, so two things keep them out of each
+other: the flight is `solid: false` (treads and risers only, open soffit) and
+the W.C walls carry `height: 2.3`. Don't make either full again.
 
 ## Known simplifications
 

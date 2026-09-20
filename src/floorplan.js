@@ -89,7 +89,7 @@ const GROUND_WALLS = [
     type: 'exterior',
     a: [709, 1624], b: [799, 1624],
     openings: [
-      { from: 18, to: 74, sill: 0, kind: 'door' }, // K1:100/230 to ANA KORIDOR
+      { from: 18, to: 74, sill: 0, kind: 'door', swing: -1 }, // K1:100/230 to ANA KORIDOR
     ],
   },
 
@@ -154,7 +154,7 @@ const GROUND_WALLS = [
     type: 'exterior',
     a: [1115, 1624], b: [1115, 2012],
     openings: [
-      { from: 16, to: 66, sill: 0, kind: 'door' }, // K1:90/230 from GIRIS HOLU
+      { from: 16, to: 66, sill: 0, kind: 'door', swing: -1 }, // K1:90/230 from GIRIS HOLU
     ],
   },
 
@@ -166,7 +166,7 @@ const GROUND_WALLS = [
     type: 'exterior',
     a: [807, 1878], b: [931, 1878],
     openings: [
-      { from: 10, to: 65, sill: 0, kind: 'door' }, // K1:100/230 front door
+      { from: 10, to: 65, sill: 0, kind: 'door', swing: -1 }, // K1:100/230 front door
     ],
   },
   {
@@ -197,7 +197,7 @@ const GROUND_WALLS = [
     type: 'interior',
     a: [709, 1389], b: [709, 1624],
     openings: [
-      { from: 136, to: 180, sill: 0, kind: 'door' }, // K1:80/230 to Y.MUTFAK
+      { from: 136, to: 180, sill: 0, kind: 'door', swing: 1, hinge: 'to' }, // K1:80/230 to Y.MUTFAK
     ],
   },
   {
@@ -207,7 +207,7 @@ const GROUND_WALLS = [
     type: 'interior',
     a: [709, 1434], b: [937, 1434],
     openings: [
-      { from: 18, to: 74, sill: 0, kind: 'door' },                 // K1:100/230
+      { from: 18, to: 74, sill: 0, kind: 'door', swing: -1 },                 // K1:100/230
       { from: 83, to: 210, sill: 0, head: 2.3, kind: 'opening' },  // 225/230
     ],
   },
@@ -225,7 +225,7 @@ const GROUND_WALLS = [
     height: 2.3,
     a: [946, 1725], b: [1031, 1725],
     openings: [
-      { from: 10, to: 53, sill: 0, kind: 'door' }, // K1:80/230
+      { from: 10, to: 53, sill: 0, kind: 'door', swing: 1 }, // K1:80/230
     ],
   },
   {
@@ -279,13 +279,13 @@ const FIRST_WALLS = [
     name: 'YATAK ODASI 1 — door wall',
     type: 'interior',
     a: [2389, 1559], b: [2468, 1559],
-    openings: [{ from: 12, to: 65, sill: 0, kind: 'door' }], // K1:90/230
+    openings: [{ from: 12, to: 65, sill: 0, kind: 'door', swing: -1, hinge: 'to' }], // K1:90/230
   },
   {
     name: 'YATAK ODASI 2 — door wall',
     type: 'interior',
     a: [2468, 1559], b: [2543, 1559],
-    openings: [{ from: 18, to: 68, sill: 0, kind: 'door' }], // K1:90/230
+    openings: [{ from: 18, to: 68, sill: 0, kind: 'door', swing: -1 }], // K1:90/230
   },
   {
     name: 'Y.ODASI 2 D.ODASI — west wall',
@@ -306,7 +306,7 @@ const FIRST_WALLS = [
     type: 'interior',
     a: [2379, 1448], b: [2379, 1616],
     openings: [
-      { from: 118, to: 161, sill: 0, kind: 'door' }, // K1:80/230 to corridor
+      { from: 118, to: 161, sill: 0, kind: 'door', swing: 1, hinge: 'to' }, // K1:80/230 to corridor
     ],
   },
 
@@ -337,7 +337,7 @@ const FIRST_WALLS = [
     name: 'ÇAMSIR ODASI — east wall',
     type: 'interior',
     a: [2382, 1625], b: [2382, 1744],
-    openings: [{ from: 66, to: 110, sill: 0, kind: 'door' }], // K1:80/230
+    openings: [{ from: 66, to: 110, sill: 0, kind: 'door', swing: 1, hinge: 'to' }], // K1:80/230
   },
 
   // ────────────────────────────────── gallery void + stair hall
@@ -396,7 +396,7 @@ const FIRST_WALLS = [
     name: 'EBEVEYN Y.ODASI — west wall',
     type: 'interior',
     a: [2875, 1631], b: [2875, 1840],
-    openings: [{ from: 6, to: 56, sill: 0, kind: 'door' }], // K1:90/230
+    openings: [{ from: 6, to: 56, sill: 0, kind: 'door', swing: -1 }], // K1:90/230
   },
   {
     name: 'DUS W.C — west wall',
@@ -409,7 +409,7 @@ const FIRST_WALLS = [
     type: 'interior',
     a: [2886, 1840], b: [3187, 1840],
     openings: [
-      { from: 69, to: 124, sill: 0, kind: 'door' }, // K1:80/230 into DUS W.C
+      { from: 69, to: 124, sill: 0, kind: 'door', swing: 1, hinge: 'to' }, // K1:80/230 into DUS W.C
       // Bedroom ↔ EBEVEYN D.ODASI: glazed slider in black joinery. Not on
       // this sheet revision; added per the owner. It parks westward so the
       // leaf clears both the DUS W.C door and the wardrobe run.
@@ -442,6 +442,9 @@ const GROUND_OBJECTS = [
   { kind: 'box', name: 'Kitchen counter (south)', rect: [482, 1389, 702, 1426], h: 0.9, mat: 'counter' },
   { kind: 'box', name: 'Tall units / fridge',     rect: [484, 1208, 524, 1250], h: 2.1, mat: 'cabinet' },
   { kind: 'box', name: 'Kitchen island',          rect: [649, 1206, 717, 1330], h: 0.92, mat: 'counter' },
+  { kind: 'hob',       name: 'Ocak — MUTFAK',        rect: [652, 1253, 683, 1286], y: 0.92 },
+  { kind: 'oven',      name: 'Fırın — MUTFAK',       rect: [485, 1249, 519, 1283], face: 'E' },
+  { kind: 'appliance', name: 'Bulaşık Mak.',         rect: [485, 1285, 516, 1338] },
   { kind: 'stool', name: 'Bar stool', rect: [711, 1216, 737, 1242] },
   { kind: 'stool', name: 'Bar stool', rect: [711, 1256, 737, 1282] },
   { kind: 'stool', name: 'Bar stool', rect: [711, 1291, 737, 1317] },
@@ -460,18 +463,16 @@ const GROUND_OBJECTS = [
   // ────────────────────────────────── Y.MUTFAK KILER
   { kind: 'box', name: 'Pantry counter (west)', rect: [481, 1486, 517, 1573], h: 0.9, mat: 'counter' },
   { kind: 'box', name: 'Pantry counter',        rect: [514, 1441, 700, 1476], h: 0.9, mat: 'counter' },
-  { kind: 'box', name: 'Pantry tall unit',      rect: [655, 1441, 694, 1488], h: 2.1, mat: 'cabinet' },
+  { kind: 'box', name: 'Buzdolabı — Y.MUTFAK', rect: [658, 1445, 695, 1483], h: 2.1, mat: 'cabinet' },
+  { kind: 'hob',  name: 'Ocak — Y.MUTFAK',     rect: [573, 1445, 606, 1476], y: 0.9 },
+  { kind: 'oven', name: 'Fırın — Y.MUTFAK',    rect: [573, 1445, 606, 1479], face: 'S' },
 
   // ────────────────────────────────── W.C + stair
   { kind: 'basin',  rect: [996, 1775, 1021, 1803] },
   { kind: 'toilet', rect: [986, 1825, 1011, 1850] },
-  // Switchback stair, MÜ: 20 (17x30). Flight 1 rises south (treads 1–9), a
-  // half-landing at the turn, then flight 2 rises north (treads 10–18) over
-  // the W.C, and a final riser lands on the first floor at 3.40 m.
-  { kind: 'stairs', name: 'Stair flight 1 (treads 1–9)', rect: [1033, 1712, 1108, 1878], dir: 'S', steps: 9, riser: 0.17 },
-  { kind: 'box',    name: 'Stair half-landing', rect: [946, 1878, 1108, 1943], h: 1.70, mat: 'counter' },
-  { kind: 'stairs', name: 'Stair flight 2 (treads 10–18)', rect: [946, 1712, 1021, 1878], dir: 'N', steps: 9, riser: 0.17, base: 1.70, solid: false },
-  { kind: 'railing', name: 'Stair balustrade', path: [[1027, 1712], [1027, 1878]], h: 1.0 },
+  // The stair belongs to BIRINCI KAT — its plan is the one that draws the
+  // whole flight, and it is modelled there descending to this floor. The
+  // ZEMIN plan only draws treads 1–12, which stay part of the texture.
 
   // ────────────────────────────────── GIRIS HOLU
   // Not a room — a freestanding vestiyer/dolap in the recess the sheet draws
@@ -530,6 +531,15 @@ const FIRST_OBJECTS = [
   { kind: 'toilet', rect: [2964, 1963, 2988, 2000] },
   { kind: 'shower', name: 'DUS', rect: [2888, 1925, 2960, 2010] },
 
+  // ────────────────────────────────── stair, descending to ZEMIN
+  // MÜ: 20 (17x30) switchback. Levels are relative to this floor's slab, so
+  // the flights run from -3.40 m up to the final riser at 0.
+  { kind: 'stairs', name: 'Stair flight 1 (treads 1–9)',   rect: [2796, 1715, 2871, 1876], dir: 'S', steps: 9, riser: 0.17, from: -3.40 },
+  { kind: 'box',    name: 'Stair half-landing',            rect: [2710, 1876, 2871, 1946], h: 1.70, y: -3.40, mat: 'counter' },
+  // Open soffit: this flight passes over the ground-floor W.C.
+  { kind: 'stairs', name: 'Stair flight 2 (treads 10–18)', rect: [2710, 1721, 2784, 1876], dir: 'N', steps: 9, riser: 0.17, from: -1.70, solid: false },
+  { kind: 'railing', name: 'Stair balustrade', path: [[2790, 1721], [2790, 1876]], h: 1.0, y: -1.7 },
+
   // ────────────────────────────────── open edges
   {
     kind: 'railing',
@@ -585,12 +595,14 @@ const GAP_PX = 149;
  */
 export function placement(floor, mode = 'apart') {
   const [ax, ay] = floor.alignPx;
-  if (mode === 'stacked') {
-    return { offsetPx: [ax, ay], elevation: floor.storey * PLAN.floorToFloor };
-  }
+  // Both modes keep each storey at its true level; only 'apart' also slides
+  // them along +X. The first floor's stair descends from its slab, so it has
+  // to stay 3.40 m up or the flight would run below ground.
+  const elevation = floor.storey * PLAN.floorToFloor;
+  if (mode === 'stacked') return { offsetPx: [ax, ay], elevation };
   return {
     offsetPx: [ax + floor.storey * (ORIGIN.w + GAP_PX), ay],
-    elevation: 0,
+    elevation,
   };
 }
 
