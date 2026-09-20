@@ -84,9 +84,12 @@ rather than the printed numbers where they disagree.
 
 `placement(floor, mode)` in `floorplan.js` is the single source of truth:
 
-- `'apart'` (default) — every storey sits on the ground, stepped along +X by
-  `ORIGIN.w + GAP_PX`.
-- `'stacked'` — storeys in their true positions, `storey * storeyHeight` up.
+- `'apart'` (default) — storeys stepped along +X by `ORIGIN.w + GAP_PX`.
+- `'stacked'` — storeys in plan alignment, one above the other.
+
+**Both** modes put a storey at its true height, `storey * floorToFloor`; only the
+sideways offset differs. That is deliberate — the first-floor stair descends from
+its own slab, so a first floor sitting at y=0 would bury the flight.
 
 Geometry is built **once** at each floor's true alignment and wrapped in a
 container; switching modes only moves containers. Don't bake layout offsets into
