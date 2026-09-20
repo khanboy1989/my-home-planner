@@ -229,30 +229,6 @@ const GROUND_WALLS = [
     ],
   },
   {
-    // Coat room off GIRIS HOLU. The recess is drawn on the sheet (x 894..931,
-    // y 1724..1869) but left unlabelled; fitted out here as a cloakroom.
-    name: 'Coat room — front partition',
-    type: 'interior',
-    a: [894, 1724], b: [894, 1869],
-    openings: [
-      { from: 20, to: 80, sill: 0, kind: 'sliding' },
-    ],
-  },
-  {
-    name: 'Coat room — back panel',
-    type: 'interior',
-    thickness: 0.08,
-    a: [931, 1724], b: [931, 1869],
-    openings: [],
-  },
-  {
-    name: 'Coat room — north return',
-    type: 'interior',
-    thickness: 0.08,
-    a: [894, 1724], b: [931, 1724],
-    openings: [],
-  },
-  {
     name: 'Stair / W.C. wall',
     type: 'interior',
     a: [1031, 1718], b: [1031, 1879],
@@ -320,25 +296,28 @@ const FIRST_WALLS = [
   {
     name: 'ORTAK W.C — north wall',
     type: 'interior',
-    a: [2237, 1461], b: [2389, 1461],
+    a: [2237, 1456], b: [2379, 1456],
     openings: [],
   },
   {
+    // The W.C opens onto ANA KORIDOR, not into ÇAMSIR ODASI. PDF faces run
+    // x=2371/2386 with a clear gap at y 1557..1612 — that gap is the door.
     name: 'ORTAK W.C — east wall',
     type: 'interior',
-    a: [2389, 1461], b: [2389, 1613],
-    openings: [],
+    a: [2379, 1448], b: [2379, 1616],
+    openings: [
+      { from: 118, to: 161, sill: 0, kind: 'door' }, // K1:80/230 to corridor
+    ],
   },
 
   // ────────────────────────────────── laundry + balcony (west)
   {
-    // Also the ORTAK W.C's south wall; the K1:80/230 links the two.
+    // Solid: the ORTAK W.C's south wall. There is no door between the W.C
+    // and ÇAMSIR ODASI — the W.C is entered from ANA KORIDOR.
     name: 'ÇAMSIR ODASI — north wall',
     type: 'exterior',
     a: [2174, 1620], b: [2389, 1620],
-    openings: [
-      { from: 163, to: 206, sill: 0, kind: 'door' }, // K1:80/230
-    ],
+    openings: [],
   },
   {
     name: 'ÇAMSIR ODASI — west exterior',
@@ -494,10 +473,10 @@ const GROUND_OBJECTS = [
   { kind: 'stairs', name: 'Stair flight 2 (treads 10–18)', rect: [946, 1712, 1021, 1878], dir: 'N', steps: 9, riser: 0.17, base: 1.70, solid: false },
   { kind: 'railing', name: 'Stair balustrade', path: [[1027, 1712], [1027, 1878]], h: 1.0 },
 
-  // ────────────────────────────────── GIRIS HOLU coat room
-  { kind: 'box', name: 'Coat rail',   rect: [898, 1732, 928, 1862], h: 0.05, y: 1.72, mat: 'metal' },
-  { kind: 'box', name: 'Hat shelf',   rect: [898, 1732, 928, 1862], h: 0.06, y: 1.92, mat: 'wood' },
-  { kind: 'box', name: 'Shoe shelves', rect: [898, 1790, 928, 1862], h: 0.42, mat: 'cabinet' },
+  // ────────────────────────────────── GIRIS HOLU
+  // Not a room — a freestanding vestiyer/dolap in the recess the sheet draws
+  // at x 894..931, y 1724..1869. No partition, no door.
+  { kind: 'box', name: 'VESTIYER / DOLAP', rect: [894, 1724, 931, 1869], h: 2.2, mat: 'cabinet' },
 
   // ────────────────────────────────── OTURMA ODASI
   { kind: 'sofa', name: 'Three-seat sofa', rect: [1194, 1744, 1346, 1801], back: 'N' },

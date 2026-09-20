@@ -176,6 +176,12 @@ Settled questions — do not re-litigate these without new instruction:
 - **The main entrance is into GIRIS HOLU**, through the `K1:100/230` in the wall
   at y≈1878 off GIRIS TERASI. The W.C block's south wall carries a 210/110
   **window**, not a door.
+- **ORTAK W.C opens onto ANA KORIDOR**, through the `K1:80/230` in its **east**
+  wall (gap at y 1557..1612). There is **no** door between the W.C and ÇAMSIR
+  ODASI — that shared wall is solid.
+- **GIRIS HOLU has no coat room.** The recess at x 894..931, y 1724..1869 holds
+  a freestanding **vestiyer/dolap** — a cupboard, not an enclosed room. No
+  partition walls, no door.
 
 If the plan is revised, reconcile these first — they are the parts a fresh trace
 would not reproduce.
