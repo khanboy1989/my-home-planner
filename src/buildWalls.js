@@ -36,6 +36,8 @@ const FRAME = new THREE.MeshStandardMaterial({ color: 0xf0ece4, roughness: 0.55 
 const BLACK_FRAME = new THREE.MeshStandardMaterial({
   color: 0x1b1e23, roughness: 0.42, metalness: 0.25,
 });
+const SHUTTER = new THREE.MeshStandardMaterial({ color: 0xf8f8f6, roughness: 0.5 });
+const SHUTTER_GUIDE = new THREE.MeshStandardMaterial({ color: 0xb9bdc2, roughness: 0.4, metalness: 0.5 });
 const LEAF = new THREE.MeshStandardMaterial({ color: 0x9a7a56, roughness: 0.6 });
 const HANDLE = new THREE.MeshStandardMaterial({
   color: 0x9aa3ad, roughness: 0.3, metalness: 0.8,
@@ -53,7 +55,7 @@ function slab(w, h, d, mat, x, y, z) {
  * Joinery for one opening, in wall-local space (+X along the wall, Z across
  * its thickness). Windows get a frame, a sill and glazing; doors get a lined
  * frame plus a leaf swung 78° open so the swing reads from above, the way it
- * does on the plan. Sectional garage doors get a head panel and no leaf.
+ * does on the plan. Garage openings get a white roller shutter.
  */
 function buildOpening(cut, depth) {
   const g = new THREE.Group();
@@ -76,7 +78,25 @@ function buildOpening(cut, depth) {
   if (cut.kind === 'opening') return g;
 
   if (cut.kind === 'garage') {
-    g.add(slab(w - jamb * 2, 0.12, depth * 0.5, FRAME, cx, cut.head - 0.2, 0));
+    // White roller shutter: a roll housing under the head, slats hanging
+    // from it, a bottom bar and side guides. `raise` (0 closed .. 1 fully
+    // rolled up) leaves the opening partly clear.
+    const inner = w - jamb * 2;
+    const housingH = 0.28;
+    const housingBottom = cut.head - housingH;
+    const panelH = (housingBottom - cut.sill) * (1 - (cut.raise ?? 0));
+    g.add(slab(inner, housingH, depth * 0.6, SHUTTER, cx, cut.head - housingH / 2, 0));
+    for (const side of [-1, 1]) {
+      g.add(slab(0.05, h - housingH, 0.06, SHUTTER_GUIDE, cx + side * (inner / 2 - 0.025), cut.sill + (h - housingH) / 2, 0));
+    }
+    if (panelH > 0.1) {
+      const pitch = 0.08;
+      const slats = Math.floor((panelH - 0.05) / pitch);
+      for (let i = 0; i < slats; i++) {
+        g.add(slab(inner - 0.1, pitch - 0.008, 0.03, SHUTTER, cx, housingBottom - (i + 0.5) * pitch, 0));
+      }
+      g.add(slab(inner - 0.1, 0.05, 0.05, SHUTTER_GUIDE, cx, housingBottom - panelH + 0.025, 0));
+    }
     return g;
   }
 
@@ -142,6 +162,7 @@ function solidPieces(length, openings, wallHeight, mpp) {
       sill: o.sill ?? PLAN.sill,
       head: Math.min(o.head ?? PLAN.head, wallHeight),
       kind: o.kind,
+      raise: o.raise,
       swing: o.swing,
       hinge: o.hinge,
     }))

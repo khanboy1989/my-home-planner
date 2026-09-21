@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { PLAN, ORIGIN, FLOORS, placement } from './floorplan.js';
+import { PLAN, ORIGIN, FLOORS, placement, toWorld } from './floorplan.js';
 import { buildWalls } from './buildWalls.js';
-import { buildObjects } from './objects.js';
+import { buildObjects, poolBasinPx } from './objects.js';
 
 const app = document.getElementById('app');
 const statusEl = document.getElementById('status');
@@ -12,7 +12,12 @@ const MPP = PLAN.metersPerPixel;
 const PLANE_W = ORIGIN.w * MPP;
 const PLANE_H = ORIGIN.h * MPP;
 
-let layout = 'apart'; // 'apart' | 'stacked'
+// Both models are always on screen: the floors side by side at the origin,
+// and a second copy with the first floor stacked on the ground floor, to the
+// east of it. STACK_DX clears the right-hand edge of the side-by-side row.
+const STACK_GAP_M = 8;
+const STACK_DX = (2 * ORIGIN.w + 149) * MPP + STACK_GAP_M;
+const LAYOUTS = [['apart', 0], ['stacked', STACK_DX]];
 
 // ── renderer ────────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -49,17 +54,39 @@ scene.add(new THREE.HemisphereLight(0xbcd6ff, 0x6b6257, 1.1));
 const sun = new THREE.DirectionalLight(0xfff3e0, 2.4);
 sun.position.set(-20, 34, 20);
 sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.mapSize.set(4096, 4096);
 sun.shadow.bias = -0.0005;
-const d = PLANE_W * 1.4;
-Object.assign(sun.shadow.camera, { left: -d, right: d, top: d, bottom: -d, near: 1, far: 140 });
+const d = STACK_DX + PLANE_W; // the shadow frustum has to reach the stacked model too
+Object.assign(sun.shadow.camera, { left: -d, right: d, top: d, bottom: -d, near: 1, far: 200 });
 sun.shadow.camera.updateProjectionMatrix();
 scene.add(sun);
 scene.add(new THREE.AmbientLight(0xffffff, 0.25));
 
-// Ground the whole composition sits on.
+// Ground the whole composition sits on. Each pool basin is sunk below it, so
+// the apron gets a hole over each or it would hide the water and pool floor.
+function apronGeometry() {
+  const w = PLANE_W * 8;
+  const h = PLANE_H * 6;
+  const shape = new THREE.Shape([
+    new THREE.Vector2(-w / 2 + STACK_DX / 2, -h / 2), new THREE.Vector2(w / 2 + STACK_DX / 2, -h / 2),
+    new THREE.Vector2(w / 2 + STACK_DX / 2, h / 2), new THREE.Vector2(-w / 2 + STACK_DX / 2, h / 2),
+  ]);
+  const pool = FLOORS.find((f) => f.id === 'ground')?.objects.find((o) => o.kind === 'pool');
+  if (pool) {
+    const [x0, y0, x1, y1] = poolBasinPx(pool.rect);
+    for (const [, dx] of LAYOUTS) {
+      // Shape +Y is world -Z once the apron is laid flat, hence the flip.
+      const corners = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
+        .map((c) => toWorld(c, [0, 0]))
+        .map(([x, z]) => new THREE.Vector2(x + dx, -z));
+      shape.holes.push(new THREE.Path(corners));
+    }
+  }
+  return new THREE.ShapeGeometry(shape);
+}
+
 const apron = new THREE.Mesh(
-  new THREE.PlaneGeometry(PLANE_W * 6, PLANE_H * 6),
+  apronGeometry(),
   new THREE.MeshStandardMaterial({ color: 0x2a3038, roughness: 1 }),
 );
 apron.rotation.x = -Math.PI / 2;
@@ -84,7 +111,42 @@ try {
   throw err;
 }
 
-function cropTexture({ x, y, w, h }) {
+/**
+ * Laminated oak parquet as a repeating pattern, drawn in sheet pixels: planks
+ * 0.19 m wide and 1.3 m long (11 × 77 px at 0.0168 m/px), laid in staggered
+ * rows with a slightly different tone per plank and a dark joint line.
+ */
+function parquetPattern(ctx) {
+  const rowH = 11;
+  const plankL = 77;
+  const rows = 14;
+  const tile = document.createElement('canvas');
+  tile.width = plankL * 2;
+  tile.height = rowH * rows;
+  const t = tile.getContext('2d');
+  const tones = ['#dcbb8f', '#d3b083', '#e2c398', '#cfa97b', '#d9b688'];
+  for (let r = 0; r < rows; r++) {
+    for (let i = -1; i < 3; i++) {
+      const px = i * plankL + ((r * 37) % plankL);   // staggered end joints
+      // Tone repeats every two planks, matching the tile width, so it wraps cleanly.
+      t.fillStyle = tones[(r * 3 + (((i % 2) + 2) % 2) * 7) % tones.length];
+      t.fillRect(px, r * rowH, plankL, rowH);
+      t.fillStyle = 'rgba(70,40,15,0.45)';
+      t.fillRect(px, r * rowH, 1, rowH);             // end joint
+    }
+    t.fillStyle = 'rgba(70,40,15,0.35)';
+    t.fillRect(0, r * rowH, tile.width, 1);          // long joint
+  }
+  return ctx.createPattern(tile, 'repeat');
+}
+
+/**
+ * Bakes the floor's plan crop into a canvas. Rooms listed in `floor.parquet`
+ * get laminate oak *multiplied* over the drawing, so the printed lines and
+ * labels stay legible and everything else keeps the paper white.
+ */
+function cropTexture(floor) {
+  const { x, y, w, h } = floor.crop;
   const canvas = document.createElement('canvas');
   canvas.width = w;
   canvas.height = h;
@@ -92,6 +154,16 @@ function cropTexture({ x, y, w, h }) {
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, w, h);
   ctx.drawImage(sheet, x, y, w, h, 0, 0, w, h);
+
+  if (floor.parquet?.length) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = parquetPattern(ctx);
+    for (const [x0, y0, x1, y1] of floor.parquet) {
+      ctx.fillRect(x0 - x, y0 - y, x1 - x0, y1 - y0);
+    }
+    ctx.restore();
+  }
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
@@ -100,7 +172,7 @@ function cropTexture({ x, y, w, h }) {
 }
 
 /**
- * The slab is the floor's crop rectangle with its `voids` punched out — the
+ * The slab is the floor's crop rectangle (or its `outline` footprint) with its `voids` punched out — the
  * GALERI BOSLUGU stairwell, so you can see down through it when stacked.
  * ShapeGeometry emits raw shape coordinates as UVs, so they get renormalised
  * to keep the plan texture registered across the hole.
@@ -108,7 +180,7 @@ function cropTexture({ x, y, w, h }) {
 function slabGeometry(floor) {
   const w = floor.crop.w * MPP;
   const h = floor.crop.h * MPP;
-  if (!floor.voids?.length) return new THREE.PlaneGeometry(w, h);
+  if (!floor.voids?.length && !floor.outline) return new THREE.PlaneGeometry(w, h);
 
   // Shape space matches the un-rotated plane: +X right, +Y up (= -Z / north).
   const local = ([px, py]) => [
@@ -116,11 +188,14 @@ function slabGeometry(floor) {
     ((floor.crop.y + floor.crop.h / 2) - py) * MPP,
   ];
 
-  const shape = new THREE.Shape()
-    .moveTo(-w / 2, -h / 2).lineTo(w / 2, -h / 2)
-    .lineTo(w / 2, h / 2).lineTo(-w / 2, h / 2).closePath();
+  // The full crop rectangle, or the floor's footprint polygon if it has one.
+  const shape = floor.outline
+    ? new THREE.Shape(floor.outline.map((p) => new THREE.Vector2(...local(p))))
+    : new THREE.Shape()
+      .moveTo(-w / 2, -h / 2).lineTo(w / 2, -h / 2)
+      .lineTo(w / 2, h / 2).lineTo(-w / 2, h / 2).closePath();
 
-  for (const v of floor.voids) {
+  for (const v of floor.voids ?? []) {
     const [x0, y0] = local([v.rect[0], v.rect[1]]);
     const [x1, y1] = local([v.rect[2], v.rect[3]]);
     const [lo, hi] = [Math.min(x0, x1), Math.max(x0, x1)];
@@ -141,55 +216,69 @@ function slabGeometry(floor) {
 }
 
 // ── floors ──────────────────────────────────────────────────────────────
-/**
- * Each floor is built once at its true alignment, wrapped in a container.
- * Switching layout only moves the containers — no geometry is rebuilt.
- */
-const floorGroups = FLOORS.map((floor) => {
-  const container = new THREE.Group();
-  container.name = floor.id;
-
-  const slab = new THREE.Mesh(
-    slabGeometry(floor),
-    new THREE.MeshStandardMaterial({
-      map: cropTexture(floor.crop),
-      roughness: 1,
-      side: THREE.DoubleSide,
-    }),
-  );
-  slab.rotation.x = -Math.PI / 2;
-  slab.receiveShadow = true;
-  container.add(slab);
-
-  const place = { offsetPx: floor.alignPx, elevation: 0 };
-  const walls = buildWalls(floor, place);
-  const objects = buildObjects(floor, place);
-  container.add(walls, objects);
-
-  scene.add(container);
-  return { floor, container, walls, objects, slab };
-});
-
-function applyLayout() {
-  for (const { floor, container, slab } of floorGroups) {
-    const place = placement(floor, layout);
-    container.position.set(
-      (place.offsetPx[0] - floor.alignPx[0]) * MPP,
-      place.elevation,
-      (place.offsetPx[1] - floor.alignPx[1]) * MPP,
-    );
-    // Stacked, an upper slab is a ceiling: lift it clear of the walls below.
-    slab.position.y = layout === 'stacked' && floor.storey > 0 ? 0.01 : 0;
-  }
-  layoutEl.textContent = layout === 'apart' ? 'side by side' : 'stacked';
+const slabTextures = new Map(); // one canvas per floor, shared by both models
+function slabTexture(floor) {
+  if (!slabTextures.has(floor.id)) slabTextures.set(floor.id, cropTexture(floor));
+  return slabTextures.get(floor.id);
 }
-applyLayout();
+
+/**
+ * Each floor is built at its true alignment inside a container, then the
+ * container is moved to where `placement()` puts it for that layout, plus the
+ * layout's sideways offset `dx`.
+ */
+function buildModel(mode, dx) {
+  return FLOORS.map((floor) => {
+    const container = new THREE.Group();
+    container.name = `${mode}:${floor.id}`;
+
+    const slab = new THREE.Mesh(
+      slabGeometry(floor),
+      new THREE.MeshStandardMaterial({
+        map: slabTexture(floor),
+        roughness: 1,
+        side: THREE.DoubleSide,
+      }),
+    );
+    slab.rotation.x = -Math.PI / 2;
+    slab.receiveShadow = true;
+    // Stacked, an upper slab is a ceiling: lift it clear of the walls below.
+    slab.position.y = mode === 'stacked' && floor.storey > 0 ? 0.01 : 0;
+    container.add(slab);
+
+    const own = { offsetPx: floor.alignPx, elevation: 0, mode };
+    const walls = buildWalls(floor, own);
+    const objects = buildObjects(floor, own);
+    container.add(walls, objects);
+
+    const at = placement(floor, mode);
+    container.position.set(
+      dx + (at.offsetPx[0] - floor.alignPx[0]) * MPP,
+      at.elevation,
+      (at.offsetPx[1] - floor.alignPx[1]) * MPP,
+    );
+
+    scene.add(container);
+    return { floor, mode, container, walls, objects, slab };
+  });
+}
+
+const floorGroups = LAYOUTS.flatMap(([mode, dx]) => buildModel(mode, dx));
+layoutEl.textContent = 'side by side · stacked (east)';
 
 // ── view helpers ────────────────────────────────────────────────────────
 const grid = new THREE.GridHelper(120, 120, 0x3c4654, 0x232a33);
 grid.position.y = -0.01;
 grid.visible = false;
 scene.add(grid);
+
+let roofsHidden = false;
+function setRoofsHidden(hidden) {
+  roofsHidden = hidden;
+  for (const { objects } of floorGroups) {
+    objects.traverse((o) => { if (o.userData.roof) o.visible = !hidden; });
+  }
+}
 
 let xray = false;
 function setXray(on) {
@@ -212,11 +301,17 @@ function showFloors(ids) {
   }
 }
 
-function frameAll() {
+/** Bounding box of the visible floors, optionally only one model's. */
+function visibleBounds(mode) {
   const box = new THREE.Box3();
-  for (const { container } of floorGroups) {
-    if (container.visible) box.expandByObject(container);
+  for (const g of floorGroups) {
+    if (g.container.visible && (!mode || g.mode === mode)) box.expandByObject(g.container);
   }
+  return box;
+}
+
+function frameAll(mode) {
+  const box = visibleBounds(mode);
   if (box.isEmpty()) return;
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
@@ -226,10 +321,7 @@ function frameAll() {
 }
 
 function topView() {
-  const box = new THREE.Box3();
-  for (const { container } of floorGroups) {
-    if (container.visible) box.expandByObject(container);
-  }
+  const box = visibleBounds();
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   controls.target.copy(center).setY(0);
@@ -240,13 +332,11 @@ window.addEventListener('keydown', (e) => {
   switch (e.key.toLowerCase()) {
     case 'g': grid.visible = !grid.visible; break;
     case 'x': setXray(!xray); break;
+    case 'o': setRoofsHidden(!roofsHidden); break;
     case 't': topView(); break;
     case 'r': frameAll(); break;
-    case 'l':
-      layout = layout === 'apart' ? 'stacked' : 'apart';
-      applyLayout();
-      frameAll();
-      break;
+    case '3': frameAll('apart'); break;
+    case '4': frameAll('stacked'); break;
     case '1': showFloors(['ground']); frameAll(); break;
     case '2': showFloors(['first']); frameAll(); break;
     case '0': showFloors('all'); frameAll(); break;

@@ -14,7 +14,9 @@ the short version plus the non-negotiables.
 A Three.js viewer for a real house — **Villa Khan**. It lays the architect's 2D
 floor plans down as ground textures and extrudes the walls, joinery and
 furniture back out of them. Two storeys: `ZEMIN` (ground) and `BIRINCI KAT`
-(first).
+(first), drawn **twice** on screen: as separate models side by side, and — to
+the east — stacked as the real building. The site is modelled too: a plot
+(`land`), a boundary wall, a pool, a paved terrace and side parking.
 
 Plain ES modules, no bundler, no build step. `three` is reached through an
 import map in `index.html` pointing at `node_modules/`.
@@ -32,7 +34,10 @@ plan JPEG both fail on a `file://` origin.
 
 There is no test suite. `npm run audit` is the verification step; it must report
 **`doors: 12/14 arcs matched`**. The two leftovers are the curved sofa in
-OTURMA ODASI, not doors.
+OTURMA ODASI, not doors. The audit only checks the plan geometry, so also run
+`node --check src/*.js` after editing the modules. The owner has asked agents not
+to open a browser on their own — ask first, and otherwise say plainly that a
+visual change is unverified on screen.
 
 ## The rules that matter
 
@@ -52,6 +57,10 @@ OTURMA ODASI, not doors.
 
 3. **All geometry data lives in `src/floorplan.js`.** Add new object types as
    makers in `src/objects.js` keyed by `kind`; don't model one-offs inline.
+   Two item flags matter for the dual view: `roof: true` puts an item on the `O`
+   (hide roofs) toggle, and `only: 'stacked'` leaves it out of the side-by-side
+   model, which is meant to be seen into from above. The tile roofs and the
+   terrace roof are both stacked-only.
 
 4. **Run `npm run audit` after any geometry change**, and re-render a visual
    overlay if a wall's position is in doubt.
@@ -61,6 +70,18 @@ OTURMA ODASI, not doors.
    in person that the drawing does not show, and things that look wrong but are
    right. Re-deriving them from the PDF will reintroduce bugs the owner has
    already reported once.
+
+## Things that bite
+
+- **Both models are built from the same data.** `main.js` calls `buildModel()`
+  twice, so anything you add to a floor appears in both. Use `only:` to restrict.
+- **The pool is sunk below the ground.** The ground `apron` in `main.js` and the
+  `land` item each get a hole over it via `poolBasinPx()`; move the pool and the
+  holes follow. Pool water and floor are unlit `MeshBasicMaterial` on purpose.
+- **The first floor's slab is clipped** to its `outline`; without that its empty
+  crop hides the ground floor when stacked.
+- **`buildObjects` positions by `rect`, elevation by `z`** (an item's height
+  offset is `y` inside its own maker but `z` on the item for the group).
 
 ## Reading the PDF correctly
 
@@ -95,4 +116,7 @@ Turkish room names are used throughout and should be kept as-is: `MUTFAK`
 corridor), `GIRIS HOLU` (entrance hall), `OTURMA ODASI` (living room), `GARAJ`,
 `YATAK ODASI` (bedroom), `EBEVEYN` (master), `D.ODASI` (dressing room),
 `ÇAMSIR ODASI` (laundry), `GALERI BOSLUGU` (stairwell void), `BALKON TERASI`,
-`TEZGAH` (worktop), `VESTIYER` (coat cupboard), `OCAK` (hob), `FIRIN` (oven).
+`TEZGAH` (worktop), `VESTIYER` (coat cupboard), `OCAK` (hob), `FIRIN` (oven),
+`HAVUZ` (pool), `ŞEZLONG` (sun lounger), `TAŞMA KANALI` (pool overflow channel).
+
+`D.ODASI` is *Dolap Odası*, a dressing room — never a bathroom.

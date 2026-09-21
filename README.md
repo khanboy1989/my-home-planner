@@ -4,8 +4,8 @@ A Three.js viewer that uses the architect's 2D drawings as ground textures and
 extrudes the walls, joinery and furniture back out of them.
 
 Both storeys are modelled — **ZEMIN** (ground) and **BIRINCI KAT** (first). They
-render side by side as two separate models, each at its true height; press `L` to
-stack them into the real building.
+are drawn twice: as two separate models side by side, and — a little way east — as
+the real building with the first floor stacked on the ground floor.
 
 ---
 
@@ -79,11 +79,12 @@ drifted from the architect's PDF.
 | --- | --- |
 | drag | orbit |
 | scroll | zoom |
-| `L` | side by side / stacked |
+| `3` `4` | fit the side-by-side plans / the stacked model |
 | `1` `2` `0` | ground only / first only / both |
 | `T` | top view |
 | `R` | refit view |
 | `X` | x-ray walls |
+| `O` | hide the roofs |
 | `G` | grid |
 
 Hover a wall, a door or a piece of furniture to see its floor and name in the

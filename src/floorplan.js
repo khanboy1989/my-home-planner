@@ -115,7 +115,7 @@ const GROUND_WALLS = [
     type: 'exterior',
     a: [412, 1999], b: [798, 1999],
     openings: [
-      { from: 18, to: 368, sill: 0, head: 2.4, kind: 'garage' }, // sectional
+      { from: 18, to: 368, sill: 0, head: 2.4, kind: 'garage' }, // white roller shutter (raise: 0..1 rolls it up)
     ],
   },
   {
@@ -183,6 +183,25 @@ const GROUND_WALLS = [
       { from: 43, to: 168, sill: 1.1, kind: 'window' }, // 210/110
     ],
   },
+
+  // ────────────────────────────────── plot boundary wall
+  // 2 m garden wall on the plot line (the `land` polygon in GROUND_OBJECTS),
+  // 0.2 m thick. The street is the south edge (D→C): one 9 m vehicle opening
+  // serves both the garage door (x 412..798) and the side parking strip west
+  // of it (x 246..404), and a 1.2 m pedestrian opening lines up with the GIRIS
+  // entrance (x ≈ 1024). Openings are pixels along each wall.
+  {
+    name: 'Plot wall — south (street)',
+    type: 'exterior', thickness: 0.2, height: 2.0,
+    a: [224, 2209], b: [1590, 2294],
+    openings: [
+      { from: 21, to: 560, sill: 0, head: 2.0, kind: 'opening' },   // parking strip + garage
+      { from: 767, to: 838, sill: 0, head: 2.0, kind: 'opening' },  // GIRIS
+    ],
+  },
+  { name: 'Plot wall — east',  type: 'exterior', thickness: 0.2, height: 2.0, a: [1590, 2294], b: [1643, 530], openings: [] },
+  { name: 'Plot wall — north', type: 'exterior', thickness: 0.2, height: 2.0, a: [1643, 530],  b: [254, 161],   openings: [] },
+  { name: 'Plot wall — west',  type: 'exterior', thickness: 0.2, height: 2.0, a: [254, 161],   b: [224, 2209],  openings: [] },
 
   // ────────────────────────────────── interior partitions
   {
@@ -268,10 +287,11 @@ const FIRST_WALLS = [
     openings: [],
   },
   {
-    // Twin partitions with a recess between them.
+    // One wall, not twin partitions: the PDF faces sit at x=2461 and 2476
+    // (15 px ≈ 0.25 m). The verticals at 2453/2456 and 2482/2485 are the two TVs.
     name: 'YATAK ODASI 1 / 2 partition',
     type: 'interior',
-    thickness: 0.3,
+    thickness: 0.25,
     a: [2468, 1194], b: [2468, 1563],
     openings: [],
   },
@@ -291,6 +311,15 @@ const FIRST_WALLS = [
     name: 'Y.ODASI 2 D.ODASI — west wall',
     type: 'interior',
     a: [2543, 1559], b: [2543, 1618],
+    openings: [],
+  },
+  {
+    // D.ODASI = Dolap Odası (dressing room). Thin partition between YATAK
+    // ODASI 2 and its dressing room: PDF faces at y=1445 and 1451 (~0.1 m).
+    name: 'YATAK ODASI 2 / Y.ODASI 2 D.ODASI partition',
+    type: 'interior',
+    thickness: 0.1,
+    a: [2548, 1448], b: [2704, 1448],
     openings: [],
   },
   {
@@ -429,9 +458,27 @@ const FIRST_WALLS = [
  * same sheet-pixel space. See objects.js for what each `kind` builds.
  */
 const GROUND_OBJECTS = [
+  // ────────────────────────────────── the plot
+  // Inner boundary line on the sheet (the double line round the site). At the
+  // model's scale it encloses ~744 m² against the stated 726 m² — within the
+  // calibration tolerance. Its top sits just under the ground-floor slab.
+  {
+    kind: 'land', name: 'Plot (726 m²)', mat: 'lawn', y: -0.005, h: 0.01,
+    path: [[254, 161], [1643, 530], [1590, 2294], [224, 2209]],
+  },
+
+  // ────────────────────────────────── side parking (west of the garage)
+  // The sheet draws two cars on the strip between the plot wall and the
+  // garage (x 245..368). A paved pad runs the length of it to the street gate.
+  { kind: 'paving', name: 'Side parking pad', path: [[246, 1350], [404, 1350], [404, 2198], [246, 2198]] },
+  { kind: 'sedan', name: 'Parked car 1', rect: [255, 1366, 375, 1646], nose: 'S', paint: 0xb8bcc4 },
+  { kind: 'sedan', name: 'Parked car 2', rect: [255, 1680, 375, 1960], nose: 'S', paint: 0x6b2b2b },
+
   // ────────────────────────────────── GARAJ
-  { kind: 'car', name: 'Car (left bay)',  rect: [457, 1677, 577, 1963], variant: 0 },
-  { kind: 'car', name: 'Car (right bay)', rect: [633, 1677, 753, 1963], variant: 1 },
+  { kind: 'sedan',  name: 'Mercedes-Benz C220 d', rect: [457, 1677, 577, 1963] },
+  // The L200 is 5.30 m long, so its rect starts further north than the old car's;
+  // it stays west of x=740 to keep the K1:100/230 door (x 727..783) reachable.
+  { kind: 'pickup', name: 'Mitsubishi L200 Pickup (2018)', rect: [626, 1648, 736, 1963] },
   // One continuous worktop the full width of the party wall, for unloading
   // shopping, with the EV charger wall-mounted above its east end.
   { kind: 'box', name: 'Tezgah — unloading worktop', rect: [420, 1594, 702, 1631], h: 0.9, mat: 'counter' },
@@ -487,6 +534,54 @@ const GROUND_OBJECTS = [
   { kind: 'sofa', name: 'Armchair', rect: [1326, 1653, 1371, 1692], back: 'N', h: 0.4 },
   { kind: 'box',  name: 'Console table', rect: [1261, 1654, 1312, 1690], h: 0.42, mat: 'wood' },
   { kind: 'tv',   name: 'TV — OTURMA ODASI', rect: [1406, 1753, 1412, 1817], h: 0.62, y: 1.05 },
+
+  // ────────────────────────────────── TERRACE (east of the kitchen/hall/living)
+  // The L drawn dashed on the sheet: x 946..1191 beside the kitchen, widening
+  // to x 1604 along the living room's north wall.
+  { kind: 'paving', name: 'Terrace', path: [[946, 1188], [1191, 1188], [1191, 1402], [1604, 1402], [1604, 1615], [946, 1615]] },
+  { kind: 'table', name: 'Dining table', rect: [1330, 1478, 1450, 1532] },
+  ...[1338, 1378, 1418].flatMap((x) => [
+    { kind: 'chair', name: 'Dining chair', rect: [x, 1449, x + 27, 1476] },
+    { kind: 'chair', name: 'Dining chair', rect: [x, 1534, x + 27, 1561], rot: 180 },
+  ]),
+  // Rubble-stone barbecue beside the kitchen, backed onto the terrace's open
+  // north edge (the kitchen's east windows fill the wall side, so it can't
+  // stand against that). Working face to the south; its flue runs up through
+  // the roof (soffit 2.65 m, top 2.93 m).
+  { kind: 'barbecue', name: 'Stone barbecue', rect: [1000, 1190, 1101, 1232], back: 'N', flueTop: 3.3 },
+
+  // Timber roof over the whole terrace: a flat oak slab with a thick fascia
+  // and plank soffit, leaning on the house walls to the west and south and
+  // cantilevering ~0.3 m past the free edges. Slim black posts at the corners.
+  // Stacked model only, so the side-by-side ground floor can be seen into.
+  {
+    kind: 'paving', name: 'Terrace — wooden roof', mat: 'oak', y: 2.65, h: 0.28, roof: true, only: 'stacked',
+    path: [[946, 1170], [1209, 1170], [1209, 1384], [1622, 1384], [1622, 1615], [946, 1615]],
+  },
+  ...[[952, 1176], [1203, 1176], [1203, 1378], [1400, 1378], [1616, 1378], [1616, 1608]].map(([x, y]) => (
+    { kind: 'box', name: 'Roof post', rect: [x - 3, y - 3, x + 3, y + 3], h: 2.65, mat: 'frame', only: 'stacked' }
+  )),
+
+  // Greenery under the roof: timber planters along the open edges, potted
+  // topiary by the table.
+  { kind: 'planter', name: 'Planter', rect: [1165, 1240, 1189, 1370] },
+  { kind: 'planter', name: 'Planter', rect: [1215, 1405, 1520, 1429] },
+  { kind: 'planter', name: 'Planter', rect: [1580, 1425, 1604, 1595] },
+  ...[[1225, 1470], [1225, 1560], [1570, 1450], [1570, 1600]].map(([x, y]) => (
+    { kind: 'topiary', name: 'Potted topiary', rect: [x - 11, y - 11, x + 11, y + 11] }
+  )),
+
+  // ────────────────────────────────── POOL (HAVUZ, AL. 51.70 m²)
+  // North of the house. Loungers sit at the centres of the sheet's four
+  // ŞEZLONG labels, turned ~25° as drawn.
+  { kind: 'pool', name: 'Havuz', rect: [513, 669, 1188, 1103] },
+  ...[[1305, 758], [1305, 834], [1305, 942], [1305, 1018]].map(([cx, cy]) => (
+    { kind: 'lounger', name: 'Şezlong', rect: [cx - 60, cy - 21, cx + 60, cy + 21], rot: 25 }
+  )),
+  // One parasol in the gap between each pair of loungers.
+  ...[796, 980].map((cy) => (
+    { kind: 'parasol', name: 'Parasol', rect: [1305 - 6, cy - 6, 1305 + 6, cy + 6], radius: 1.3 }
+  )),
 ];
 
 const FIRST_OBJECTS = [
@@ -507,11 +602,16 @@ const FIRST_OBJECTS = [
   { kind: 'bed', name: 'Bed — YATAK ODASI 2', rect: [2568, 1249, 2693, 1341], head: 'E' },
   { kind: 'box', name: 'Nightstand', rect: [2668, 1225, 2693, 1249], h: 0.5, mat: 'wood' },
   { kind: 'box', name: 'Nightstand', rect: [2668, 1341, 2693, 1365], h: 0.5, mat: 'wood' },
-  { kind: 'box', name: 'Wardrobe — YATAK ODASI 2', rect: [2548, 1407, 2696, 1449], h: 2.2, mat: 'cabinet' },
-  { kind: 'box', name: 'Desk — YATAK ODASI 2', rect: [2596, 1386, 2664, 1410], h: 0.75, mat: 'wood' },
+  // The long block across the south of the room (PDF y 1408..1445) is a desk,
+  // not a wardrobe; the chair symbol sits on its north side.
+  { kind: 'box', name: 'Desk — YATAK ODASI 2', rect: [2550, 1408, 2694, 1445], h: 0.75, mat: 'wood' },
+  { kind: 'chair', name: 'Desk chair', rect: [2642, 1384, 2669, 1408] },
   { kind: 'tv',  name: 'TV — YATAK ODASI 2', rect: [2478, 1265, 2484, 1329], h: 0.55, y: 1.1 },
-  { kind: 'box', name: 'Wardrobe — Y.ODASI 2 D.ODASI', rect: [2548, 1488, 2572, 1577], h: 2.2, mat: 'cabinet' },
-  { kind: 'box', name: 'Wardrobe — Y.ODASI 2 D.ODASI', rect: [2572, 1488, 2659, 1512], h: 2.2, mat: 'cabinet' },
+  // Y.ODASI 2 D.ODASI (Dolap Odası): wardrobes only round the walls, open
+  // floor in the middle, no island. The U opens west onto the vestibule.
+  { kind: 'wardrobe', name: 'Wardrobe — Y.ODASI 2 D.ODASI (north)', rect: [2548, 1451, 2694, 1481], back: 'N' },
+  { kind: 'wardrobe', name: 'Wardrobe — Y.ODASI 2 D.ODASI (east)',  rect: [2664, 1481, 2694, 1582], back: 'E' },
+  { kind: 'wardrobe', name: 'Wardrobe — Y.ODASI 2 D.ODASI (south)', rect: [2548, 1582, 2694, 1612], back: 'S' },
 
   // ────────────────────────────────── ÇAMSIR ODASI
   { kind: 'box',       name: 'Laundry counter', rect: [2187, 1627, 2385, 1670], h: 0.9, mat: 'counter' },
@@ -524,9 +624,13 @@ const FIRST_OBJECTS = [
   { kind: 'box', name: 'Wardrobe — master',      rect: [2884, 1689, 2925, 1777], h: 2.2, mat: 'cabinet' },
   { kind: 'box', name: 'Desk — EBEVEYN Y. ODASI', rect: [2923, 1789, 2949, 1818], h: 0.75, mat: 'wood' },
   { kind: 'tv',  name: 'TV — EBEVEYN Y. ODASI',  rect: [2927, 1700, 2933, 1770], h: 0.62, y: 1.1 },
-  // Shortened to the east end so the slider's parked leaf clears it.
-  { kind: 'box', name: 'Wardrobe — EBEVEYN D.ODASI', rect: [3100, 1845, 3180, 1868], h: 2.2, mat: 'cabinet' },
-  { kind: 'box', name: 'Dressing island',        rect: [3047, 1885, 3144, 1960], h: 1.0, mat: 'cabinet' },
+  // EBEVEYN D.ODASI: U of wardrobes round three walls with a glass-top island
+  // in the middle. It opens north onto the slider; the west run starts south
+  // of y 1868 so the slider's parked leaf clears it.
+  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (west)',  rect: [3010, 1868, 3040, 1976], back: 'W' },
+  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (east)',  rect: [3147, 1845, 3177, 1976], back: 'E' },
+  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (south)', rect: [3010, 1976, 3177, 2006], back: 'S' },
+  { kind: 'island',   name: 'Dressing island',                    rect: [3073, 1896, 3115, 1946] },
   { kind: 'basin',  rect: [2886, 1863, 2916, 1896] },
   { kind: 'toilet', rect: [2964, 1963, 2988, 2000] },
   { kind: 'shower', name: 'DUS', rect: [2888, 1925, 2960, 2010] },
@@ -540,12 +644,36 @@ const FIRST_OBJECTS = [
   { kind: 'stairs', name: 'Stair flight 2 (treads 10–18)', rect: [2710, 1721, 2784, 1876], dir: 'N', steps: 9, riser: 0.17, from: -1.70, solid: false },
   { kind: 'railing', name: 'Stair balustrade', path: [[2790, 1721], [2790, 1876]], h: 1.0, y: -1.7 },
 
+  // ────────────────────────────────── roofs
+  // The sheet draws no roof, so these are modelled from the owner's photo: a
+  // black stone-coated S-tile hip roof, one per block, eaves at wall height.
+  // Stacked only (`only: 'stacked'`): the side-by-side first floor stays open
+  // so it can be seen into from above. Stacked, they cover the ground floor too.
+  { kind: 'hiproof', name: 'Roof — YATAK ODASI block',     rect: [2237, 1194, 2704, 1627], y: 3.0, roof: true, only: 'stacked' },
+  { kind: 'hiproof', name: 'Roof — ÇAMSIR / ANA KORIDOR', rect: [2174, 1620, 2560, 1744], y: 3.0, roof: true, only: 'stacked' },
+  { kind: 'hiproof', name: 'Roof — stair hall',            rect: [2560, 1620, 2870, 1950], y: 3.0, roof: true, only: 'stacked' },
+  { kind: 'hiproof', name: 'Roof — EBEVEYN suite',         rect: [2870, 1621, 3187, 2019], y: 3.0, roof: true, only: 'stacked' },
+
   // ────────────────────────────────── open edges
+  // BALKON TERASI is split front/back. The back half (y 1744..1872, against
+  // the house) is a glazed room in black frames under a glass roof, with a
+  // sliding door in its glass front. The front half (y 1872..2000) stays open
+  // for laundry and keeps the balustrade. The room's east side is the GALERI
+  // wall, so only its west and south edges are glass.
   {
     kind: 'railing',
     name: 'BALKON TERASI balustrade',
-    path: [[2174, 1744], [2174, 2000], [2560, 2000], [2560, 1874]],
+    path: [[2174, 1872], [2174, 2000], [2560, 2000], [2560, 1874]],
     h: 1.1,
+  },
+  {
+    kind: 'glassroom',
+    name: 'BALKON TERASI glass room',
+    rect: [2174, 1744, 2560, 1872],
+    sides: [
+      { side: 'S', door: true },
+      { side: 'W' },
+    ],
   },
   {
     kind: 'railing',
@@ -561,6 +689,16 @@ export const FLOORS = [
     name: 'ZEMIN',
     label: 'Ground floor',
     crop: { ...ORIGIN },
+    // Laminate parquet throughout, kitchens included. Only the W.C, the stair
+    // and the garage keep the plain finish. Rects are approximate room
+    // interiors; the walls hide the edges.
+    parquet: [
+      [1124, 1633, 1421, 2004], // OTURMA ODASI
+      [482, 1203, 930, 1428],   // MUTFAK + dining
+      [482, 1441, 702, 1580],   // Y.MUTFAK KILER
+      [718, 1442, 930, 1616],   // ANA KORIDOR
+      [812, 1730, 931, 1872],   // GIRIS HOLU
+    ],
     alignPx: [0, 0],
     storey: 0,
     walls: GROUND_WALLS,
@@ -571,10 +709,30 @@ export const FLOORS = [
     name: 'BIRINCI KAT',
     label: 'First floor',
     crop: { x: 2147, y: 1179, w: 1060, h: 855 },
+    parquet: [
+      [2244, 1201, 2461, 1452], // YATAK ODASI 1 (north of the ORTAK W.C)
+      [2387, 1452, 2461, 1552], // YATAK ODASI 1 (strip east of the W.C, to its door)
+      [2476, 1201, 2697, 1559], // YATAK ODASI 2 + vestibule
+      [2548, 1559, 2697, 1612], // Y.ODASI 2 D.ODASI (south part)
+      [2389, 1562, 2540, 1627], // ANA KORIDOR (north strip, below the bedroom doors)
+      [2389, 1627, 2560, 1737], // ANA KORIDOR
+      [2560, 1627, 2870, 1872], // stair hall / gallery, inside the south wall
+      [2702, 1872, 2870, 1946], // stair landing (the strip south of the gallery is outdoors)
+      [2890, 1638, 3180, 1834], // EBEVEYN Y. ODASI
+      [3010, 1845, 3177, 2006], // EBEVEYN D.ODASI
+    ],
     alignPx: [-1762, 1],
     storey: 1,
     walls: FIRST_WALLS,
     objects: FIRST_OBJECTS,
+    // The slab is clipped to the building's footprint. Without it the whole
+    // crop (mostly empty paper) hangs 3.4 m up in the stacked model and hides
+    // the ground-floor terrace and its roof.
+    outline: [
+      [2237, 1194], [2704, 1194], [2704, 1620], [3187, 1620], [3187, 2019],
+      [2870, 2019], [2870, 1950], [2560, 1950], [2560, 2000], [2174, 2000],
+      [2174, 1620], [2237, 1620],
+    ],
     // Openings cut clean through the slab (stairwell void).
     voids: [
       { name: 'GALERI BOSLUGU', rect: [2569, 1744, 2690, 1864] },
