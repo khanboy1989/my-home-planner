@@ -195,8 +195,8 @@ const GROUND_WALLS = [
     type: 'exterior', thickness: 0.2, height: 2.0,
     a: [224, 2209], b: [1590, 2294],
     openings: [
-      { from: 21, to: 560, sill: 0, head: 2.0, kind: 'opening' },   // parking strip + garage
-      { from: 767, to: 838, sill: 0, head: 2.0, kind: 'opening' },  // GIRIS
+      { from: 21, to: 560, sill: 0, head: 2.0, kind: 'gate' },      // parking strip + garage
+      { from: 767, to: 838, sill: 0, head: 2.0, kind: 'gate' },     // GIRIS
     ],
   },
   { name: 'Plot wall — east',  type: 'exterior', thickness: 0.2, height: 2.0, a: [1590, 2294], b: [1643, 530], openings: [] },
@@ -457,14 +457,84 @@ const FIRST_WALLS = [
  * Furniture and fixtures, traced off the same drawings as the walls, in the
  * same sheet-pixel space. See objects.js for what each `kind` builds.
  */
+/** The plot's four corners in sheet px, clockwise on the page: NW, NE, SE, SW. */
+const PLOT = [[254, 161], [1643, 530], [1590, 2294], [224, 2209]];
+
+/**
+ * A point `t` px along plot edge `edge` (edge i runs PLOT[i] to PLOT[i+1]) and
+ * `inset` px in from the wall. Going clockwise, the plot's inside is on the
+ * right of each edge, which is (-uy, ux) in y-down sheet coordinates.
+ */
+function plotPoint(edge, t, inset) {
+  const [a, b] = [PLOT[edge], PLOT[(edge + 1) % 4]];
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  const [ux, uy] = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
+  return [Math.round(a[0] + ux * t - uy * inset), Math.round(a[1] + uy * t + ux * inset)];
+}
+
+/**
+ * Exotic fruit planting just inside the wall: [edge, t, kind, options].
+ * Gaps are deliberate: the street gates (edge 2, t 528..599 and 806..1345),
+ * the side parking strip on the west edge (t < 900), the terrace on the east
+ * edge (t ~ 870..1230) and the pool are all kept clear.
+ */
+const PLANTING = [
+  // north edge, well clear of the pool
+  [0, 200, 'fruittree', { fruit: 'mango' }],   [0, 420, 'palm', { species: 'date' }],
+  [0, 640, 'banana'],                          [0, 860, 'fruittree', { fruit: 'fig' }],
+  [0, 1080, 'palm', { species: 'date' }],      [0, 1300, 'banana'],
+  // east edge, stops before the terrace and resumes south of it
+  [1, 120, 'palm', { species: 'date' }],       [1, 340, 'banana'],
+  [1, 560, 'palm', { species: 'papaya' }],     [1, 780, 'fruittree', { fruit: 'pomegranate' }],
+  [1, 1250, 'fruittree', { fruit: 'orange' }], [1, 1450, 'palm', { species: 'date' }],
+  [1, 1620, 'banana'],
+  // south (street) edge, between the two gates and east of the entrance
+  [2, 130, 'fruittree', { fruit: 'lemon' }],   [2, 300, 'palm', { species: 'papaya' }],
+  [2, 450, 'banana'],                          [2, 700, 'palm', { species: 'date' }],
+  // west edge, north of the parking strip
+  [3, 950, 'banana'],                          [3, 1200, 'fruittree', { fruit: 'avocado' }],
+  [3, 1450, 'palm', { species: 'date' }],      [3, 1700, 'fruittree', { fruit: 'mango' }],
+  [3, 1900, 'palm', { species: 'papaya' }],
+].map(([edge, t, kind, opts], i) => {
+  const [x, y] = plotPoint(edge, t, 65);
+  return { kind, name: `${kind} ${i + 1}`, rect: [x - 6, y - 6, x + 6, y + 6], seed: i + 1, ...opts };
+});
+
+/**
+ * A gate leaf group for the street wall's opening running `from`..`to` px from
+ * its west end (the wall's `a` point). Placed on the wall line and turned to
+ * match its slight slope.
+ */
+function streetGate(from, to, extra) {
+  const [a, b] = [[224, 2209], [1590, 2294]];
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  const [ux, uy] = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
+  const mid = (from + to) / 2;
+  const [cx, cy] = [a[0] + ux * mid, a[1] + uy * mid];
+  const half = (to - from) / 2;
+  return {
+    kind: 'gate', rect: [cx - half, cy - 6, cx + half, cy + 6],
+    rot: (Math.atan2(uy, ux) * 180) / Math.PI, ...extra,
+  };
+}
+
 const GROUND_OBJECTS = [
+  ...PLANTING,
+
+  // ────────────────────────────────── front gates (street wall)
+  // Both black bar gates. The wide one is a bi-parting sliding gate over the
+  // garage + side parking opening, drawn closed; the pedestrian gate at GIRIS
+  // is a single leaf swung open 70 degrees inward so it reads from above.
+  streetGate(21, 560, { name: 'Vehicle gate', style: 'sliding', open: 0 }),
+  streetGate(767, 838, { name: 'Pedestrian gate', style: 'swing', openDeg: 70 }),
   // ────────────────────────────────── the plot
   // Inner boundary line on the sheet (the double line round the site). At the
   // model's scale it encloses ~744 m² against the stated 726 m² — within the
-  // calibration tolerance. Its top sits just under the ground-floor slab.
+  // calibration tolerance. A slab item spans y..y+h, so this runs -0.02..-0.01:
+  // above the ground apron (-0.02) and safely under the floor slabs at 0.
   {
-    kind: 'land', name: 'Plot (726 m²)', mat: 'lawn', y: -0.005, h: 0.01,
-    path: [[254, 161], [1643, 530], [1590, 2294], [224, 2209]],
+    kind: 'land', name: 'Plot (726 m²)', mat: 'lawn', y: -0.02, h: 0.01,
+    path: PLOT,
   },
 
   // ────────────────────────────────── side parking (west of the garage)
@@ -527,13 +597,32 @@ const GROUND_OBJECTS = [
   { kind: 'box', name: 'VESTIYER / DOLAP', rect: [894, 1724, 931, 1869], h: 2.2, mat: 'cabinet' },
 
   // ────────────────────────────────── OTURMA ODASI
-  { kind: 'sofa', name: 'Three-seat sofa', rect: [1194, 1744, 1346, 1801], back: 'N' },
-  { kind: 'sofa', name: 'Sectional (west arm)',  rect: [1130, 1818, 1185, 1946], back: 'W' },
-  { kind: 'sofa', name: 'Sectional (south arm)', rect: [1150, 1938, 1265, 1995], back: 'S' },
-  { kind: 'sofa', name: 'Armchair', rect: [1202, 1653, 1244, 1692], back: 'N', h: 0.4 },
-  { kind: 'sofa', name: 'Armchair', rect: [1326, 1653, 1371, 1692], back: 'N', h: 0.4 },
-  { kind: 'box',  name: 'Console table', rect: [1261, 1654, 1312, 1690], h: 0.42, mat: 'wood' },
-  { kind: 'tv',   name: 'TV — OTURMA ODASI', rect: [1406, 1753, 1412, 1817], h: 0.62, y: 1.05 },
+  // Restyled from the owner's reference: cream and gold, a media wall, and a
+  // marble coffee table on a patterned rug.
+  // At the owner's request the three-seat sofa, both armchairs, the console
+  // table and the ficus were removed (their printed symbols are painted out by
+  // `erase` on the floor).
+  // Relaxed seating around a ceiling-hung fireplace (after the owner's
+  // reference). Four relaxed pieces (a 3-seat sofa, a 2-seat sofa and two
+  // single armchairs), none joined at a corner (no L-shaped sofa), leave the
+  // middle of the floor open. The fireplace hangs in the salon's north-east
+  // corner, beside the window and the start of the media wall, its mouth turned
+  // into the room. The 3-seater sits on the west wall facing the TV, the
+  // 2-seater on the south side, the armchairs side by side at the window.
+  { kind: 'lounge', name: '3-seat sofa',     rect: [1124, 1787, 1188, 1924], back: 'W', seats: 3 },
+  { kind: 'lounge', name: '2-seat sofa',     rect: [1225, 1938, 1326, 2002], back: 'S', seats: 2 },
+  { kind: 'lounge', name: 'Armchair (west)', rect: [1196, 1655, 1256, 1719], back: 'N', seats: 1 },
+  { kind: 'lounge', name: 'Armchair (east)', rect: [1262, 1655, 1322, 1719], back: 'N', seats: 1 },
+  { kind: 'hangingfire', name: 'Hanging fireplace', rect: [1361, 1688, 1373, 1700], faceDeg: 53 },
+  { kind: 'rug',      name: 'Rug',          rect: [1196, 1735, 1392, 1935] },
+  { kind: 'coffee',   name: 'Coffee table', rect: [1240, 1836, 1300, 1872] },
+  // Media wall on the east wall (inner face x ~ 1422): TV, floating unit, niches.
+  // The fireplace is not here; it hangs in the north-east corner.
+  { kind: 'tvwall',   name: 'Media wall (TV)', rect: [1398, 1745, 1422, 1965], back: 'E', fireplace: false },
+  { kind: 'curtain',  name: 'Curtains', rect: [1176, 1631, 1360, 1640] },
+  { kind: 'lamp',     name: 'Floor lamp', rect: [1140, 1748, 1156, 1764] },
+  { kind: 'sidetable', name: 'Side table', rect: [1140, 1943, 1168, 1971] },
+  { kind: 'sidetable', name: 'Side table', rect: [1336, 1960, 1364, 1988] },
 
   // ────────────────────────────────── TERRACE (east of the kitchen/hall/living)
   // The L drawn dashed on the sheet: x 946..1191 beside the kitchen, widening
@@ -692,6 +781,13 @@ export const FLOORS = [
     // Laminate parquet throughout, kitchens included. Only the W.C, the stair
     // and the garage keep the plain finish. Rects are approximate room
     // interiors; the walls hide the edges.
+    // Plan symbols painted over with plain parquet: the removed armchairs and
+    // console table, the removed three-seat sofa and the replaced sectional.
+    erase: [
+      [1196, 1646, 1378, 1697],
+      [1186, 1738, 1354, 1806],
+      [1126, 1812, 1272, 1998], // the sectional
+    ],
     parquet: [
       [1124, 1633, 1421, 2004], // OTURMA ODASI
       [482, 1203, 930, 1428],   // MUTFAK + dining

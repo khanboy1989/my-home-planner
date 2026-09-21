@@ -228,17 +228,41 @@ Also added on the owner's instruction (see comments in `floorplan.js`):
    (1590,2294) (224,2209). The owner's figure is 726 m²; at `metersPerPixel`
    the polygon measures ~744 m² (the outer line ~773 m²), so it is within the
    scale calibration. It is cut away over the pool basin.
-10. **Plot wall.** A 2 m × 0.2 m boundary wall runs on the plot line (same four
-   corners as the `land` item). The street is the south edge: a 6 m opening
-   lines up with the garage door and a 1.2 m one with the GIRIS entrance. They
-   are open gaps, not gates. The street opening is one 9 m gap that also serves
-    the side parking strip (a paved pad west of the garage, x 246..404) with two
-    parked cars — the sheet draws two cars there.
+10. **Plot wall and front gates.** A 2 m × 0.2 m boundary wall runs on the plot
+    line (same four corners as the `land` item). The street is the south edge.
+    It has two `gate` openings (black-lined, no leaf), each with a black bar gate
+    object (`gate` kind, `streetGate()` in `floorplan.js`): one 9 m opening serves
+    the garage door and the side parking strip (a paved pad west of the garage,
+    x 246..404, with the two parked cars the sheet draws there) and carries a
+    bi-parting sliding gate, drawn closed; a 1.2 m opening at the GIRIS entrance
+    carries a pedestrian gate swung open 70° inward.
 11. **Laminate parquet floors** in the living areas (`parquet` rects on each
     floor). `cropTexture()` in `main.js` multiplies a plank pattern over the
     plan, so printed lines and labels survive. Kitchens included; only the
     W.Cs, showers, laundry, the stair and the garage stay plain. Interiors are never grass: the `land` sits *under* the
     slabs.
+12. **Exotic fruit planting** just inside the plot wall: date and papaya palms,
+    banana clumps, and mango / fig / pomegranate / orange / lemon / avocado
+    trees (`PLANTING` in `floorplan.js`; `palm`, `banana` and `fruittree`
+    makers). Clear of the street gates, the parking strip, the terrace and
+    the pool.
+13. **Floor slab body.** Storeys are 3.0 m of wall on a 3.40 m floor-to-floor, so
+    an upper floor gets a 0.4 m structural slab under it (`slabBody()` in
+    `main.js`, same outline and voids) and the walls below meet it with no gap.
+14. **OTURMA ODASI restyle** after the owner's reference photo: cream and gold.
+    Media wall on the east wall (`tvwall`: backlit niches, one floating unit,
+    TV above, `fireplace: false`) and a **ceiling-hung fireplace** (`hangingfire`,
+    black flue and steel bowl with the fire) hung in the **north-east corner** of
+    the salon, its mouth turned into the room (`faceDeg`), cream sofas with gold rails
+    (`fabric: 'cream'`, `trim: true`), patterned `rug`, marble `coffee` table,
+    `curtain`s on the north window, `lamp` and `sidetable`s. The sectional was
+    replaced by four low, deep `lounge` pieces — a 3-seat sofa (west wall), a
+    2-seat sofa (south) and two single armchairs (north, at the window) — none
+    joined at a corner (**no L-shaped sofa**), so the floor stays open. The owner then had
+    the three-seat sofa, both armchairs, the console table and the ficus
+    removed; the plan's printed symbols for them are painted out via the
+    floor's `erase` rects (`cropTexture()` overpaints them with plain parquet). The fireplace
+    is a requirement — keep one (now the hanging one) if the room is restyled again.
 
 Settled questions — do not re-litigate these without new instruction:
 

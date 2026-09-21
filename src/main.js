@@ -163,6 +163,12 @@ function cropTexture(floor) {
       ctx.fillRect(x0 - x, y0 - y, x1 - x0, y1 - y0);
     }
     ctx.restore();
+
+    // Printed symbols the owner has removed: overpaint with plain parquet.
+    ctx.fillStyle = parquetPattern(ctx);
+    for (const [x0, y0, x1, y1] of floor.erase ?? []) {
+      ctx.fillRect(x0 - x, y0 - y, x1 - x0, y1 - y0);
+    }
   }
   const tex = new THREE.CanvasTexture(canvas);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -172,23 +178,19 @@ function cropTexture(floor) {
 }
 
 /**
- * The slab is the floor's crop rectangle (or its `outline` footprint) with its `voids` punched out — the
- * GALERI BOSLUGU stairwell, so you can see down through it when stacked.
- * ShapeGeometry emits raw shape coordinates as UVs, so they get renormalised
- * to keep the plan texture registered across the hole.
+ * The slab's outline: the floor's crop rectangle, or its `outline` footprint,
+ * with its `voids` punched out (the GALERI BOSLUGU stairwell, so you can see
+ * down through it when stacked). Shape space matches the un-rotated plane:
+ * +X right, +Y up (= -Z / north).
  */
-function slabGeometry(floor) {
+function slabShape(floor) {
   const w = floor.crop.w * MPP;
   const h = floor.crop.h * MPP;
-  if (!floor.voids?.length && !floor.outline) return new THREE.PlaneGeometry(w, h);
-
-  // Shape space matches the un-rotated plane: +X right, +Y up (= -Z / north).
   const local = ([px, py]) => [
     (px - (floor.crop.x + floor.crop.w / 2)) * MPP,
     ((floor.crop.y + floor.crop.h / 2) - py) * MPP,
   ];
 
-  // The full crop rectangle, or the floor's footprint polygon if it has one.
   const shape = floor.outline
     ? new THREE.Shape(floor.outline.map((p) => new THREE.Vector2(...local(p))))
     : new THREE.Shape()
@@ -204,8 +206,19 @@ function slabGeometry(floor) {
       new THREE.Path().moveTo(lo, bo).lineTo(lo, tp).lineTo(hi, tp).lineTo(hi, bo).closePath(),
     );
   }
+  return shape;
+}
 
-  const geo = new THREE.ShapeGeometry(shape);
+/**
+ * The textured floor plane. ShapeGeometry emits raw shape coordinates as UVs,
+ * so they get renormalised to keep the plan texture registered across holes.
+ */
+function slabGeometry(floor) {
+  const w = floor.crop.w * MPP;
+  const h = floor.crop.h * MPP;
+  if (!floor.voids?.length && !floor.outline) return new THREE.PlaneGeometry(w, h);
+
+  const geo = new THREE.ShapeGeometry(slabShape(floor));
   const pos = geo.attributes.position;
   const uv = geo.attributes.uv;
   for (let i = 0; i < pos.count; i++) {
@@ -213,6 +226,25 @@ function slabGeometry(floor) {
   }
   uv.needsUpdate = true;
   return geo;
+}
+
+/**
+ * The structural floor under an upper storey: floor-to-floor minus the wall
+ * height (0.4 m), so the walls below meet it with no gap. Its top is flush
+ * with the textured plane; the same outline and voids apply.
+ */
+const SLAB_BODY_MAT = new THREE.MeshStandardMaterial({ color: 0xd9d5cc, roughness: 0.95 });
+function slabBody(floor) {
+  const thickness = PLAN.floorToFloor - PLAN.storeyHeight;
+  const body = new THREE.Mesh(
+    new THREE.ExtrudeGeometry(slabShape(floor), { depth: thickness, bevelEnabled: false }),
+    SLAB_BODY_MAT,
+  );
+  body.rotation.x = -Math.PI / 2;      // shape +Y is north; extrusion runs up
+  body.position.y = -thickness;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  return body;
 }
 
 // ── floors ──────────────────────────────────────────────────────────────
@@ -245,6 +277,7 @@ function buildModel(mode, dx) {
     // Stacked, an upper slab is a ceiling: lift it clear of the walls below.
     slab.position.y = mode === 'stacked' && floor.storey > 0 ? 0.01 : 0;
     container.add(slab);
+    if (floor.storey > 0 && floor.outline) container.add(slabBody(floor));
 
     const own = { offsetPx: floor.alignPx, elevation: 0, mode };
     const walls = buildWalls(floor, own);

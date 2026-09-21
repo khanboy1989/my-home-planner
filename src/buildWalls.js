@@ -67,15 +67,16 @@ function buildOpening(cut, depth) {
   const jamb = 0.06;
   const d = depth + 0.02;
   const isWindow = cut.sill > 1e-3;
-  const frameMat = isWindow || cut.kind === 'sliding' ? BLACK_FRAME : FRAME;
+  const frameMat = isWindow || cut.kind === 'sliding' || cut.kind === 'gate' ? BLACK_FRAME : FRAME;
 
   // Frame: two jambs plus a head, lining the reveal.
   g.add(slab(jamb, h, d, frameMat, cut.from + jamb / 2, cut.sill + h / 2, 0));
   g.add(slab(jamb, h, d, frameMat, cut.to - jamb / 2, cut.sill + h / 2, 0));
   g.add(slab(w, jamb, d, frameMat, cx, cut.head - jamb / 2, 0));
 
-  // A cased opening is a lined hole — no leaf.
-  if (cut.kind === 'opening') return g;
+  // A cased opening is a lined hole — no leaf. A `gate` is the same, black;
+  // its leaves are separate `gate` objects (see objects.js).
+  if (cut.kind === 'opening' || cut.kind === 'gate') return g;
 
   if (cut.kind === 'garage') {
     // White roller shutter: a roll housing under the head, slats hanging

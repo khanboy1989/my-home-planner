@@ -90,6 +90,39 @@ function tileTexture() {
   return tex;
 }
 
+/** Cream rug with soft clouds and sweeping gold strokes, after the owner's reference. */
+function rugTexture() {
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 384;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#e7dece';
+  ctx.fillRect(0, 0, 512, 384);
+  for (const [x, y, r, a] of [[120, 90, 140, 0.35], [380, 260, 170, 0.3], [300, 60, 120, 0.25]]) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    g.addColorStop(0, `rgba(255,255,255,${a})`);
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 512, 384);
+  }
+  ctx.strokeStyle = 'rgba(190,150,96,0.6)';
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 7; i++) {
+    ctx.lineWidth = 10 + (i % 3) * 6;
+    ctx.beginPath();
+    ctx.moveTo(40 + i * 30, 340 - i * 22);
+    ctx.bezierCurveTo(140 + i * 40, 40 + i * 30, 300, 400 - i * 25, 470 - i * 10, 60 + i * 35);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = '#b8996a';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(6, 6, 500, 372);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 Object.assign(M, {
   tile:      new THREE.MeshStandardMaterial({
     color: 0xffffff, roughness: 0.85, map: tileTexture(), side: THREE.DoubleSide,
@@ -112,6 +145,23 @@ Object.assign(M, {
   water:     new THREE.MeshBasicMaterial({ color: 0x35b9ee, transparent: true, opacity: 0.6 }),
   poolBed:   new THREE.MeshBasicMaterial({ color: 0x2f9fc4 }),
   lawn:      new THREE.MeshStandardMaterial({ color: 0x6f8457, roughness: 1 }),
+  frond:     new THREE.MeshStandardMaterial({ color: 0x3d6b2f, roughness: 0.85, side: THREE.DoubleSide }),
+  frondLite: new THREE.MeshStandardMaterial({ color: 0x5f9a3c, roughness: 0.85, side: THREE.DoubleSide }),
+  bananaLeaf: new THREE.MeshStandardMaterial({ color: 0x74b03f, roughness: 0.8, side: THREE.DoubleSide }),
+  bananaStem: new THREE.MeshStandardMaterial({ color: 0xa3b56f, roughness: 0.9 }),
+  trunkPalm: new THREE.MeshStandardMaterial({ color: 0x6e5a44, roughness: 1 }),
+  cream:     new THREE.MeshStandardMaterial({ color: 0xe9e0cf, roughness: 0.9 }),
+  creamGloss: new THREE.MeshStandardMaterial({ color: 0xf1ebdf, roughness: 0.12, metalness: 0.05 }),
+  gold:      new THREE.MeshStandardMaterial({ color: 0xc9a66b, roughness: 0.3, metalness: 0.85 }),
+  warm:      new THREE.MeshBasicMaterial({ color: 0xffdfae }),
+  flame:     new THREE.MeshBasicMaterial({ color: 0xff8a2a }),
+  glow:      new THREE.MeshBasicMaterial({ color: 0xff7a1f, transparent: true, opacity: 0.4 }),
+  niche:     new THREE.MeshStandardMaterial({ color: 0xd8b98a, roughness: 0.8, emissive: 0x6b4a1f, emissiveIntensity: 0.6 }),
+  sheer:     new THREE.MeshStandardMaterial({ color: 0xfaf6ee, roughness: 1, transparent: true, opacity: 0.35, side: THREE.DoubleSide }),
+  drape:     new THREE.MeshStandardMaterial({ color: 0xcbbd9f, roughness: 1 }),
+  rug:       new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1, map: rugTexture() }),
+  hearth:    new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.45, metalness: 0.6, side: THREE.DoubleSide }),
+  ember:     new THREE.MeshBasicMaterial({ color: 0xff6a1a }),
   parasol:   new THREE.MeshStandardMaterial({ color: 0xf3eee3, roughness: 0.8, side: THREE.DoubleSide }),
 });
 
@@ -137,6 +187,49 @@ function backedRun(g, { w, d }, back = 'N') {
   g.add(run);
   return { run, len: alongX ? w : d, depth: alongX ? d : w };
 }
+
+/** Fruit-coloured materials, made on first use. */
+const FRUIT_COLOURS = {
+  orange: 0xe8912a, lemon: 0xe9d63a, mango: 0xd9772b, pomegranate: 0xb3262c,
+  fig: 0x5a3a63, avocado: 0x3e5b2e, date: 0xb8631f, papaya: 0xe89b2a, banana: 0xd9c93a,
+};
+const fruitMats = {};
+const fruitMat = (name) => (fruitMats[name] ??= new THREE.MeshStandardMaterial({
+  color: FRUIT_COLOURS[name] ?? FRUIT_COLOURS.orange, roughness: 0.6,
+}));
+
+function ball(r, mat, x, y, z, detail = 1) {
+  const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, detail), mat);
+  m.position.set(x, y, z);
+  m.castShadow = true;
+  return m;
+}
+
+/**
+ * A leaf or palm frond that rises off its base then arches over: two flat
+ * segments, the second hinged at the end of the first. Points along local +Z.
+ */
+function arch(len, width, mat, rise, droop) {
+  const seg = (l) => {
+    const geo = new THREE.BoxGeometry(width, 0.02, l);
+    geo.translate(0, 0, l / 2);
+    const m = new THREE.Mesh(geo, mat);
+    m.castShadow = true;
+    return m;
+  };
+  const a = new THREE.Group();
+  a.rotation.x = -rise;
+  a.add(seg(len / 2));
+  const b = new THREE.Group();
+  b.position.z = len / 2;
+  b.rotation.x = droop;
+  b.add(seg(len / 2));
+  a.add(b);
+  return a;
+}
+
+/** Tiny deterministic scatter in [0,1) so trees differ but stay stable. */
+const scatter = (seed, i) => ((Math.sin(seed * 12.9898 + i * 78.233) * 43758.5453) % 1 + 1) % 1;
 
 /** Axis-aligned box helper: size + centre, both in metres. */
 function box(w, h, d, mat, x = 0, y = 0, z = 0) {
@@ -517,6 +610,345 @@ const KINDS = {
     }
   },
 
+  /**
+   * Palm. `species: 'date'` is a tall ringed trunk with a crown of arching
+   * fronds and hanging fruit clusters; `'papaya'` is a slim trunk with a
+   * rosette of leaves and fruit close under it. `seed` varies each tree.
+   */
+  palm(g, _size, it) {
+    const seed = it.seed ?? 0;
+    const papaya = it.species === 'papaya';
+    const P = papaya
+      ? { h: 3.0, r0: 0.11, r1: 0.07, n: 9, len: 1.3, width: 0.55, leaf: M.frondLite, fruit: 'papaya', fruitR: 0.13 }
+      : { h: 5.6, r0: 0.24, r1: 0.17, n: 16, len: 2.7, width: 0.3, leaf: M.frond, fruit: 'date', fruitR: 0.09 };
+    const h = P.h * (0.9 + scatter(seed, 1) * 0.2);
+
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(P.r1, P.r0, h, 10), M.trunkPalm);
+    trunk.position.y = h / 2;
+    trunk.castShadow = true;
+    g.add(trunk);
+    if (!papaya) {
+      for (let y = 0.4; y < h - 0.2; y += 0.35) {          // leaf-base rings
+        const r = P.r0 + (P.r1 - P.r0) * (y / h) + 0.015;
+        g.add(cyl(r, 0.05, M.bark, 0, y));
+      }
+    }
+
+    const crown = new THREE.Group();
+    crown.position.y = h;
+    crown.rotation.y = scatter(seed, 2) * Math.PI * 2;
+    for (let i = 0; i < P.n; i++) {
+      const pivot = new THREE.Group();
+      pivot.rotation.y = (i / P.n) * Math.PI * 2;
+      const len = P.len * (0.85 + scatter(seed, 10 + i) * 0.3);
+      pivot.add(arch(len, P.width, P.leaf, papaya ? 0.15 : 0.55, papaya ? 0.7 : 1.05));
+      crown.add(pivot);
+    }
+    const fruits = papaya ? 5 : 4;
+    for (let i = 0; i < fruits; i++) {
+      const a = (i / fruits) * Math.PI * 2 + scatter(seed, 3);
+      crown.add(ball(P.fruitR, fruitMat(P.fruit), Math.cos(a) * 0.28, -0.25 - scatter(seed, 20 + i) * 0.15, Math.sin(a) * 0.28));
+    }
+    g.add(crown);
+    g.scale.setScalar(it.scale ?? 1);
+  },
+
+  /** Banana clump: three pseudo-stems with broad arching leaves and a bunch. */
+  banana(g, _size, it) {
+    const seed = it.seed ?? 0;
+    const stems = [[0, 0, 3.0], [0.5, 0.3, 2.4], [-0.42, 0.38, 2.0]];
+    stems.forEach(([x, z, h], s) => {
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.12, h, 8), M.bananaStem);
+      stem.position.set(x, h / 2, z);
+      stem.castShadow = true;
+      g.add(stem);
+
+      const top = new THREE.Group();
+      top.position.set(x, h, z);
+      top.rotation.y = scatter(seed, s) * Math.PI * 2;
+      for (let k = 0; k < 6; k++) {
+        const pivot = new THREE.Group();
+        pivot.rotation.y = (k / 6) * Math.PI * 2;
+        const len = 1.9 * (0.85 + scatter(seed, 30 + s * 6 + k) * 0.3);
+        pivot.add(arch(len, 0.62, M.bananaLeaf, 0.3, 0.85));
+        top.add(pivot);
+      }
+      g.add(top);
+    });
+
+    // A hand of bananas and its purple bud on the tallest stem.
+    const h = stems[0][2];
+    const bud = new THREE.MeshStandardMaterial({ color: 0x5b2a55, roughness: 0.6 });
+    g.add(ball(0.09, bud, 0.22, h - 0.55, 0.05));
+    for (let i = 0; i < 6; i++) {
+      const f = new THREE.Mesh(new THREE.CapsuleGeometry(0.035, 0.16, 3, 6), fruitMat('banana'));
+      f.position.set(0.22 + Math.cos(i) * 0.08, h - 0.78 - (i % 3) * 0.05, 0.05 + Math.sin(i) * 0.08);
+      f.rotation.z = 0.5;
+      g.add(f);
+    }
+    g.scale.setScalar(it.scale ?? 1);
+  },
+
+  /** Round-crowned fruit tree (mango, citrus, pomegranate, fig ...) dotted with fruit. */
+  fruittree(g, _size, it) {
+    const seed = it.seed ?? 0;
+    const crown = (it.crown ?? 1.3) * (0.9 + scatter(seed, 1) * 0.2);
+    const trunk = it.trunk ?? 1.5;
+    g.add(cyl(0.1, trunk, M.bark));
+    const cy = trunk + crown * 0.55;
+    g.add(ball(crown, M.leaf, 0, cy, 0));
+    g.add(ball(crown * 0.7, M.leafLite, crown * 0.55, cy - crown * 0.2, crown * 0.2));
+    g.add(ball(crown * 0.65, M.leafLite, -crown * 0.5, cy - crown * 0.15, -crown * 0.3));
+    for (let i = 0; i < 16; i++) {
+      const a = scatter(seed, 40 + i) * Math.PI * 2;
+      const e = 0.2 + scatter(seed, 60 + i) * 0.9;        // elevation on the crown
+      const r = crown * 0.98;
+      const x = Math.cos(a) * Math.cos(e) * r;
+      const y = cy + Math.sin(e) * r * 0.85 - crown * 0.25;
+      const z = Math.sin(a) * Math.cos(e) * r;
+      g.add(ball(0.075, fruitMat(it.fruit ?? 'orange'), x, y, z, 0));
+    }
+    g.scale.setScalar(it.scale ?? 1);
+  },
+
+  /**
+   * Black bar gate in a wall opening. Local X runs along the gate, Z across
+   * the wall (+Z is the street side). `style: 'sliding'` is a bi-parting gate,
+   * `open` (0..1) slides its two leaves apart; `'swing'` is one leaf hinged at
+   * the west end and swung `openDeg` degrees inward (towards -Z).
+   */
+  gate(g, { w, d }, it) {
+    const h = it.h ?? 1.9;
+    const bar = 0.12;
+
+    // One leaf of vertical bars between rails, its west edge at x = 0.
+    const leaf = (width) => {
+      const l = new THREE.Group();
+      l.add(box(width, 0.07, 0.05, M.frame, width / 2, 0.14));
+      l.add(box(width, 0.07, 0.05, M.frame, width / 2, h - 0.1));
+      for (const x of [0.03, width - 0.03]) l.add(box(0.06, h - 0.1, 0.06, M.frame, x, 0.1));
+      const n = Math.max(1, Math.floor(width / bar));
+      for (let i = 1; i < n; i++) l.add(box(0.02, h - 0.3, 0.02, M.frame, (width * i) / n, 0.18));
+      return l;
+    };
+
+    if (it.style === 'swing') {
+      const l = leaf(w - 0.04);
+      l.position.x = -w / 2 + 0.02;
+      l.rotation.y = THREE.MathUtils.degToRad(it.openDeg ?? 0);
+      g.add(l);
+      return;
+    }
+
+    const half = (w - 0.06) / 2;
+    const slide = (it.open ?? 0) * half;
+    for (const s of [-1, 1]) {
+      const l = leaf(half);
+      // Left leaf slides west along the inside face, right leaf east.
+      l.position.set(s < 0 ? -w / 2 + 0.03 - slide : 0.03 + slide, 0, s * 0.02 * (slide > 0 ? 3 : 0));
+      g.add(l);
+    }
+    g.add(box(w, 0.05, 0.16, M.frame, 0, 0));                 // track
+  },
+
+  /**
+   * Media wall in cream gloss, after the owner's reference: a full-height
+   * panel with backlit display niches at each end, a linear fireplace flanked
+   * by floating cabinets (or, with `fireplace: false`, one long unit), and
+   * the TV above. `back` names the wall it
+   * stands against; the rect's long side is the wall length.
+   */
+  tvwall(g, { w, d }, it) {
+    const { run, len, depth } = backedRun(g, { w, d }, it.back);
+    const H = it.h ?? 2.8;
+    const backZ = -depth / 2;
+    const nicheW = 0.65;
+    const cw = len - nicheW * 2;                      // centre section width
+
+    run.add(box(len, H, 0.06, M.creamGloss, 0, 0, backZ + 0.03));                // back panel
+    run.add(box(len, 0.03, 0.06, M.warm, 0, H - 0.05, backZ + 0.09));            // cove light
+
+    for (const s of [-1, 1]) {                                                    // display niches
+      const x = s * (len / 2 - nicheW / 2);
+      run.add(box(0.06, H, depth, M.cream, x - (nicheW / 2 - 0.03), 0, 0));
+      run.add(box(0.06, H, depth, M.cream, x + (nicheW / 2 - 0.03), 0, 0));
+      run.add(box(nicheW, 0.06, depth, M.cream, x, H - 0.06, 0));
+      run.add(box(nicheW, 0.25, depth, M.cream, x, 0, 0));
+      run.add(box(nicheW - 0.12, H - 0.5, 0.02, M.niche, x, 0.25, backZ + 0.08));
+      [0.7, 1.25, 1.8, 2.35].forEach((y, i) => {
+        run.add(box(nicheW - 0.12, 0.025, depth - 0.1, M.cream, x, y, 0.02));
+        run.add(box(nicheW - 0.16, 0.012, 0.012, M.warm, x, y - 0.012, depth / 2 - 0.08));
+        run.add(cyl(0.045, 0.2 + (i % 2) * 0.08, M.ceramic, x - 0.1, y + 0.025, 0.02));
+        run.add(ball(0.06, M.gold, x + 0.12, y + 0.09, 0.02));
+      });
+    }
+
+    if (it.fireplace === false) {                                                // one long floating unit
+      run.add(box(cw - 0.02, 0.4, depth - 0.1, M.creamGloss, 0, 0.2, 0.02));
+      run.add(box(cw - 0.2, 0.008, 0.01, M.gold, 0, 0.44, depth / 2 - 0.06));
+    } else {
+      const fw = Math.min(1.25, cw * 0.5);                                       // linear fireplace
+      const cabW = (cw - fw) / 2;
+      const fz = backZ + 0.06 + 0.13;
+      run.add(box(fw, 0.55, 0.26, M.dark, 0, 0.2, fz));
+      run.add(box(fw - 0.14, 0.34, 0.01, M.glow, 0, 0.3, fz + 0.135));
+      run.add(box(fw - 0.24, 0.06, 0.012, M.flame, 0, 0.32, fz + 0.14));
+      for (const y of [0.2, 0.74]) run.add(box(fw + 0.04, 0.015, 0.28, M.gold, 0, y, fz));
+      for (const s of [-1, 1]) {
+        const x = s * (fw / 2 + cabW / 2);
+        run.add(box(cabW - 0.02, 0.4, depth - 0.1, M.creamGloss, x, 0.2, 0.02));
+        run.add(box(cabW - 0.12, 0.008, 0.01, M.gold, x, 0.44, depth / 2 - 0.06));
+      }
+    }
+
+    const tw = Math.min(1.4, cw - 0.3);                                           // television
+    run.add(box(tw, 0.78, 0.04, M.dark, 0, 1.15, backZ + 0.08));
+    run.add(box(tw + 0.04, 0.01, 0.045, M.gold, 0, 1.15, backZ + 0.08));
+  },
+
+  /** Flat rug; the cream-and-gold pattern comes from the texture. */
+  rug(g, { w, d }) {
+    g.add(box(w, 0.02, d, M.rug, 0, 0.005));
+  },
+
+  /** Cream gloss coffee table on a gold plinth, with books and a flower vase. */
+  coffee(g, { w, d }) {
+    g.add(box(w * 0.82, 0.1, d * 0.82, M.gold));
+    g.add(box(w * 0.92, 0.24, d * 0.92, M.creamGloss, 0, 0.1));
+    g.add(box(w, 0.07, d, M.creamGloss, 0, 0.34));
+    g.add(box(0.26, 0.035, 0.19, M.cabinet, -w * 0.22, 0.41, d * 0.08));
+    g.add(box(0.22, 0.03, 0.16, M.linen, -w * 0.22, 0.445, d * 0.08));
+    g.add(cyl(0.045, 0.16, M.ceramic, w * 0.24, 0.41, -d * 0.12));
+    g.add(ball(0.1, M.linen, w * 0.24, 0.62, -d * 0.12));
+  },
+
+  /** Indoor ficus in a white pot with a gold band. */
+  plant(g) {
+    g.add(cyl(0.2, 0.4, M.ceramic));
+    g.add(cyl(0.21, 0.03, M.gold, 0, 0.34));
+    g.add(cyl(0.03, 1.25, M.bark, 0, 0.4));
+    g.add(ball(0.45, M.leaf, 0, 1.75, 0));
+    g.add(ball(0.32, M.leafLite, 0.26, 1.5, 0.1));
+    g.add(ball(0.3, M.leafLite, -0.22, 1.55, -0.12));
+  },
+
+  /** Gold floor lamp with a warm shade. */
+  lamp(g) {
+    g.add(cyl(0.14, 0.03, M.gold));
+    g.add(cyl(0.015, 1.5, M.gold, 0, 0.03));
+    g.add(ball(0.17, M.warm, 0, 1.62, 0));
+  },
+
+  /** Round side table: cream gloss top on three gold legs. */
+  sidetable(g, { w }) {
+    const r = w / 2;
+    g.add(cyl(r, 0.025, M.creamGloss, 0, 0.5));
+    g.add(cyl(r + 0.01, 0.012, M.gold, 0, 0.5));
+    for (let i = 0; i < 3; i++) {
+      const a = (i / 3) * Math.PI * 2;
+      g.add(cyl(0.012, 0.5, M.gold, Math.cos(a) * r * 0.6, 0, Math.sin(a) * r * 0.6));
+    }
+    g.add(cyl(r * 0.5, 0.01, M.gold));
+  },
+
+  /** Window dressing: gold rod, beige drapes at each end, sheer in the middle. */
+  curtain(g, { w, d }, it) {
+    const h = it.h ?? 2.7;
+    g.add(box(w, 0.03, 0.03, M.gold, 0, h));
+    for (const s of [-1, 1]) {
+      const x = s * (w / 2 - w * 0.08);
+      for (let i = 0; i < 3; i++) {
+        g.add(box(w * 0.16 / 3, h - 0.05, d * 0.5, M.drape, x + (i - 1) * (w * 0.16 / 3), 0.02, (i % 2 ? 1 : -1) * d * 0.15));
+      }
+    }
+    g.add(box(w * 0.68, h - 0.05, 0.01, M.sheer, 0, 0.02, 0));
+  },
+
+  /**
+   * Ceiling-hung fireplace, after the owner's reference: a black flue from a
+   * round ceiling plate that flares into an open steel bowl with logs and
+   * flame inside. The bowl's mouth faces `face` ('W' by default) or `faceDeg`; hung so the
+   * bowl bottom is 0.92 m off the floor and the plate meets the ceiling at 3.0 m.
+   */
+  hangingfire(g, _size, it) {
+    const top = it.ceiling ?? 3.0;
+    const gap = 1.6;                                    // width of the bowl's open mouth, rad
+    // Lathe profile (radius, height): flue, trumpet flare, then the dish.
+    const profile = [
+      [0.09, 1.9], [0.09, 1.5], [0.11, 1.38], [0.2, 1.27], [0.36, 1.19],
+      [0.52, 1.13], [0.58, 1.06], [0.52, 0.97], [0.32, 0.92], [0.0, 0.91],
+    ].map(([r, y]) => new THREE.Vector2(r, y));
+    // Local mouth is centred on -X: lathe angle 3*pi/2 (x = sin(phi)).
+    const bowl = new THREE.Mesh(
+      new THREE.LatheGeometry(profile, 40, (3 * Math.PI) / 2 + gap / 2, Math.PI * 2 - gap), M.hearth);
+    bowl.castShadow = true;
+    g.add(bowl);
+
+    g.add(cyl(0.09, top - 1.9, M.hearth, 0, 1.9));      // flue up to the ceiling
+    g.add(cyl(0.14, 0.5, M.hearth, 0, top - 0.5));      // collar
+    g.add(cyl(0.3, 0.03, M.hearth, 0, top - 0.03));     // ceiling plate
+
+    // Fire on the bowl floor, towards the open side.
+    for (let i = 0; i < 4; i++) {
+      const log = cyl(0.035, 0.3, M.bark, -0.22, 0.93 + (i % 2) * 0.05, (i - 1.5) * 0.07);
+      log.rotation.x = Math.PI / 2;
+      log.rotation.z = (i - 1.5) * 0.25;
+      g.add(log);
+    }
+    for (let i = 0; i < 5; i++) {
+      const flame = new THREE.Mesh(new THREE.ConeGeometry(0.05 + (i % 2) * 0.02, 0.2 + (i % 3) * 0.06, 6), M.ember);
+      flame.position.set(-0.2 - (i % 2) * 0.05, 1.05 + (i % 3) * 0.02, (i - 2) * 0.07);
+      g.add(flame);
+    }
+
+    // Turn the mouth to face a side (`face`) or any angle (`faceDeg`: 0 = west,
+    // positive turns towards the south, i.e. clockwise on the plan).
+    g.rotation.y = it.faceDeg != null
+      ? THREE.MathUtils.degToRad(it.faceDeg)
+      : { W: 0, N: -Math.PI / 2, S: Math.PI / 2, E: Math.PI }[it.face ?? 'W'];
+  },
+
+  /**
+   * Relaxed lounge sofa: low and deep, with a plush base, separate seat
+   * cushions, back cushions leaning off the vertical, low rolled arms and a
+   * couple of throw pillows. `seats` is the number of seat cushions (1 =
+   * armchair); `back` names the wall it stands against.
+   */
+  lounge(g, { w, d }, it) {
+    const { run, len, depth } = backedRun(g, { w, d }, it.back);
+    const armW = 0.16;
+    const inner = len - armW * 2;
+    const seats = it.seats ?? Math.max(1, Math.round(inner / 0.85));
+    const sw = inner / seats;
+
+    run.add(box(len * 0.97, 0.04, depth * 0.95, M.gold));                      // gold base rail
+    run.add(box(len, 0.16, depth, M.cream, 0, 0.04));                          // plush base
+    for (const s of [-1, 1]) {                                                 // rolled arms
+      run.add(box(armW, 0.3, depth, M.cream, s * (len / 2 - armW / 2), 0.04));
+    }
+    for (let i = 0; i < seats; i++) {                                          // seat cushions
+      const x = -inner / 2 + sw * (i + 0.5);
+      run.add(box(sw - 0.03, 0.14, depth * 0.68, M.cream, x, 0.2, depth * 0.14));
+    }
+    for (let i = 0; i < seats; i++) {                                          // leaning back cushions
+      const x = -inner / 2 + sw * (i + 0.5);
+      const pivot = new THREE.Group();
+      pivot.position.set(x, 0.32, -depth / 2 + 0.2);
+      pivot.rotation.x = -0.32;
+      pivot.add(box(sw - 0.04, 0.42, 0.2, M.cream));
+      run.add(pivot);
+    }
+    const pillow = (x, mat) => {
+      const p = new THREE.Group();
+      p.position.set(x, 0.36, -depth / 2 + 0.36);
+      p.rotation.set(-0.5, 0.25, 0.1);
+      p.add(box(0.38, 0.38, 0.1, mat));
+      run.add(p);
+    };
+    pillow(-inner / 2 + 0.3, M.drape);
+    pillow(inner / 2 - 0.3, M.gold);
+  },
+
   /** Free-standing dressing island with a glass display top. */
   island(g, { w, d }, it) {
     const h = it.h ?? 0.86;
@@ -560,9 +992,11 @@ const KINDS = {
     const bw = vertical ? w : 0.18;
     const bd = vertical ? 0.18 : d;
     const seatH = it.h ?? 0.42;
+    const fab = M[it.fabric] ?? M.fabric;
 
-    g.add(box(w * 0.98, seatH, d * 0.98, M.fabric));
-    const backRest = box(bw, 0.5, bd, M.fabric, 0, seatH - 0.08);
+    g.add(box(w * 0.98, seatH, d * 0.98, fab));
+    if (it.trim) g.add(box(w * 0.99, 0.05, d * 0.99, M.gold)); // gold base rail
+    const backRest = box(bw, 0.5, bd, fab, 0, seatH - 0.08);
     if (vertical) backRest.position.z = sign * (d / 2 - 0.09);
     else backRest.position.x = sign * (w / 2 - 0.09);
     g.add(backRest);
@@ -571,7 +1005,7 @@ const KINDS = {
     const armW = vertical ? 0.16 : w * 0.96;
     const armD = vertical ? d * 0.96 : 0.16;
     for (const s of [-1, 1]) {
-      const arm = box(armW, 0.24, armD, M.fabric, 0, seatH - 0.02);
+      const arm = box(armW, 0.24, armD, fab, 0, seatH - 0.02);
       if (vertical) arm.position.x = s * (w / 2 - 0.08);
       else arm.position.z = s * (d / 2 - 0.08);
       g.add(arm);
