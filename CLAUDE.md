@@ -32,8 +32,8 @@ and reconcile the **Departures from the sheet** section below.
 plans down as ground textures and extrudes the walls back up out of them.
 
 Both storeys on the sheet are modelled: **ZEMIN** (ground) and **BIRINCI KAT**
-(first). By default they render as two separate models side by side; `L` switches
-to stacking them in their real relative positions.
+(first). They render twice: as two separate models side by side, and — to the
+east — stacked in their real relative positions.
 
 ## Stack and setup
 
@@ -91,18 +91,27 @@ rather than the printed numbers where they disagree.
 
 ## Layout modes
 
-`placement(floor, mode)` in `floorplan.js` is the single source of truth:
+Both layouts are on screen at once: the side-by-side row at the world origin,
+and a second copy with the first floor stacked on the ground floor `STACK_DX`
+(≈46 m) to the east. `main.js` builds each floor twice (`buildModel`), sharing
+the slab textures. `placement(floor, mode)` in `floorplan.js` is the single
+source of truth for where a floor goes within a model:
 
-- `'apart'` (default) — storeys stepped along +X by `ORIGIN.w + GAP_PX`.
+- `'apart'` — storeys stepped along +X by `ORIGIN.w + GAP_PX`.
 - `'stacked'` — storeys in plan alignment, one above the other.
 
 **Both** modes put a storey at its true height, `storey * floorToFloor`; only the
 sideways offset differs. That is deliberate — the first-floor stair descends from
 its own slab, so a first floor sitting at y=0 would bury the flight.
 
-Geometry is built **once** at each floor's true alignment and wrapped in a
-container; switching modes only moves containers. Don't bake layout offsets into
-the geometry, or the toggle stops being free.
+Geometry is built at each floor's true alignment and wrapped in a container;
+layouts only move containers. Don't bake layout offsets into the geometry. Each
+model has its own pool, so the ground `apron` gets a hole per model, and the sun's
+shadow frustum is sized to reach the eastern one.
+
+A floor may set an `outline` (footprint polygon, that floor's sheet px) to clip its
+slab. BIRINCI KAT does — otherwise its crop, mostly empty paper, hangs 3.4 m up
+in the stacked model and hides the ground-floor terrace and its roof.
 
 ## Wall data conventions
 
@@ -176,6 +185,85 @@ added on the owner's instruction and are commented at their definitions:
    shortened to the east end for the same reason.
 2. **Window joinery is black** throughout, as is the slider.
 
+Also added on the owner's instruction (see comments in `floorplan.js`):
+
+3. **Dressing rooms.** `D.ODASI` = *Dolap Odası*, not a bathroom. EBEVEYN
+   D.ODASI is a U of `wardrobe` runs round three walls with a glass-top
+   `island`; Y.ODASI 2 D.ODASI is the same U with **no island**. The thin
+   partition between YATAK ODASI 2 and its dressing room is 0.1 m (PDF faces
+   y 1445/1451); the long block on its bedroom side is a desk, not a wardrobe.
+4. **BALKON TERASI is half glazed, front/back.** The back half (y 1744..1872,
+   against the house) is a `glassroom` — black frames, mono-pitch glass roof
+   leaning on the house wall, sliding door in its glass front. The front half
+   (y 1872..2000) stays open, with its balustrade, for laundry.
+5. **Ground-floor terrace:** the whole L-shaped terrace (`paving`) east of
+   the house is under a flat oak roof (another `paving` slab, `y: 2.65`,
+   cantilevering past the free edges, black corner posts) — in the stacked
+   model only, like the tile roofs. Under it: dining
+   table + six chairs, timber planters, potted topiary, and a rubble-stone
+   barbecue beside the kitchen whose flue passes up through the roof (it sits
+   on the open north edge because the kitchen's east windows fill the wall
+   side). `O` hides the roof (any `paving` item with `roof: true`) so the
+   terrace can be seen from above. The pool (HAVUZ) and four ŞEZLONG loungers
+   are from the sheet, north of the house and outside the floor crop, so they
+   carry their own deck and shell; a parasol stands between each pair of
+   loungers. The pool water and floor use unlit `MeshBasicMaterial` so the
+   house's shadow can't blacken them. The basin is sunk below the ground
+   `apron` in `main.js`, which therefore has a hole cut over the pool
+   (`poolBasinPx()` in `objects.js`) — move the pool and the hole follows.
+6. **Garage door is a white roller shutter** (`kind: 'garage'`), drawn closed.
+   Set `raise` (0 closed .. 1 rolled up) on the opening to leave it partly
+   open.
+7. **The garage cars are a Mercedes-Benz C220 d** (left bay, graphite) **and a
+   Mitsubishi L200 double-cab pickup, 2018** (right bay, white), built by the
+   `sedan` and `pickup` makers at their real sizes, nose to the north wall.
+8. **Black tile roofs** — the sheet draws none (the old "roof is not modelled"
+   note no longer holds for BIRINCI KAT). Four `hiproof` items sit on the first
+   floor's blocks (`roof: true`, eaves at 3.0 m), in charcoal S-tile after the
+   owner's photo, **only in the stacked model** (`only: 'stacked'`) — the
+   side-by-side floors stay open so you can look into them from above. Stacked,
+   they cover the ground floor too. `O` hides every `roof: true` item.
+9. **The plot.** A `land` item (lawn) fills the site boundary — the inner line
+   of the double line round the site on the sheet, corners (254,161) (1643,530)
+   (1590,2294) (224,2209). The owner's figure is 726 m²; at `metersPerPixel`
+   the polygon measures ~744 m² (the outer line ~773 m²), so it is within the
+   scale calibration. It is cut away over the pool basin.
+10. **Plot wall and front gates.** A 2 m × 0.2 m boundary wall runs on the plot
+    line (same four corners as the `land` item). The street is the south edge.
+    It has two `gate` openings (black-lined, no leaf), each with a black bar gate
+    object (`gate` kind, `streetGate()` in `floorplan.js`): one 9 m opening serves
+    the garage door and the side parking strip (a paved pad west of the garage,
+    x 246..404, with the two parked cars the sheet draws there) and carries a
+    bi-parting sliding gate, drawn closed; a 1.2 m opening at the GIRIS entrance
+    carries a pedestrian gate swung open 70° inward.
+11. **Laminate parquet floors** in the living areas (`parquet` rects on each
+    floor). `cropTexture()` in `main.js` multiplies a plank pattern over the
+    plan, so printed lines and labels survive. Kitchens included; only the
+    W.Cs, showers, laundry, the stair and the garage stay plain. Interiors are never grass: the `land` sits *under* the
+    slabs.
+12. **Exotic fruit planting** just inside the plot wall: date and papaya palms,
+    banana clumps, and mango / fig / pomegranate / orange / lemon / avocado
+    trees (`PLANTING` in `floorplan.js`; `palm`, `banana` and `fruittree`
+    makers). Clear of the street gates, the parking strip, the terrace and
+    the pool.
+13. **Floor slab body.** Storeys are 3.0 m of wall on a 3.40 m floor-to-floor, so
+    an upper floor gets a 0.4 m structural slab under it (`slabBody()` in
+    `main.js`, same outline and voids) and the walls below meet it with no gap.
+14. **OTURMA ODASI restyle** after the owner's reference photo: cream and gold.
+    Media wall on the east wall (`tvwall`: backlit niches, one floating unit,
+    TV above, `fireplace: false`) and a **ceiling-hung fireplace** (`hangingfire`,
+    black flue and steel bowl with the fire) hung in the **north-east corner** of
+    the salon, its mouth turned into the room (`faceDeg`), cream sofas with gold rails
+    (`fabric: 'cream'`, `trim: true`), patterned `rug`, marble `coffee` table,
+    `curtain`s on the north window, `lamp` and `sidetable`s. The sectional was
+    replaced by four low, deep `lounge` pieces — a 3-seat sofa (west wall), a
+    2-seat sofa (south) and two single armchairs (north, at the window) — none
+    joined at a corner (**no L-shaped sofa**), so the floor stays open. The owner then had
+    the three-seat sofa, both armchairs, the console table and the ficus
+    removed; the plan's printed symbols for them are painted out via the
+    floor's `erase` rects (`cropTexture()` overpaints them with plain parquet). The fireplace
+    is a requirement — keep one (now the hanging one) if the room is restyled again.
+
 Settled questions — do not re-litigate these without new instruction:
 
 - **There is no door through the Y.MUTFAK / garage party wall** (y=1586). That
@@ -219,7 +307,7 @@ the W.C walls carry `height: 2.3`. Don't make either full again.
 
 ## Known simplifications
 
-- The roof is not modelled.
+- The ground floor has no roof of its own (stacked, the first floor's covers it); the first floor's four hip roofs are approximate — the sheet draws none.
 - Window positions on the kitchen block's east elevation (ground) are approximate;
   the clearly dimensioned openings elsewhere are accurate.
 - Storey height is a uniform 3.0 m of wall with a 3.40 m floor-to-floor (from the
@@ -230,6 +318,6 @@ the W.C walls carry `height: 2.3`. Don't make either full again.
 
 ## Controls
 
-`drag` orbit · `scroll` zoom · `L` side-by-side/stacked · `1`/`2`/`0` floor
-visibility · `T` top view · `R` refit · `X` x-ray walls · `G` grid. Hovering a
+`drag` orbit · `scroll` zoom · `3`/`4` fit side-by-side / stacked model ·
+`1`/`2`/`0` floor visibility · `T` top view · `R` refit · `X` x-ray walls · `O` hide roofs · `G` grid. Hovering a
 wall shows its floor and name in the bottom-left readout.
