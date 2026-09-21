@@ -263,6 +263,16 @@ Also added on the owner's instruction (see comments in `floorplan.js`):
     removed; the plan's printed symbols for them are painted out via the
     floor's `erase` rects (`cropTexture()` overpaints them with plain parquet). The fireplace
     is a requirement — keep one (now the hanging one) if the room is restyled again.
+15. **Ground-floor copy** (branch `feature/ground-floor-copy`). `src/groundCopy.js`
+    is a full, independent source copy of the ground floor — walls, plot, planting,
+    gates, objects, parquet — drawn as a third model 30 m west of the origin (key
+    `5` fits it). It exists to try changes without touching the original; edit it
+    freely. Changes made only there so far: the kitchen's **appliance wardrobe**
+    (`appliancenook`), the east 1.6 m of the south run, hiding a coffee machine,
+    kettle, toaster and microwave behind pocket doors.
+    Each model has a colour-coded name plate in front of it (blue side by side,
+    green stacked, orange copy; `LABELS` in `main.js`, `N` toggles) and the hover
+    readout ends with the model's name.
 
 Settled questions — do not re-litigate these without new instruction:
 
@@ -318,6 +328,6 @@ the W.C walls carry `height: 2.3`. Don't make either full again.
 
 ## Controls
 
-`drag` orbit · `scroll` zoom · `3`/`4` fit side-by-side / stacked model ·
-`1`/`2`/`0` floor visibility · `T` top view · `R` refit · `X` x-ray walls · `O` hide roofs · `G` grid. Hovering a
+`drag` orbit · `scroll` zoom · `3`/`4`/`5` fit side-by-side / stacked / ground-copy model ·
+`1`/`2`/`0` floor visibility · `T` top view · `R` refit · `X` x-ray walls · `O` hide roofs · `N` hide the model name plates · `G` grid. Hovering a
 wall shows its floor and name in the bottom-left readout.

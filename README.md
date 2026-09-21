@@ -79,12 +79,13 @@ drifted from the architect's PDF.
 | --- | --- |
 | drag | orbit |
 | scroll | zoom |
-| `3` `4` | fit the side-by-side plans / the stacked model |
+| `3` `4` `5` | fit the side-by-side plans / the stacked model / the ground-floor copy |
 | `1` `2` `0` | ground only / first only / both |
 | `T` | top view |
 | `R` | refit view |
 | `X` | x-ray walls |
 | `O` | hide the roofs |
+| `N` | hide the model name plates |
 | `G` | grid |
 
 Hover a wall, a door or a piece of furniture to see its floor and name in the
