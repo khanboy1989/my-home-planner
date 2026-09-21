@@ -949,6 +949,76 @@ const KINDS = {
     pillow(inner / 2 - 0.3, M.gold);
   },
 
+  /**
+   * Kitchen appliance wardrobe: base drawers, a worktop, and a niche behind
+   * pocket doors (drawn slid back to the ends) that hides a full-automatic
+   * coffee machine, kettle, toaster and microwave, with closed cabinets above.
+   * `back` names the wall it stands against; the rect's long side is its width.
+   */
+  appliancenook(g, { w, d }, it) {
+    const { run, len, depth } = backedRun(g, { w, d }, it.back);
+    const H = it.h ?? 2.3;
+    const counter = 0.9;
+    const nicheH = 0.7;
+    const inner = len - 0.1;
+    const front = depth / 2;
+
+    // Base cabinet: three drawers under the worktop.
+    run.add(box(len, counter, depth, M.cabinet));
+    for (let i = 0; i < 3; i++) {
+      run.add(box(len * 0.3, 0.015, 0.02, M.metal, (i - 1) * (len / 3), 0.68 - i * 0.02, front + 0.005));
+    }
+    run.add(box(len, 0.04, depth + 0.03, M.counter, 0, counter));
+
+    // The niche: side cheeks, back panel, header, and a warm strip under it.
+    const top = counter + 0.04 + nicheH;
+    for (const s of [-1, 1]) run.add(box(0.05, nicheH, depth, M.cabinet, s * (len / 2 - 0.025), counter + 0.04));
+    run.add(box(inner, nicheH, 0.02, M.cream, 0, counter + 0.04, -depth / 2 + 0.03));
+    run.add(box(len, 0.05, depth, M.cabinet, 0, top));
+    run.add(box(inner, 0.015, 0.02, M.warm, 0, top - 0.015, front - 0.08));
+
+    // Closed cabinets above, with door lines.
+    const upperH = H - top - 0.05;
+    run.add(box(len, upperH, depth * 0.9, M.cabinet, 0, top + 0.05, -depth * 0.05));
+    for (const s of [-1, 0, 1]) {
+      run.add(box(0.012, upperH - 0.1, 0.01, M.dark, s * (len / 6), top + 0.1, front - depth * 0.1 + 0.005));
+    }
+
+    // Pocket doors slid back to the ends, on a metal track.
+    run.add(box(inner, 0.02, 0.03, M.metal, 0, top - 0.02, front - 0.03));
+    for (const s of [-1, 1]) {
+      run.add(box(0.11, nicheH - 0.04, 0.025, M.creamGloss, s * (len / 2 - 0.105), counter + 0.06, front - 0.03));
+    }
+
+    // Appliances on the worktop, left to right: coffee machine, kettle, toaster, microwave.
+    const y0 = counter + 0.04;
+    const zc = -depth / 2 + 0.3;                         // depth position of the appliances
+    const cx = -inner / 2 + 0.2;
+
+    run.add(box(0.32, 0.44, 0.42, M.metal, cx, y0, zc));                              // coffee machine
+    run.add(box(0.26, 0.2, 0.012, M.dark, cx, y0 + 0.2, zc + 0.216));
+    run.add(box(0.14, 0.03, 0.012, M.warm, cx, y0 + 0.32, zc + 0.222));               // display
+    run.add(box(0.12, 0.06, 0.16, M.dark, cx, y0 + 0.44, zc - 0.08));                 // bean hopper
+    run.add(cyl(0.012, 0.07, M.dark, cx, y0 + 0.12, zc + 0.21));                      // spout
+    run.add(box(0.28, 0.025, 0.2, M.dark, cx, y0, zc + 0.12));                        // drip tray
+
+    const kx = cx + 0.32;
+    run.add(cyl(0.09, 0.2, M.metal, kx, y0, zc + 0.02));                              // kettle
+    run.add(cyl(0.055, 0.025, M.dark, kx, y0 + 0.2, zc + 0.02));
+    run.add(box(0.025, 0.17, 0.03, M.dark, kx + 0.11, y0 + 0.02, zc + 0.02));
+
+    const tx = kx + 0.28;
+    run.add(box(0.3, 0.18, 0.17, M.metal, tx, y0, zc));                               // toaster
+    for (const z of [-0.035, 0.035]) run.add(box(0.22, 0.012, 0.03, M.dark, tx, y0 + 0.18, zc + z));
+    run.add(box(0.03, 0.02, 0.03, M.dark, tx + 0.17, y0 + 0.1, zc));
+
+    const mx = inner / 2 - 0.29;
+    run.add(box(0.46, 0.28, 0.34, M.metal, mx, y0, zc - 0.04));                       // microwave
+    run.add(box(0.31, 0.2, 0.012, M.dark, mx - 0.06, y0 + 0.04, zc + 0.136));
+    run.add(box(0.09, 0.2, 0.012, M.dark, mx + 0.17, y0 + 0.04, zc + 0.136));
+    run.add(box(0.015, 0.16, 0.02, M.metal, mx + 0.11, y0 + 0.06, zc + 0.15));
+  },
+
   /** Free-standing dressing island with a glass display top. */
   island(g, { w, d }, it) {
     const h = it.h ?? 0.86;

@@ -73,6 +73,9 @@ visual change is unverified on screen.
 
 ## Things that bite
 
+- **`src/groundCopy.js` is a deliberate duplicate** of the ground floor, drawn as
+  a third model west of the origin, for experiments. Edit the copy, not the
+  original, unless the owner says otherwise; the two are not linked.
 - **Both models are built from the same data.** `main.js` calls `buildModel()`
   twice, so anything you add to a floor appears in both. Use `only:` to restrict.
 - **The pool is sunk below the ground.** The ground `apron` in `main.js` and the

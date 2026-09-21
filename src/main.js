@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { PLAN, ORIGIN, FLOORS, placement, toWorld } from './floorplan.js';
+import { GROUND_COPY } from './groundCopy.js';
 import { buildWalls } from './buildWalls.js';
 import { buildObjects, poolBasinPx } from './objects.js';
 
@@ -17,7 +18,16 @@ const PLANE_H = ORIGIN.h * MPP;
 // east of it. STACK_DX clears the right-hand edge of the side-by-side row.
 const STACK_GAP_M = 8;
 const STACK_DX = (2 * ORIGIN.w + 149) * MPP + STACK_GAP_M;
-const LAYOUTS = [['apart', 0], ['stacked', STACK_DX]];
+// A duplicate of the ground floor (groundCopy.js) for experiments, west of the
+// origin. The plot is ~24 m wide (x -11.6..12.2), so 30 m leaves ~6 m between.
+const COPY_DX = -30;
+
+// Each entry: [set, sideways offset, placement mode, floors to build].
+const LAYOUTS = [
+  ['apart', 0, 'apart', FLOORS],
+  ['stacked', STACK_DX, 'stacked', FLOORS],
+  ['copy', COPY_DX, 'apart', [GROUND_COPY]],
+];
 
 // ── renderer ────────────────────────────────────────────────────────────
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -56,7 +66,7 @@ sun.position.set(-20, 34, 20);
 sun.castShadow = true;
 sun.shadow.mapSize.set(4096, 4096);
 sun.shadow.bias = -0.0005;
-const d = STACK_DX + PLANE_W; // the shadow frustum has to reach the stacked model too
+const d = Math.max(STACK_DX, -COPY_DX) + PLANE_W; // the shadow frustum has to reach every model
 Object.assign(sun.shadow.camera, { left: -d, right: d, top: d, bottom: -d, near: 1, far: 200 });
 sun.shadow.camera.updateProjectionMatrix();
 scene.add(sun);
@@ -65,22 +75,24 @@ scene.add(new THREE.AmbientLight(0xffffff, 0.25));
 // Ground the whole composition sits on. Each pool basin is sunk below it, so
 // the apron gets a hole over each or it would hide the water and pool floor.
 function apronGeometry() {
-  const w = PLANE_W * 8;
+  const dxs = LAYOUTS.map(([, dx]) => dx);
+  const [lo, hi] = [Math.min(...dxs), Math.max(...dxs)];
+  const w = PLANE_W * 8 + (hi - lo);
   const h = PLANE_H * 6;
+  const cx = (lo + hi) / 2;
   const shape = new THREE.Shape([
-    new THREE.Vector2(-w / 2 + STACK_DX / 2, -h / 2), new THREE.Vector2(w / 2 + STACK_DX / 2, -h / 2),
-    new THREE.Vector2(w / 2 + STACK_DX / 2, h / 2), new THREE.Vector2(-w / 2 + STACK_DX / 2, h / 2),
+    new THREE.Vector2(cx - w / 2, -h / 2), new THREE.Vector2(cx + w / 2, -h / 2),
+    new THREE.Vector2(cx + w / 2, h / 2), new THREE.Vector2(cx - w / 2, h / 2),
   ]);
-  const pool = FLOORS.find((f) => f.id === 'ground')?.objects.find((o) => o.kind === 'pool');
-  if (pool) {
+  for (const [, dx, , floors] of LAYOUTS) {
+    const pool = floors.find((f) => f.storey === 0)?.objects.find((o) => o.kind === 'pool');
+    if (!pool) continue;
     const [x0, y0, x1, y1] = poolBasinPx(pool.rect);
-    for (const [, dx] of LAYOUTS) {
-      // Shape +Y is world -Z once the apron is laid flat, hence the flip.
-      const corners = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
-        .map((c) => toWorld(c, [0, 0]))
-        .map(([x, z]) => new THREE.Vector2(x + dx, -z));
-      shape.holes.push(new THREE.Path(corners));
-    }
+    // Shape +Y is world -Z once the apron is laid flat, hence the flip.
+    const corners = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
+      .map((c) => toWorld(c, [0, 0]))
+      .map(([x, z]) => new THREE.Vector2(x + dx, -z));
+    shape.holes.push(new THREE.Path(corners));
   }
   return new THREE.ShapeGeometry(shape);
 }
@@ -259,10 +271,11 @@ function slabTexture(floor) {
  * container is moved to where `placement()` puts it for that layout, plus the
  * layout's sideways offset `dx`.
  */
-function buildModel(mode, dx) {
-  return FLOORS.map((floor) => {
+function buildModel(set, mode, dx, floors) {
+  return floors.map((floor) => {
     const container = new THREE.Group();
-    container.name = `${mode}:${floor.id}`;
+    container.name = `${set}:${floor.id}`;
+    container.userData.set = set;
 
     const slab = new THREE.Mesh(
       slabGeometry(floor),
@@ -292,12 +305,69 @@ function buildModel(mode, dx) {
     );
 
     scene.add(container);
-    return { floor, mode, container, walls, objects, slab };
+    return { floor, set, mode, container, walls, objects, slab };
   });
 }
 
-const floorGroups = LAYOUTS.flatMap(([mode, dx]) => buildModel(mode, dx));
-layoutEl.textContent = 'side by side · stacked (east)';
+const floorGroups = LAYOUTS.flatMap(([set, dx, mode, floors]) => buildModel(set, mode, dx, floors));
+layoutEl.textContent = 'side by side · stacked (east) · ground copy (west)';
+
+// ── name plates ─────────────────────────────────────────────────────────
+// Three models look alike, so each gets a colour-coded plate on the ground in
+// front of it (south of the plot). Sprites always face the camera and ignore
+// depth, so they stay readable from any angle. `N` hides them.
+const SET_NAMES = { apart: 'side by side', stacked: 'stacked', copy: 'ground-floor copy' };
+const LABELS = [
+  { set: 'apart', floorId: 'ground', accent: '#4da3ff', title: 'SIDE BY SIDE', sub: 'ZEMIN · ground floor' },
+  { set: 'apart', floorId: 'first', accent: '#4da3ff', title: 'SIDE BY SIDE', sub: 'BIRINCI KAT · first floor' },
+  { set: 'stacked', floorId: 'ground', accent: '#5fd08a', title: 'STACKED', sub: 'first floor on the ground floor' },
+  { set: 'copy', floorId: 'ground-copy', accent: '#ffa94d', title: 'COPY · EXPERIMENTS', sub: 'ZEMIN · src/groundCopy.js' },
+];
+
+/** A two-line plate: bold title over a smaller subtitle, with a colour tab. */
+function makeLabel(title, sub, accent) {
+  const w = 640;
+  const h = 200;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(14,18,24,0.9)';
+  ctx.beginPath();
+  ctx.roundRect(0, 0, w, h, 26);
+  ctx.fill();
+  ctx.fillStyle = accent;
+  ctx.beginPath();
+  ctx.roundRect(0, 0, 26, h, [26, 0, 0, 26]);
+  ctx.fill();
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#f2f4f7';
+  ctx.font = 'bold 66px system-ui, sans-serif';
+  ctx.fillText(title, 58, 70, w - 90);
+  ctx.fillStyle = '#b9c2cf';
+  ctx.font = '40px system-ui, sans-serif';
+  ctx.fillText(sub, 58, 142, w - 90);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+  const worldH = 4.4;                     // plate height in metres (~14 m wide)
+  sprite.scale.set(worldH * (w / h), worldH, 1);
+  sprite.renderOrder = 999;
+  return sprite;
+}
+
+const labelGroup = new THREE.Group();
+labelGroup.name = 'labels';
+const LABEL_Z = (2294 - (ORIGIN.y + ORIGIN.h / 2)) * MPP + 3.5;  // just south of the plot wall
+for (const { set, floorId, accent, title, sub } of LABELS) {
+  const at = floorGroups.find((g) => g.set === set && g.floor.id === floorId);
+  if (!at) continue;
+  const plate = makeLabel(title, sub, accent);
+  plate.position.set(at.container.position.x, 2.4, LABEL_Z);
+  labelGroup.add(plate);
+}
+scene.add(labelGroup);
 
 // ── view helpers ────────────────────────────────────────────────────────
 const grid = new THREE.GridHelper(120, 120, 0x3c4654, 0x232a33);
@@ -330,21 +400,21 @@ function setXray(on) {
 
 function showFloors(ids) {
   for (const { floor, container } of floorGroups) {
-    container.visible = ids === 'all' || ids.includes(floor.id);
+    container.visible = ids === 'all' || ids.includes(floor.base ?? floor.id);
   }
 }
 
-/** Bounding box of the visible floors, optionally only one model's. */
-function visibleBounds(mode) {
+/** Bounding box of the visible floors, optionally only one model's ('apart', 'stacked' or 'copy'). */
+function visibleBounds(set) {
   const box = new THREE.Box3();
   for (const g of floorGroups) {
-    if (g.container.visible && (!mode || g.mode === mode)) box.expandByObject(g.container);
+    if (g.container.visible && (!set || g.set === set)) box.expandByObject(g.container);
   }
   return box;
 }
 
-function frameAll(mode) {
-  const box = visibleBounds(mode);
+function frameAll(set) {
+  const box = visibleBounds(set);
   if (box.isEmpty()) return;
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
@@ -366,10 +436,12 @@ window.addEventListener('keydown', (e) => {
     case 'g': grid.visible = !grid.visible; break;
     case 'x': setXray(!xray); break;
     case 'o': setRoofsHidden(!roofsHidden); break;
+    case 'n': labelGroup.visible = !labelGroup.visible; break;
     case 't': topView(); break;
     case 'r': frameAll(); break;
     case '3': frameAll('apart'); break;
     case '4': frameAll('stacked'); break;
+    case '5': frameAll('copy'); break;
     case '1': showFloors(['ground']); frameAll(); break;
     case '2': showFloors(['first']); frameAll(); break;
     case '0': showFloors('all'); frameAll(); break;
@@ -396,7 +468,11 @@ renderer.domElement.addEventListener('pointermove', (e) => {
     else if (d?.item) label = `${d.floor?.name ?? ''} · ${d.item.name ?? d.item.kind}`.trim();
     node = node.parent;
   }
-  statusEl.textContent = label;
+  // Say which model the pointer is over, since the three look alike.
+  let owner = hit?.object ?? null;
+  while (owner && !owner.userData.set) owner = owner.parent;
+  const model = SET_NAMES[owner?.userData.set];
+  statusEl.textContent = label && model ? `${label}  ·  ${model}` : label;
 });
 
 // ── go ──────────────────────────────────────────────────────────────────
