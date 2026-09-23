@@ -4,6 +4,7 @@ import { PLAN, ORIGIN, FLOORS, placement, toWorld } from './floorplan.js';
 import { GROUND_COPY } from './groundCopy.js';
 import { buildWalls } from './buildWalls.js';
 import { buildObjects, poolBasinPx } from './objects.js';
+import { createWalkMode } from './walk.js';
 
 const app = document.getElementById('app');
 const statusEl = document.getElementById('status');
@@ -59,7 +60,8 @@ controls.minDistance = 3;
 controls.maxDistance = 160;
 
 // ── lighting ────────────────────────────────────────────────────────────
-scene.add(new THREE.HemisphereLight(0xbcd6ff, 0x6b6257, 1.1));
+const hemi = new THREE.HemisphereLight(0xbcd6ff, 0x6b6257, 1.1);
+scene.add(hemi);
 
 const sun = new THREE.DirectionalLight(0xfff3e0, 2.4);
 sun.position.set(-20, 34, 20);
@@ -70,7 +72,8 @@ const d = Math.max(STACK_DX, -COPY_DX) + PLANE_W; // the shadow frustum has to r
 Object.assign(sun.shadow.camera, { left: -d, right: d, top: d, bottom: -d, near: 1, far: 200 });
 sun.shadow.camera.updateProjectionMatrix();
 scene.add(sun);
-scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+const ambient = new THREE.AmbientLight(0xffffff, 0.25);
+scene.add(ambient);
 
 // Ground the whole composition sits on. Each pool basin is sunk below it, so
 // the apron gets a hole over each or it would hide the water and pool floor.
@@ -369,6 +372,16 @@ for (const { set, floorId, accent, title, sub } of LABELS) {
 }
 scene.add(labelGroup);
 
+// ── walk mode ───────────────────────────────────────────────────────────
+// First person inside the house. It reuses this scene's geometry as its
+// collision world, so it needs the built floor groups — hence it is created
+// here rather than in main's preamble.
+const walk = createWalkMode({
+  renderer, camera, scene, orbit: controls, floorGroups, labelGroup, statusEl,
+  ambient, hemi,
+  set: 'stacked',   // the real house: both storeys in their true positions
+});
+
 // ── view helpers ────────────────────────────────────────────────────────
 const grid = new THREE.GridHelper(120, 120, 0x3c4654, 0x232a33);
 grid.position.y = -0.01;
@@ -432,7 +445,10 @@ function topView() {
 }
 
 window.addEventListener('keydown', (e) => {
+  // Inside the house, WASD is movement and the view keys would fight it.
+  if (walk.active && e.key.toLowerCase() !== 'f') return;
   switch (e.key.toLowerCase()) {
+    case 'f': walk.toggle(); break;
     case 'g': grid.visible = !grid.visible; break;
     case 'x': setXray(!xray); break;
     case 'o': setRoofsHidden(!roofsHidden); break;
@@ -452,6 +468,7 @@ window.addEventListener('keydown', (e) => {
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 renderer.domElement.addEventListener('pointermove', (e) => {
+  if (walk.active) return;
   pointer.x = (e.clientX / window.innerWidth) * 2 - 1;
   pointer.y = -(e.clientY / window.innerHeight) * 2 + 1;
   raycaster.setFromCamera(pointer, camera);
@@ -479,13 +496,27 @@ renderer.domElement.addEventListener('pointermove', (e) => {
 document.getElementById('loading').remove();
 frameAll();
 
+// walk.html — the desktop app's entry page — asks to start inside the house
+// rather than above the drawing. index.html leaves this unset and opens on the
+// orbit view as before; `F` swaps between the two either way.
+if (window.VILLA_BOOT === 'walk') walk.enter();
+
+// A handle on the scene for the console and for the smoke test that drives the
+// desktop build. Read-only in spirit — nothing in the app reads it back.
+window.villa = { scene, camera, controls, walk, floorGroups };
+
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+let last = performance.now();
 renderer.setAnimationLoop(() => {
-  controls.update();
+  const now = performance.now();
+  const dt = (now - last) / 1000;
+  last = now;
+  if (walk.active) walk.update(dt);
+  else controls.update();
   renderer.render(scene, camera);
 });

@@ -4,44 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Villa Khan — 3D Floor Plan</title>
-<style>
-  :root { color-scheme: dark; }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; overflow: hidden;
-    background: #11151b; color: #e7ecf3;
-    font: 13px/1.5 ui-sans-serif, -apple-system, "Segoe UI", sans-serif; }
-  #app { position: fixed; inset: 0; }
-  canvas { display: block; }
-
-  .panel {
-    position: fixed; z-index: 10;
-    background: rgba(18, 23, 30, .78);
-    border: 1px solid rgba(255,255,255,.1);
-    border-radius: 10px;
-    padding: 12px 14px;
-    backdrop-filter: blur(10px);
-  }
-  #hud { top: 16px; left: 16px; max-width: 260px; }
-  #hud h1 { margin: 0 0 2px; font-size: 14px; letter-spacing: .04em; }
-  #hud p  { margin: 0 0 10px; font-size: 11px; color: #8b97a8; }
-  #hud dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12px; }
-  #hud dt { color: #8b97a8; }
-  #hud dd { margin: 0; }
-  kbd {
-    display: inline-block; min-width: 18px; text-align: center;
-    padding: 1px 5px; border-radius: 4px; font-size: 11px;
-    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16);
-  }
-  #status {
-    bottom: 16px; left: 16px; min-height: 0;
-    font-size: 12px; color: #b7c3d4;
-  }
-  #status:empty { display: none; }
-  #loading {
-    position: fixed; inset: 0; display: grid; place-content: center;
-    z-index: 20; color: #8b97a8; background: #11151b;
-  }
-</style>
+<link rel="stylesheet" href="./src/viewer.css">
 <script type="importmap">
 {
   "imports": {
@@ -58,6 +21,7 @@
     <h1>VILLA KHAN</h1>
     <p>ZEMIN + BIRINCI KAT · <span id="layout-mode">side by side</span></p>
     <dl>
+      <dt><kbd>F</kbd></dt><dd>walk inside (WASD)</dd>
       <dt><kbd>drag</kbd></dt><dd>orbit</dd>
       <dt><kbd>scroll</kbd></dt><dd>zoom</dd>
       <dt><kbd>3</kbd></dt><dd>fit side-by-side plans</dd>

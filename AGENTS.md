@@ -15,8 +15,13 @@ A Three.js viewer for a real house — **Villa Khan**. It lays the architect's 2
 floor plans down as ground textures and extrudes the walls, joinery and
 furniture back out of them. Two storeys: `ZEMIN` (ground) and `BIRINCI KAT`
 (first), drawn **twice** on screen: as separate models side by side, and — to
-the east — stacked as the real building. The site is modelled too: a plot
-(`land`), a boundary wall, a pool, a paved terrace and side parking.
+the east — stacked as the real building (plus a third model, the ground-floor
+copy, west of the origin). The site is modelled too: a plot (`land`), a
+boundary wall, a pool, a paved terrace and side parking.
+
+It is also **walkable in first person** (`F`, or `walk.html`) and ships as a
+**macOS / Windows desktop app** built on Electron. See *Walk mode and the
+desktop app* in `CLAUDE.md`.
 
 Plain ES modules, no bundler, no build step. `three` is reached through an
 import map in `index.html` pointing at `node_modules/`.
@@ -27,6 +32,9 @@ import map in `index.html` pointing at `node_modules/`.
 npm install     # three + pdfjs-dist; Node 18+
 npm start       # http://localhost:8080  (node tools/serve.mjs)
 npm run audit   # verify the model against the architect's PDF
+npm run app     # the Electron desktop app (opens inside the house)
+npm run bundle  # dist/*.html, one self-contained file per entry page
+npm run dist:mac / dist:win   # packaged installers
 ```
 
 The app **must** be served over HTTP — ES modules and the canvas read of the
@@ -35,9 +43,21 @@ plan JPEG both fail on a `file://` origin.
 There is no test suite. `npm run audit` is the verification step; it must report
 **`doors: 12/14 arcs matched`**. The two leftovers are the curved sofa in
 OTURMA ODASI, not doors. The audit only checks the plan geometry, so also run
-`node --check src/*.js` after editing the modules. The owner has asked agents not
-to open a browser on their own — ask first, and otherwise say plainly that a
-visual change is unverified on screen.
+`node --check src/*.js` after editing the modules.
+
+The owner has asked agents **not to open a browser — or the desktop app — on
+their own**. Ask first, and otherwise say plainly that a visual change is
+unverified on screen. This covers scripted Electron windows too: they steal
+pointer lock and the keyboard from whatever the owner is doing, and one that
+ends with `app.quit()` looks exactly like the app crashing.
+
+Walk mode is the one part with behaviour a static read cannot verify. When you
+do have permission to run it, drive it through `window.villa.walk`:
+`goTo([px, py], storey, heading, feetY)` stands the player anywhere,
+`probe()` names whatever is blocking a move, and `stairBounds()` dumps the
+stair's real world heights. Compare a sampled heading against a sampled
+velocity rather than assuming the camera still points where you left it —
+under pointer lock the owner's real mouse steers it.
 
 ## The rules that matter
 
@@ -75,7 +95,9 @@ visual change is unverified on screen.
 
 - **`src/groundCopy.js` is a deliberate duplicate** of the ground floor, drawn as
   a third model west of the origin, for experiments. Edit the copy, not the
-  original, unless the owner says otherwise; the two are not linked.
+  original, unless the owner says otherwise; the two are not linked. Plain bug
+  fixes to shared data (a maker, a chair's orientation) are worth applying to
+  both so the copy stays a copy.
 - **Both models are built from the same data.** `main.js` calls `buildModel()`
   twice, so anything you add to a floor appears in both. Use `only:` to restrict.
 - **The pool is sunk below the ground.** The ground `apron` in `main.js` and the
@@ -85,6 +107,18 @@ visual change is unverified on screen.
   crop hides the ground floor when stacked.
 - **`buildObjects` positions by `rect`, elevation by `z`** (an item's height
   offset is `y` inside its own maker but `z` on the item for the group).
+- **Walls stop below the floor above unless you say otherwise.** A storey with
+  another above it needs `wallTop: PLAN.floorToFloor`, or its 3.0 m walls leave
+  a 0.4 m band of open air under the 3.40 m slab. The slab hides it — until a
+  `void` removes the slab and you can see straight out over the floor.
+- **A `void` must not reach a wall centreline.** Stop it at the wall's inner
+  face, or that same 0.4 m band becomes an open slot to the sky.
+- **The stairwell void has to cover the half-landing**, not just the flights,
+  or the slab is a ceiling 1.30 m above the landing and the stair is unusable.
+- **Walk mode collides with the real geometry.** Anything you model is
+  something the owner can bump into, stand on or get stuck inside, so a
+  decorative box across a doorway is now a wall. There is a head-room test that
+  stops the player climbing furniture; stairs are exempt from it.
 
 ## Reading the PDF correctly
 

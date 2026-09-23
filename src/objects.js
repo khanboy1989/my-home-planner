@@ -198,6 +198,20 @@ const fruitMat = (name) => (fruitMats[name] ??= new THREE.MeshStandardMaterial({
   color: FRUIT_COLOURS[name] ?? FRUIT_COLOURS.orange, roughness: 0.6,
 }));
 
+/**
+ * Toddler-toy colours, made on first use. Kept saturated and soft so the play
+ * room reads as a nursery against the house's cream-and-gold palette.
+ */
+const TOY_COLOURS = {
+  red: 0xd8544a, blue: 0x3f87c9, yellow: 0xf0c04a, green: 0x5aa85c,
+  pink: 0xe58fb2, purple: 0x8f74c4, orange: 0xe8913f, mint: 0x79c9bd,
+  hide: 0xd9b48a, mane: 0x6b4a33,
+};
+const toyMats = {};
+const toyMat = (name) => (toyMats[name] ??= new THREE.MeshStandardMaterial({
+  color: TOY_COLOURS[name] ?? name, roughness: 0.85,
+}));
+
 function ball(r, mat, x, y, z, detail = 1) {
   const m = new THREE.Mesh(new THREE.IcosahedronGeometry(r, detail), mat);
   m.position.set(x, y, z);
@@ -1082,14 +1096,210 @@ const KINDS = {
     }
   },
 
+  /**
+   * Dining chair: four legs, a seat at 0.45 m and an open backrest above it,
+   * rather than the solid block this used to be — at eye level in walk mode a
+   * block reads as a crate. The back is at local -Z, so `rot` turns the chair
+   * to face its table ('degrees clockwise on the page': 0 backs north, 90 east).
+   */
   chair(g, { w, d }) {
-    g.add(box(w * 0.9, 0.45, d * 0.9, M.wood));
-    g.add(box(w * 0.9, 0.42, 0.06, M.wood, 0, 0.45, -d / 2 + 0.03));
+    const sw = w * 0.9;
+    const sd = d * 0.9;
+    const seatH = 0.45;
+    const leg = 0.045;
+    const seat = 0.05;
+    const backZ = -sd / 2 + leg / 2;
+
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        g.add(box(leg, seatH - seat, leg, M.wood,
+          sx * (sw / 2 - leg / 2), 0, sz * (sd / 2 - leg / 2)));
+      }
+      // The back legs carry on up as the backrest uprights.
+      g.add(box(leg, 0.50, leg, M.wood, sx * (sw / 2 - leg / 2), seatH, backZ));
+    }
+    g.add(box(sw, seat, sd, M.wood, 0, seatH - seat));
+    g.add(box(sw - leg * 2, 0.26, 0.035, M.wood, 0, seatH + 0.20, backZ));
   },
 
   stool(g, { w }) {
     g.add(cyl(w / 2, 0.06, M.wood, 0, 0.66));
     g.add(cyl(0.04, 0.66, M.metal));
+  },
+
+  // ── toddler play room (COPY) ───────────────────────────────────────────
+  /**
+   * Interlocking foam play tiles, laid to fill the rect. `tile` sets the
+   * nominal tile size (0.6 m); the grid is rounded to whole tiles and the
+   * colours alternate so the jigsaw pattern reads from above.
+   */
+  playmat(g, { w, d }, it) {
+    const t = it.tile ?? 0.6;
+    const cols = Math.max(1, Math.round(w / t));
+    const rows = Math.max(1, Math.round(d / t));
+    const tw = w / cols;
+    const td = d / rows;
+    const pal = it.palette ?? ['blue', 'yellow', 'green', 'pink', 'orange', 'mint'];
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < rows; j++) {
+        const c = pal[(i + j * 3) % pal.length];
+        g.add(box(tw - 0.012, 0.035, td - 0.012, toyMat(c),
+          -w / 2 + tw * (i + 0.5), 0, -d / 2 + td * (j + 0.5)));
+      }
+    }
+  },
+
+  /**
+   * Rocking horse. Nose at local -X, so the rect's long side is its length and
+   * `rot` turns it on the mat. Two arched rockers carry a plank, the body sits
+   * on that, and the handle bar crosses the withers.
+   */
+  rockinghorse(g, { w }, it) {
+    const L = Math.min(w, 1.05);
+    const R = L * 0.95;                       // rocker radius
+    const half = 0.55;                        // half the arc, radians
+    const segLen = (2 * R * half) / 7 * 1.18;
+    const hide = toyMat(it.paint ?? 'hide');
+    for (const sz of [-1, 1]) {
+      for (let i = 0; i < 7; i++) {
+        const a = -half + (half * 2) * (i + 0.5) / 7;
+        const seg = box(segLen, 0.05, 0.06, M.wood, Math.sin(a) * R, R - Math.cos(a) * R, sz * 0.17);
+        seg.rotation.z = -a;
+        g.add(seg);
+      }
+    }
+    const deck = 0.22;                        // plank height
+    g.add(box(L * 0.8, 0.04, 0.4, M.wood, 0, deck));
+    for (const sx of [-1, 1]) {               // legs
+      g.add(box(0.07, 0.2, 0.07, hide, sx * L * 0.24, deck + 0.04, 0));
+    }
+    g.add(box(L * 0.62, 0.26, 0.3, hide, 0, deck + 0.24));         // body
+    g.add(box(0.26, 0.05, 0.32, M.drape, L * 0.02, deck + 0.5));   // saddle
+    const neck = new THREE.Group();                                 // neck + head
+    neck.position.set(-L * 0.26, deck + 0.44, 0);
+    neck.rotation.z = 0.5;
+    neck.add(box(0.16, 0.34, 0.2, hide));
+    g.add(neck);
+    g.add(box(0.3, 0.16, 0.18, hide, -L * 0.46, deck + 0.66));      // head
+    g.add(box(0.05, 0.1, 0.05, hide, -L * 0.38, deck + 0.8));       // ears
+    g.add(box(0.05, 0.1, 0.05, hide, -L * 0.38, deck + 0.8, 0.09));
+    g.add(box(0.1, 0.24, 0.1, toyMat('mane'), -L * 0.28, deck + 0.64));  // mane
+    g.add(box(0.1, 0.22, 0.08, toyMat('mane'), L * 0.3, deck + 0.42));   // tail
+    for (const sz of [-1, 1]) {
+      g.add(ball(0.022, M.dark, -L * 0.52, deck + 0.75, sz * 0.085, 0));
+    }
+    const bar = cyl(0.018, 0.34, M.wood, -L * 0.26, deck + 0.74);   // handle bar
+    bar.rotation.x = Math.PI / 2;
+    g.add(bar);
+  },
+
+  /** Play teepee: four poles crossed at the top under a canvas cone. */
+  teepee(g, { w, d }, it) {
+    const h = it.h ?? 1.45;
+    const r = Math.min(w, d) / 2;
+    for (let i = 0; i < 4; i++) {
+      const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      const pole = cyl(0.022, h * 1.04, M.wood, 0, 0);
+      pole.position.set(Math.cos(a) * r * 0.55, h * 0.5, Math.sin(a) * r * 0.55);
+      pole.rotation.z = -Math.cos(a) * 0.42;
+      pole.rotation.x = Math.sin(a) * 0.42;
+      g.add(pole);
+    }
+    const canvas = new THREE.Mesh(
+      new THREE.ConeGeometry(r, h, 4, 1, true),
+      new THREE.MeshStandardMaterial({ color: 0xf2ece0, roughness: 1, side: THREE.DoubleSide }),
+    );
+    canvas.position.y = h / 2;
+    canvas.rotation.y = Math.PI / 4;
+    canvas.castShadow = true;
+    g.add(canvas);
+    // Doorway: a dark panel set just inside the front face, so the tent reads
+    // as open on the side it faces (local -Z, turned by `rot`).
+    g.add(box(r * 0.8, h * 0.5, 0.01, M.dark, 0, 0, -r * 0.62));
+    g.add(box(r * 0.12, h * 0.52, 0.02, M.drape, -r * 0.42, 0, -r * 0.64));
+    g.add(box(r * 0.12, h * 0.52, 0.02, M.drape, r * 0.42, 0, -r * 0.64));
+    g.add(ball(0.05, toyMat('yellow'), 0, h + 0.05, 0));
+  },
+
+  /**
+   * Low cube toy storage: a grid of open cubbies with coloured bins in some of
+   * them, kept toddler-height. `back` names the wall it stands against.
+   */
+  toyshelf(g, { w, d }, it) {
+    const { run, len, depth } = backedRun(g, { w, d }, it.back);
+    const h = it.h ?? 0.78;
+    const cols = Math.max(2, Math.round(len / 0.42));
+    const rows = it.rows ?? 2;
+    const cw = len / cols;
+    const ch = h / rows;
+    run.add(box(len, h, depth, M.cabinet));
+    const bins = ['red', 'blue', 'yellow', 'green', 'orange', 'mint', 'purple', 'pink'];
+    for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < rows; j++) {
+        const x = -len / 2 + cw * (i + 0.5);
+        const y = ch * j + 0.04;
+        // Hollow the cubby out with a dark recess, then drop a bin into some.
+        run.add(box(cw - 0.06, ch - 0.08, 0.02, M.dark, x, y, -depth / 2 + 0.03));
+        if ((i + j) % 3 !== 2) {
+          run.add(box(cw - 0.09, ch - 0.14, depth * 0.8, toyMat(bins[(i * rows + j) % bins.length]), x, y, 0.01));
+        }
+      }
+    }
+    run.add(box(len + 0.03, 0.03, depth + 0.03, M.linen, 0, h));   // top
+  },
+
+  /** Soft-sided ball pit: a padded ring, a mat floor and a heap of balls. */
+  ballpit(g, { w, d }, it) {
+    const r = Math.min(w, d) / 2;
+    const wall = it.h ?? 0.3;
+    const side = new THREE.Mesh(
+      new THREE.CylinderGeometry(r, r, wall, 24, 1, true),
+      new THREE.MeshStandardMaterial({ color: 0xf2ece0, roughness: 1, side: THREE.DoubleSide }),
+    );
+    side.position.y = wall / 2;
+    side.castShadow = true;
+    g.add(side);
+    g.add(cyl(r, 0.05, toyMat('mint'), 0, 0, 0, 24));                // padded floor
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(r, 0.05, 8, 24), toyMat('blue'));
+    rim.rotation.x = Math.PI / 2;
+    rim.position.y = wall;
+    rim.castShadow = true;
+    g.add(rim);
+    const pal = ['red', 'blue', 'yellow', 'green', 'orange', 'pink'];
+    for (let i = 0; i < 44; i++) {
+      const a = scatter(7.1, i) * Math.PI * 2;
+      const rad = Math.sqrt(scatter(3.3, i)) * (r - 0.09);
+      g.add(ball(0.055, toyMat(pal[i % pal.length]),
+        Math.cos(a) * rad, 0.05 + scatter(9.7, i) * 0.14, Math.sin(a) * rad, 1));
+    }
+  },
+
+  /** A small heap of stacking blocks, scattered from a seed. */
+  blocks(g, { w, d }) {
+    const pal = ['red', 'blue', 'yellow', 'green', 'orange', 'purple'];
+    for (let i = 0; i < 9; i++) {
+      const s = 0.09 + scatter(5.5, i) * 0.03;
+      const stack = i % 3;
+      const b = box(s, s, s, toyMat(pal[i % pal.length]),
+        (scatter(1.7, i) - 0.5) * (w - s), stack * s * 1.02, (scatter(4.2, i) - 0.5) * (d - s));
+      b.rotation.y = scatter(8.8, i) * 0.8;
+      g.add(b);
+    }
+  },
+
+  /** Stuffed bear, sitting up. */
+  teddy(g, _size, it) {
+    const fur = toyMat(it.paint ?? 'hide');
+    g.add(ball(0.16, fur, 0, 0.16, 0));                     // body
+    g.add(ball(0.12, fur, 0, 0.42, -0.02));                 // head
+    for (const s of [-1, 1]) {
+      g.add(ball(0.045, fur, s * 0.09, 0.5, -0.02));        // ears
+      g.add(ball(0.06, fur, s * 0.17, 0.2, 0.02));          // arms
+      g.add(ball(0.07, fur, s * 0.09, 0.07, 0.14));         // legs
+      g.add(ball(0.018, M.dark, s * 0.05, 0.44, -0.12, 0)); // eyes
+    }
+    g.add(ball(0.05, M.linen, 0, 0.38, -0.11));             // muzzle
+    g.add(ball(0.02, M.dark, 0, 0.39, -0.15, 0));           // nose
   },
 
   /** Mercedes-Benz C220 d saloon (W205): 4.69 × 1.81 m. */

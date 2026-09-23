@@ -60,7 +60,14 @@ const GROUND_WALLS = [
     a: [474, 1195], b: [937, 1195],
     openings: [
       { from: 54, to: 166, kind: 'window' },  // 180/230
-      { from: 280, to: 435, kind: 'window' }, // 250/230
+      // Dining → back garden: a glazed slider straight out to the pool
+      // terrace, behind the dining table. The sheet draws a 250/230 window
+      // here; the owner asked for a door, so it keeps the drawn opening
+      // (x 754..909, 2.60 m — already centred on the table) and only drops to
+      // the floor. Black joinery, like the other slider. It parks eastward so
+      // the leaf ends up over the solid wall rather than across the second
+      // window.
+      { from: 280, to: 435, sill: 0, kind: 'sliding', swing: -1 },
     ],
   },
   {
@@ -230,25 +237,33 @@ const GROUND_WALLS = [
       { from: 83, to: 210, sill: 0, head: 2.3, kind: 'opening' },  // 225/230
     ],
   },
+  // This bay is the STAIR HALL, not a W.C. It used to be traced as a small
+  // W.C. with a basin and a toilet, its walls held down to 2.3 m so the upper
+  // flight could pass "over" it. It cannot: flight 2's soffit starts at 1.64 m
+  // and its lower treads ran through the room, over the toilet. The PDF
+  // settles it — `node tools/plan-audit.mjs 900 1690 1160 1990` shows drawn
+  // treads in BOTH columns, x 1033..1108 (flight 1) and x 946..1021
+  // (flight 2), which is exactly where the two flights are modelled. So the
+  // stair is right and the W.C was the mis-trace; the fixtures are gone and
+  // these walls are full height, enclosing a stair hall open to the floor
+  // above. The house's shared W.C is ORTAK W.C, which is unaffected.
   {
-    // The W.C is tucked beneath the upper flight, so its ceiling is low.
-    name: 'W.C. — west wall',
+    name: 'Stair hall — west wall (ground)',
     type: 'interior',
-    height: 2.3,
     a: [946, 1725], b: [946, 1947],
     openings: [],
   },
   {
-    name: 'W.C. — north wall',
+    name: 'Stair hall — north wall (ground)',
     type: 'interior',
-    height: 2.3,
     a: [946, 1725], b: [1031, 1725],
     openings: [
-      { from: 10, to: 53, sill: 0, kind: 'door', swing: 1 }, // K1:80/230
+      { from: 10, to: 53, sill: 0, kind: 'door', swing: 1 }, // K1:80/230 in from the corridor
     ],
   },
   {
-    name: 'Stair / W.C. wall',
+    // The thin wall between the two flights (PDF faces x 1030 / 1033).
+    name: 'Stair — central wall',
     type: 'interior',
     a: [1031, 1718], b: [1031, 1879],
     openings: [],
@@ -568,14 +583,18 @@ const GROUND_OBJECTS = [
 
   // ────────────────────────────────── dining
   { kind: 'box', name: 'Dining table', rect: [827, 1241, 889, 1390], h: 0.75, mat: 'wood' },
-  { kind: 'chair', rect: [798, 1264, 825, 1291] },
-  { kind: 'chair', rect: [798, 1302, 825, 1329] },
-  { kind: 'chair', rect: [798, 1339, 825, 1366] },
-  { kind: 'chair', rect: [891, 1264, 918, 1291] },
-  { kind: 'chair', rect: [891, 1302, 918, 1329] },
-  { kind: 'chair', rect: [891, 1339, 918, 1366] },
-  { kind: 'chair', rect: [844, 1213, 871, 1240] },
-  { kind: 'chair', rect: [844, 1391, 871, 1418] },
+  // Eight chairs round it, each turned so its back is to the table's outside:
+  // `rot` is degrees clockwise on the page and the maker backs a chair north
+  // at 0, so the west run is 270, the east run 90, and the ends 0 and 180.
+  // Without it every chair faced north and the two runs sat back to back.
+  { kind: 'chair', name: 'Dining chair', rect: [798, 1264, 825, 1291], rot: 270 },
+  { kind: 'chair', name: 'Dining chair', rect: [798, 1302, 825, 1329], rot: 270 },
+  { kind: 'chair', name: 'Dining chair', rect: [798, 1339, 825, 1366], rot: 270 },
+  { kind: 'chair', name: 'Dining chair', rect: [891, 1264, 918, 1291], rot: 90 },
+  { kind: 'chair', name: 'Dining chair', rect: [891, 1302, 918, 1329], rot: 90 },
+  { kind: 'chair', name: 'Dining chair', rect: [891, 1339, 918, 1366], rot: 90 },
+  { kind: 'chair', name: 'Dining chair', rect: [844, 1213, 871, 1240], rot: 0 },
+  { kind: 'chair', name: 'Dining chair', rect: [844, 1391, 871, 1418], rot: 180 },
 
   // ────────────────────────────────── Y.MUTFAK KILER
   { kind: 'box', name: 'Pantry counter (west)', rect: [481, 1486, 517, 1573], h: 0.9, mat: 'counter' },
@@ -584,12 +603,11 @@ const GROUND_OBJECTS = [
   { kind: 'hob',  name: 'Ocak — Y.MUTFAK',     rect: [573, 1445, 606, 1476], y: 0.9 },
   { kind: 'oven', name: 'Fırın — Y.MUTFAK',    rect: [573, 1445, 606, 1479], face: 'S' },
 
-  // ────────────────────────────────── W.C + stair
-  { kind: 'basin',  rect: [996, 1775, 1021, 1803] },
-  { kind: 'toilet', rect: [986, 1825, 1011, 1850] },
-  // The stair belongs to BIRINCI KAT — its plan is the one that draws the
-  // whole flight, and it is modelled there descending to this floor. The
-  // ZEMIN plan only draws treads 1–12, which stay part of the texture.
+  // ────────────────────────────────── stair hall
+  // No basin and no toilet here: this bay is the stair's lower run, not a
+  // W.C. (see 'Stair hall — west wall (ground)' for why). The stair itself
+  // belongs to BIRINCI KAT — its plan is the one that draws the whole flight,
+  // and it is modelled there descending to this floor.
 
   // ────────────────────────────────── GIRIS HOLU
   // Not a room — a freestanding vestiyer/dolap in the recess the sheet draws
@@ -778,6 +796,11 @@ export const FLOORS = [
     name: 'ZEMIN',
     label: 'Ground floor',
     crop: { ...ORIGIN },
+    // The first floor sits on this one, so these walls run the full 3.40 m to
+    // the underside of its slab rather than stopping at the 3.0 m clear
+    // height. Walls with their own `height` (the W.C block under the stair)
+    // are unaffected.
+    wallTop: PLAN.floorToFloor,
     // Laminate parquet throughout, kitchens included. Only the W.C, the stair
     // and the garage keep the plain finish. Rects are approximate room
     // interiors; the walls hide the edges.
@@ -832,8 +855,17 @@ export const FLOORS = [
     // Openings cut clean through the slab (stairwell void).
     voids: [
       { name: 'GALERI BOSLUGU', rect: [2569, 1744, 2690, 1864] },
-      // The stair comes up through here, arriving at the north edge.
-      { name: 'Stair well', rect: [2702, 1715, 2872, 1888] },
+      // The stair comes up through here, arriving at the north edge. It has to
+      // clear the HALF-LANDING as well as the two flights (the landing runs to
+      // y 1946): stopping the void at the flights left this slab as a ceiling
+      // 1.30 m above the landing, which walled the upper storey off — you
+      // could climb flight 1 and then not stand up — and cut the stair hall,
+      // and its window, in half.
+      // Stops at 1942, just inside the south wall's inner face, NOT on its
+      // centreline: walls are 3.0 m on a 3.40 m floor-to-floor, so the 0.4 m
+      // band between them is filled by the slab body alone. Run the void out
+      // to the wall and that band becomes an open slot to the sky.
+      { name: 'Stair well', rect: [2702, 1715, 2872, 1942] },
     ],
   },
 ];
