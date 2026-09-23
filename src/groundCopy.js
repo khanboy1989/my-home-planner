@@ -19,9 +19,16 @@ const COPY_WALLS = [
     name: 'Kitchen block — west exterior',
     type: 'exterior',
     a: [474, 1195], b: [474, 1620],
+    // COPY ONLY — owner's request, not on the sheet: both kitchens get their
+    // own door out to the west, onto the cement path that runs down to the
+    // parked cars. Both swing outward so they clear the counter runs inside.
     openings: [
+      { from: 14, to: 74, sill: 0, kind: 'door', swing: -1 },  // NEW K1:100/230 — MUTFAK to the path
       { from: 87, to: 195, sill: 1.1, kind: 'window' }, // 180/110
-      { from: 297, to: 375, sill: 1.1, kind: 'window' }, // 130/110
+      { from: 248, to: 296, sill: 0, kind: 'door', swing: -1, hinge: 'to' }, // NEW K1:80/230 — Y.MUTFAK to the path
+      // Shifted 6 px (10 cm) south of the sheet position to leave a pier
+      // between it and the new Y.MUTFAK door.
+      { from: 303, to: 381, sill: 1.1, kind: 'window' }, // 130/110
     ],
   },
   {
@@ -30,7 +37,8 @@ const COPY_WALLS = [
     a: [474, 1195], b: [937, 1195],
     openings: [
       { from: 54, to: 166, kind: 'window' },  // 180/230
-      { from: 280, to: 435, kind: 'window' }, // 250/230
+      // Dining → back garden slider, as on the original floor (floorplan.js).
+      { from: 280, to: 435, sill: 0, kind: 'sliding', swing: -1 },
     ],
   },
   {
@@ -85,8 +93,35 @@ const COPY_WALLS = [
     type: 'exterior',
     a: [412, 1999], b: [798, 1999],
     openings: [
-      { from: 18, to: 368, sill: 0, head: 2.4, kind: 'garage' }, // white roller shutter (raise: 0..1 rolls it up)
+      // COPY ONLY: the shutter now serves the single bay east of the new
+      // partition (x 575). West of it is the south wall of the play room.
+      { from: 175, to: 368, sill: 0, head: 2.4, kind: 'garage' }, // white roller shutter (raise: 0..1 rolls it up)
     ],
+  },
+  {
+    // ── COPY ONLY — owner's request, not on the sheet ──────────────────
+    // GARAJ (41.4 m² at this scale, printed 42.00) is split in three: the
+    // 24 m² car bay east of this partition stays a closed garage; the 2.7 m
+    // wide strip west of it is cut in two by the wall below into a games /
+    // library room (north) and a children's play room (south), ~9 m² each.
+    // The strip is the full 42 - 24; the owner's 12 + 12 does not fit in it.
+    // Both rooms open off the garage, which is their only wall to a circulated
+    // space — the Y.MUTFAK party wall stays solid.
+    name: 'Garage — rooms partition (COPY)',
+    type: 'interior',
+    a: [575, 1586], b: [575, 1999],
+    openings: [
+      { from: 144, to: 204, sill: 0, kind: 'door', swing: -1 }, // K1:100/230 — games / library room
+      { from: 264, to: 324, sill: 0, kind: 'door', swing: -1 }, // K1:100/230 — play room
+    ],
+  },
+  {
+    // COPY ONLY: splits the strip into the two rooms. Solid — each room is
+    // entered from the garage.
+    name: 'Games room / play room — party wall (COPY)',
+    type: 'interior',
+    a: [412, 1810], b: [575, 1810],
+    openings: [],
   },
   {
     name: 'Garage — east wall',
@@ -314,26 +349,67 @@ const COPY_OBJECTS = [
   // garage (x 245..368). A paved pad runs the length of it to the street gate.
   { kind: 'paving', name: 'Side parking pad', path: [[246, 1350], [404, 1350], [404, 2198], [246, 2198]] },
   { kind: 'sedan', name: 'Parked car 1', rect: [255, 1366, 375, 1646], nose: 'S', paint: 0xb8bcc4 },
-  { kind: 'sedan', name: 'Parked car 2', rect: [255, 1680, 375, 1960], nose: 'S', paint: 0x6b2b2b },
+  // The L200 moved out here when the garage was cut down to one bay (COPY).
+  { kind: 'pickup', name: 'Mitsubishi L200 Pickup (2018)', rect: [260, 1655, 370, 1970], nose: 'S' },
+
+  // ────────────────────────────────── kitchen service path (COPY ONLY)
+  // Owner's request, not on the sheet: a cement strip down the west face of
+  // the kitchen block, from the new MUTFAK door (y 1209..1269) past the new
+  // Y.MUTFAK door (y 1443..1491) to the parking pad, so shopping comes
+  // straight out of the cars and into either kitchen. It overlaps the pad at
+  // x 396..404 so the two read as one poured surface; the east edge stops at
+  // x 470, just under the west wall's outer face (x 466.6).
+  { kind: 'paving', name: 'Kitchen service path', path: [[396, 1188], [470, 1188], [470, 1616], [396, 1616]] },
 
   // ────────────────────────────────── GARAJ
-  { kind: 'sedan',  name: 'Mercedes-Benz C220 d', rect: [457, 1677, 577, 1963] },
-  // The L200 is 5.30 m long, so its rect starts further north than the old car's;
-  // it stays west of x=740 to keep the K1:100/230 door (x 727..783) reachable.
-  { kind: 'pickup', name: 'Mitsubishi L200 Pickup (2018)', rect: [626, 1648, 736, 1963] },
-  // One continuous worktop the full width of the party wall, for unloading
-  // shopping, with the EV charger wall-mounted above its east end.
-  { kind: 'box', name: 'Tezgah — unloading worktop', rect: [420, 1594, 702, 1631], h: 0.9, mat: 'counter' },
+  // One bay now (24 m²): the Mercedes sits centred in it, nose north, with
+  // ~0.8 m either side so the partition doors and the ANA KORIDOR door
+  // (x 727..783) both stay reachable. The L200 parks on the side strip.
+  { kind: 'sedan',  name: 'Mercedes-Benz C220 d', rect: [627, 1677, 747, 1963] },
+  // The worktop now runs the width of the bay only — the rest of the old
+  // party wall is inside the games room.
+  { kind: 'box', name: 'Tezgah — unloading worktop', rect: [582, 1594, 702, 1631], h: 0.9, mat: 'counter' },
   { kind: 'box', name: 'ARAÇ ŞARJ İSTASYONU — EV charger', rect: [660, 1596, 698, 1612], h: 0.55, y: 1.1, mat: 'dark' },
 
+  // ─────────────────── OYUN / KÜTÜPHANE ODASI (COPY ONLY, ~9 m²)
+  // North half of the old garage strip: library wall, PC desk under the west
+  // window, TV for the PlayStation on the north wall, sofa facing it.
+  { kind: 'tv',  name: 'TV (PlayStation)', rect: [486, 1590, 550, 1600], h: 0.62, y: 1.05 },
+  { kind: 'box', name: 'Media unit / konsol', rect: [480, 1590, 556, 1614], h: 0.45, mat: 'cabinet' },
+  // Library: shelving up the partition, north of the door.
+  { kind: 'wardrobe', name: 'Kütüphane — bookshelves', rect: [536, 1626, 568, 1722], back: 'E', h: 2.1 },
+  // PC desk under the west window (sill 0.9), with its chair.
+  { kind: 'box',   name: 'PC masası — desk', rect: [418, 1676, 458, 1756], h: 0.75, mat: 'wood' },
+  { kind: 'tv',    name: 'PC monitor', rect: [426, 1696, 434, 1738], h: 0.45, y: 0.75 },
+  { kind: 'chair', name: 'Desk chair', rect: [464, 1702, 491, 1729] },
+  { kind: 'rug',   name: 'Rug', rect: [462, 1628, 556, 1740] },
+  { kind: 'sofa',  name: 'Sofa', rect: [428, 1752, 542, 1802], back: 'S', fabric: 'cream', trim: true },
+  { kind: 'coffee', name: 'Coffee table', rect: [462, 1690, 522, 1734] },
+  { kind: 'lamp',  name: 'Floor lamp', rect: [546, 1760, 566, 1780] },
+
+  // ─────────────────── ÇOCUK OYUN ODASI (COPY ONLY, ~9 m²)
+  // South half of the old garage strip, laid out for a toddler: the floor is a
+  // soft foam mat, everything on it is a toy, and the only furniture is
+  // toddler-height cubby storage against the south wall. Nothing has a hard
+  // edge above knee height and nothing blocks the west window (sill 0.9).
+  { kind: 'playmat', name: 'Foam play mat', rect: [426, 1822, 566, 1940], tile: 0.55 },
+  { kind: 'rockinghorse', name: 'Sallanan at — rocking horse', rect: [432, 1828, 526, 1880], rot: 14 },
+  // Teepee in the south-west corner, mouth turned into the room.
+  { kind: 'teepee', name: 'Play teepee', rect: [422, 1878, 500, 1956], h: 1.45, rot: 35 },
+  { kind: 'ballpit', name: 'Top havuzu — ball pit', rect: [500, 1872, 566, 1938] },
+  { kind: 'blocks', name: 'Building blocks', rect: [528, 1824, 566, 1862] },
+  { kind: 'teddy', name: 'Oyuncak ayı — teddy bear', rect: [474, 1938, 506, 1970] },
+  { kind: 'toyshelf', name: 'Oyuncak rafı — toy cubbies', rect: [430, 1956, 566, 1988], back: 'S', h: 0.78 },
+
   // ────────────────────────────────── MUTFAK
-  { kind: 'box', name: 'Kitchen counter (west)',  rect: [481, 1205, 519, 1390], h: 0.9, mat: 'counter' },
+  // Starts south of the new west door (y 1209..1269) rather than at the corner.
+  { kind: 'box', name: 'Kitchen counter (west)',  rect: [481, 1278, 519, 1390], h: 0.9, mat: 'counter' },
   { kind: 'box', name: 'Kitchen counter (south)', rect: [482, 1389, 606, 1426], h: 0.9, mat: 'counter' },
   // Appliance wardrobe (owner's request): the east 1.6 m of the south run is a
   // full-height unit hiding a full-automatic coffee machine, kettle, toaster and
   // microwave behind pocket doors. Against the south partition (y 1434).
   { kind: 'appliancenook', name: 'Appliance wardrobe (coffee, kettle, toaster, microwave)', rect: [606, 1389, 702, 1426], back: 'S' },
-  { kind: 'box', name: 'Tall units / fridge',     rect: [484, 1208, 524, 1250], h: 2.1, mat: 'cabinet' },
+  { kind: 'box', name: 'Tall units / fridge',     rect: [484, 1282, 524, 1324], h: 2.1, mat: 'cabinet' },
   { kind: 'box', name: 'Kitchen island',          rect: [649, 1206, 717, 1330], h: 0.92, mat: 'counter' },
   { kind: 'hob',       name: 'Ocak — MUTFAK',        rect: [652, 1253, 683, 1286], y: 0.92 },
   { kind: 'oven',      name: 'Fırın — MUTFAK',       rect: [485, 1249, 519, 1283], face: 'E' },
@@ -344,17 +420,19 @@ const COPY_OBJECTS = [
 
   // ────────────────────────────────── dining
   { kind: 'box', name: 'Dining table', rect: [827, 1241, 889, 1390], h: 0.75, mat: 'wood' },
-  { kind: 'chair', rect: [798, 1264, 825, 1291] },
-  { kind: 'chair', rect: [798, 1302, 825, 1329] },
-  { kind: 'chair', rect: [798, 1339, 825, 1366] },
-  { kind: 'chair', rect: [891, 1264, 918, 1291] },
-  { kind: 'chair', rect: [891, 1302, 918, 1329] },
-  { kind: 'chair', rect: [891, 1339, 918, 1366] },
-  { kind: 'chair', rect: [844, 1213, 871, 1240] },
-  { kind: 'chair', rect: [844, 1391, 871, 1418] },
+  // Turned to face the table, as on the original floor (floorplan.js).
+  { kind: 'chair', name: 'Dining chair', rect: [798, 1264, 825, 1291], rot: 270 },
+  { kind: 'chair', name: 'Dining chair', rect: [798, 1302, 825, 1329], rot: 270 },
+  { kind: 'chair', name: 'Dining chair', rect: [798, 1339, 825, 1366], rot: 270 },
+  { kind: 'chair', name: 'Dining chair', rect: [891, 1264, 918, 1291], rot: 90 },
+  { kind: 'chair', name: 'Dining chair', rect: [891, 1302, 918, 1329], rot: 90 },
+  { kind: 'chair', name: 'Dining chair', rect: [891, 1339, 918, 1366], rot: 90 },
+  { kind: 'chair', name: 'Dining chair', rect: [844, 1213, 871, 1240], rot: 0 },
+  { kind: 'chair', name: 'Dining chair', rect: [844, 1391, 871, 1418], rot: 180 },
 
   // ────────────────────────────────── Y.MUTFAK KILER
-  { kind: 'box', name: 'Pantry counter (west)', rect: [481, 1486, 517, 1573], h: 0.9, mat: 'counter' },
+  // Starts south of the new west door (y 1443..1491).
+  { kind: 'box', name: 'Pantry counter (west)', rect: [481, 1498, 517, 1573], h: 0.9, mat: 'counter' },
   { kind: 'box', name: 'Pantry counter',        rect: [514, 1441, 700, 1476], h: 0.9, mat: 'counter' },
   { kind: 'box', name: 'Buzdolabı — Y.MUTFAK', rect: [658, 1445, 695, 1483], h: 2.1, mat: 'cabinet' },
   { kind: 'hob',  name: 'Ocak — Y.MUTFAK',     rect: [573, 1445, 606, 1476], y: 0.9 },
@@ -467,6 +545,8 @@ export const GROUND_COPY = {
     ],
     parquet: [
       [1124, 1633, 1421, 2004], // OTURMA ODASI
+      [418, 1624, 572, 1808],   // OYUN / KÜTÜPHANE ODASI (COPY)
+      [418, 1812, 572, 1997],   // ÇOCUK OYUN ODASI (COPY)
       [482, 1203, 930, 1428],   // MUTFAK + dining
       [482, 1441, 702, 1580],   // Y.MUTFAK KILER
       [718, 1442, 930, 1616],   // ANA KORIDOR

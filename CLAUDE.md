@@ -269,10 +269,39 @@ Also added on the owner's instruction (see comments in `floorplan.js`):
     `5` fits it). It exists to try changes without touching the original; edit it
     freely. Changes made only there so far: the kitchen's **appliance wardrobe**
     (`appliancenook`), the east 1.6 m of the south run, hiding a coffee machine,
-    kettle, toaster and microwave behind pocket doors.
+    kettle, toaster and microwave behind pocket doors; both kitchens' **west
+    doors** onto a cement service path down to the parked cars; and the
+    **garage split in three**. GARAJ (41.4 m² at this scale) is cut by a
+    partition at x=575 into a 24 m² single-bay closed garage to the east and a
+    2.74 m strip to the west, itself halved at y=1810 into a games / library
+    room (north: bookshelves, PC desk under the window, TV for the
+    PlayStation, sofa) and the son's play room (south), ~9 m² each — not the
+    12 + 12 asked for, which does not fit alongside 24. The play room is laid
+    out for a toddler — a foam `playmat` floor, `rockinghorse`, `teepee`,
+    `ballpit`, `blocks`, `teddy` and toddler-height `toyshelf` cubbies, all new
+    makers in `objects.js` on a `TOY_COLOURS` palette — with no hard edge above
+    knee height and the west window left clear. Both rooms open off
+    the garage; the Y.MUTFAK party wall stays solid. The roller shutter was
+    narrowed to the bay, the worktop to the bay's width, the Mercedes centred
+    in it and the L200 moved out to the side parking strip. The plan texture
+    still prints `GARAJ 42.00 m²` across all three.
     Each model has a colour-coded name plate in front of it (blue side by side,
     green stacked, orange copy; `LABELS` in `main.js`, `N` toggles) and the hover
     readout ends with the model's name.
+
+16. **Dining → back garden slider.** The sheet draws a 250/230 window in the
+    kitchen block's north wall behind the dining table; on the owner's
+    instruction it is a glazed slider to the floor instead, out to the pool
+    terrace. It keeps the drawn opening (x 754..909, 2.60 m — already centred
+    on the table) and only drops its sill to 0. Black joinery, parking east so
+    the leaf lands on solid wall rather than across the other window. Applied
+    to `groundCopy.js` too, so the copy stays a copy.
+17. **The dining chairs face the table.** Each carries a `rot` (degrees
+    clockwise on the page; the `chair` maker backs a chair north at 0), so the
+    west run is 270, the east run 90 and the ends 0 and 180. Without it all
+    eight faced north and the two runs sat back to back. The maker builds a
+    real chair — legs, seat, open backrest — rather than the solid block it
+    used to be, which at eye level read as a crate.
 
 Settled questions — do not re-litigate these without new instruction:
 
@@ -311,9 +340,69 @@ floor at its true level** (`placement()` returns `storey * floorToFloor` either
 way); `apart` only adds the sideways offset. Putting the first floor back at
 y=0 would bury the flight underground.
 
-Flight 2 passes over the ground-floor W.C, so two things keep them out of each
-other: the flight is `solid: false` (treads and risers only, open soffit) and
-the W.C walls carry `height: 2.3`. Don't make either full again.
+**The stair runs in a stair hall, not over a W.C.** The bay holding flight 2
+was once traced as a small W.C with a basin and a toilet, its walls held to
+`height: 2.3` so the flight could pass "over" it. It cannot: flight 2's soffit
+starts at 1.64 m, so its lower treads ran through the room, above the toilet.
+`node tools/plan-audit.mjs 900 1690 1160 1990` settles it — the sheet draws
+treads in **both** columns, x 1033..1108 (flight 1) and x 946..1021 (flight 2),
+exactly where the two flights are modelled. The stair was right; the W.C was
+the mis-trace. The fixtures are gone, those walls are full height, and the bay
+is the stair hall. The house's shared W.C is ORTAK W.C, which is unaffected.
+
+The flight stays `solid: false` (treads and risers only, open soffit).
+
+**The stairwell void must cover the half-landing, not just the flights.** The
+first floor's `voids` entry runs to y 1942. Stop it at the flights and that
+slab becomes a ceiling 1.30 m above the landing: you can climb flight 1 and
+then not stand up, and the stair hall — and its window — is cut in half. Do
+not run it out to the wall centreline either (see `wallTop` below).
+
+## Walk mode and the desktop app
+
+`src/walk.js` turns the scene into somewhere you stand: WASD, mouse look,
+shift to run, space to jump, C to crouch, Esc to release the mouse, `F` to
+toggle back to the orbit view. It **reuses the scene as its collision world** —
+nothing is re-modelled, so a door is walkable because it is a real gap in the
+geometry and the stair is climbable because it is the stair traced from the
+sheet. Only one model is walkable at a time (the others are hidden while you
+are inside); `'stacked'` is the default because it is the real house.
+
+Collision is raycast-based, not a physics engine:
+
+- three horizontal rays (0.55 / 1.15 / 1.62 m above the feet) along the
+  intended move; if blocked, the move is retried on each axis alone, which
+  gives wall sliding. The lowest ray sits *above* `STEP_UP` on purpose:
+  below that height geometry is something you step onto.
+- one ray dropped from `STEP_UP` (0.45 m) above the feet finds the floor —
+  slab, tread, terrace, lawn — so stairs need no special case.
+- a step up is refused unless there is head room to stand there, or you climb
+  the first sofa you meet and wedge your head in the ceiling. **Stairs are
+  exempt**, because flight 2 climbs under the first-floor slab.
+
+You move only while a key is held, and every route out of the keyboard (blur,
+tab away, leaving pointer lock) clears the held keys — a lost `keyup` would
+otherwise read as walking off on your own.
+
+`walk.goTo([px, py], storey, heading, feetY)`, `walk.probe()` and
+`walk.stairBounds()` are the debugging handles, reachable from the console via
+`window.villa`. `probe()` names what is blocking you rather than leaving you to
+guess from coordinates.
+
+### The desktop app (macOS / Windows)
+
+`desktop/main.cjs` is an Electron shell; `npm run app` runs it, `npm run dist:mac`
+/ `dist:win` package it. The web app is unchanged and unbundled — the one thing
+the desktop needs is an *origin*, because Chromium refuses ES modules and canvas
+reads over `file://`. So it registers a privileged `villa://` scheme and serves
+the project directory through it: identical to the dev server, with nothing
+listening on a port. Files are read through `fs`, not a `file://` fetch, so a
+packaged asar works.
+
+There are two entry pages sharing `src/viewer.css`: `index.html` (orbit the
+models, as before) and `walk.html`, which sets `window.VILLA_BOOT = 'walk'` so
+main.js drops you inside the house. The desktop app opens `walk.html`.
+`npm run bundle` emits a self-contained file for each.
 
 ## Known simplifications
 
@@ -323,11 +412,19 @@ the W.C walls carry `height: 2.3`. Don't make either full again.
 - Storey height is a uniform 3.0 m of wall with a 3.40 m floor-to-floor (from the
   stair note `MÜ: 20 (17x30)`). No floor-level changes — the ground plan has a
   `+0.34` step at `ANA KORIDOR`.
+- **`wallTop`.** A storey with another above it sets `wallTop: PLAN.floorToFloor`
+  so its walls run to the *underside* of that slab, not to the 3.0 m clear
+  height (`buildWalls.js` reads `wall.height ?? floor.wallTop ?? storeyHeight`).
+  The 0.4 m of structural slab would otherwise leave a band of open air above
+  every wall — invisible from outside, because the slab fills it, but wherever
+  a `void` removes the slab you can see straight out over the whole floor. The
+  stairwell is exactly such a place, which is how it was found.
 - The WhatsApp JPEG in `assets/` is a CAD screenshot of the **ground** floor, not
   the first; it adds nothing the main sheet does not already show.
 
 ## Controls
 
-`drag` orbit · `scroll` zoom · `3`/`4`/`5` fit side-by-side / stacked / ground-copy model ·
+`F` walk inside (see below) · `drag` orbit · `scroll` zoom ·
+`3`/`4`/`5` fit side-by-side / stacked / ground-copy model ·
 `1`/`2`/`0` floor visibility · `T` top view · `R` refit · `X` x-ray walls · `O` hide roofs · `N` hide the model name plates · `G` grid. Hovering a
 wall shows its floor and name in the bottom-left readout.

@@ -1,0 +1,72 @@
+/* Shared chrome for both entry pages: index.html (the model inspector) and
+   walk.html (the desktop walkthrough). Keep it in one file so the two cannot
+   drift apart. */
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden;
+    background: #11151b; color: #e7ecf3;
+    font: 13px/1.5 ui-sans-serif, -apple-system, "Segoe UI", sans-serif; }
+  #app { position: fixed; inset: 0; }
+  canvas { display: block; }
+
+  .panel {
+    position: fixed; z-index: 10;
+    background: rgba(18, 23, 30, .78);
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 10px;
+    padding: 12px 14px;
+    backdrop-filter: blur(10px);
+  }
+  #hud { top: 16px; left: 16px; max-width: 260px; }
+  #hud h1 { margin: 0 0 2px; font-size: 14px; letter-spacing: .04em; }
+  #hud p  { margin: 0 0 10px; font-size: 11px; color: #8b97a8; }
+  #hud dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 12px; }
+  #hud dt { color: #8b97a8; }
+  #hud dd { margin: 0; }
+  kbd {
+    display: inline-block; min-width: 18px; text-align: center;
+    padding: 1px 5px; border-radius: 4px; font-size: 11px;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.16);
+  }
+  #status {
+    bottom: 16px; left: 16px; min-height: 0;
+    font-size: 12px; color: #b7c3d4;
+  }
+  #status:empty { display: none; }
+  /* ── walk mode ─────────────────────────────────────────────────────── */
+  body.walking #hud { opacity: .35; }
+  #walk-overlay {
+    position: fixed; inset: 0; z-index: 30; place-content: center;
+    background: rgba(10, 13, 18, .62); backdrop-filter: blur(3px);
+    cursor: pointer; user-select: none;
+  }
+  .walk-card {
+    background: rgba(18, 23, 30, .92);
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 14px; padding: 22px 26px; min-width: 260px;
+  }
+  .walk-card h2 { margin: 0 0 4px; font-size: 15px; letter-spacing: .1em; }
+  .walk-go { margin: 0 0 14px; font-size: 12px; color: #7fd6a0; }
+  .walk-card dl {
+    margin: 0; display: grid; grid-template-columns: auto 1fr;
+    gap: 5px 14px; font-size: 12px;
+  }
+  .walk-card dt { color: #8b97a8; font-weight: 600; }
+  .walk-card dd { margin: 0; }
+  #walk-cross {
+    position: fixed; z-index: 25; left: 50%; top: 50%;
+    width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px;
+    border-radius: 50%; background: rgba(255,255,255,.75);
+    box-shadow: 0 0 0 1px rgba(0,0,0,.55); pointer-events: none;
+  }
+  #loading {
+    position: fixed; inset: 0; display: grid; place-content: center;
+    z-index: 20; color: #8b97a8; background: #11151b;
+  }
+
+/* walk.html boots straight into the house, so its HUD is the walk legend and
+   the panel should not be the first thing competing with the front door. */
+body.walk-boot #hud { opacity: .55; transition: opacity .2s; }
+body.walk-boot #hud:hover { opacity: 1; }
+body.walk-boot.walking #hud { opacity: .3; }
+body.walk-boot #hud kbd + kbd { margin-left: 2px; }

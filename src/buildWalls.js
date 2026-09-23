@@ -199,8 +199,13 @@ export function buildWalls(floor, place) {
   const mpp = PLAN.metersPerPixel;
 
   for (const wall of floor.walls) {
-    // Rooms tucked under the stair carry a reduced ceiling.
-    const H = wall.height ?? PLAN.storeyHeight;
+    // Rooms tucked under the stair carry a reduced ceiling (`wall.height`).
+    // Otherwise a wall is as tall as its floor says: a storey with another
+    // above it runs to the UNDERSIDE of that slab (`wallTop`), not to the
+    // clear room height, or the 0.4 m of structural slab leaves a band of
+    // open air above every wall. The slab hides it — except over a void,
+    // where the stair climbs through and you can see out over the whole floor.
+    const H = wall.height ?? floor.wallTop ?? PLAN.storeyHeight;
     const [ax, az] = toWorld(wall.a, place.offsetPx);
     const [bx, bz] = toWorld(wall.b, place.offsetPx);
 

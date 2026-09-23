@@ -2,17 +2,79 @@
   "name": "my-home-planner",
   "version": "1.0.0",
   "private": true,
-  "description": "Three.js viewer that extrudes 3D walls over the Villa Khan 2D floor plan",
+  "description": "Three.js viewer and first-person walkthrough of the Villa Khan floor plans",
   "type": "module",
   "scripts": {
     "start": "node tools/serve.mjs",
     "serve": "node tools/serve.mjs",
-    "audit": "node tools/plan-audit.mjs"
+    "audit": "node tools/plan-audit.mjs",
+    "bundle": "node tools/bundle.mjs",
+    "app": "electron .",
+    "dist": "electron-builder --mac --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win"
   },
   "dependencies": {
     "three": "^0.186.0"
   },
   "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3",
     "pdfjs-dist": "^6.3.289"
+  },
+  "author": {
+    "name": "Serhan Khan",
+    "email": "serhankhan0@gmail.com"
+  },
+  "main": "desktop/main.cjs",
+  "build": {
+    "appId": "com.serhankhan.villakhan",
+    "productName": "Villa Khan",
+    "directories": {
+      "output": "release",
+      "buildResources": "desktop/build"
+    },
+    "files": [
+      "desktop/**/*",
+      "src/**/*",
+      "index.html",
+      "walk.html",
+      "assets/VILLA KHAN 20092026_page-0001.jpg",
+      "!**/*.md"
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.graphics-design",
+      "darkModeSupport": true
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false
+    }
   }
 }
