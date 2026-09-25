@@ -329,6 +329,14 @@ Also added on the owner's instruction (see comments in `floorplan.js`):
     real chair — legs, seat, open backrest — rather than the solid block it
     used to be, which at eye level read as a crate.
 
+18. **Kitchen storage to the ceiling** (both kitchens). `wallcabinet` runs hang
+    over the worktops from 1.5 m to 2.95 m (the ceiling is the first-floor
+    slab's underside, 3.0 m), 0.35 m deep, clear of the MUTFAK west window;
+    over the fridges they start at 2.15 m and over the KILER hob at 2.0 m.
+    MUTFAK also has a **secret appliance wardrobe** (`appliancenook`,
+    `microwave: false`) at the west end of its south run: coffee machine,
+    kettle and toaster behind sliding pocket doors, drawn open.
+
 Settled questions — do not re-litigate these without new instruction:
 
 - **P.14 has no garage** and no EV charger / unloading tezgah; the cars park

@@ -339,6 +339,29 @@ const KINDS = {
     run.add(box(len * 0.95, 0.025, 0.025, M.metal, 0, drawerTop + openH * 0.62 - 0.08, face));
   },
 
+  /**
+   * Upper kitchen cabinets hung on a wall, from `y` (1.5 m, 0.6 m clear of
+   * the worktop) up to `top` (2.95 m, just under the 3.0 m ceiling that the
+   * first-floor slab makes). One door front per ~0.5 m, each with a pull near
+   * its lower edge. `back` names the wall it hangs on.
+   */
+  wallcabinet(g, { w, d }, it) {
+    const { run, len, depth } = backedRun(g, { w, d }, it.back);
+    const y = it.y ?? 1.5;
+    const h = (it.top ?? 2.95) - y;
+    const face = depth / 2 + 0.006;
+    run.add(box(len, h, depth, M.cabinet, 0, y, 0));
+
+    const doors = Math.max(1, Math.round(len / 0.5));
+    const doorW = len / doors;
+    for (let i = 0; i < doors; i++) {
+      const x = -len / 2 + doorW * (i + 0.5);
+      run.add(box(doorW - 0.012, h - 0.02, 0.012, M.linen, x, y + 0.01, face));
+      const pull = x + (i % 2 ? -1 : 1) * (doorW / 2 - 0.06);
+      run.add(box(0.02, 0.16, 0.02, M.metal, pull, y + 0.08, face + 0.012));
+    }
+  },
+
   /** Dining table: slab top on four square legs. */
   table(g, { w, d }, it) {
     const h = it.h ?? 0.75;
@@ -968,6 +991,7 @@ const KINDS = {
    * pocket doors (drawn slid back to the ends) that hides a full-automatic
    * coffee machine, kettle, toaster and microwave, with closed cabinets above.
    * `back` names the wall it stands against; the rect's long side is its width.
+   * `microwave: false` leaves the microwave out, for a ~1.1 m unit.
    */
   appliancenook(g, { w, d }, it) {
     const { run, len, depth } = backedRun(g, { w, d }, it.back);
@@ -1026,6 +1050,7 @@ const KINDS = {
     for (const z of [-0.035, 0.035]) run.add(box(0.22, 0.012, 0.03, M.dark, tx, y0 + 0.18, zc + z));
     run.add(box(0.03, 0.02, 0.03, M.dark, tx + 0.17, y0 + 0.1, zc));
 
+    if (it.microwave === false) return;
     const mx = inner / 2 - 0.29;
     run.add(box(0.46, 0.28, 0.34, M.metal, mx, y0, zc - 0.04));                       // microwave
     run.add(box(0.31, 0.2, 0.012, M.dark, mx - 0.06, y0 + 0.04, zc + 0.136));

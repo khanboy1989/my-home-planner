@@ -660,11 +660,27 @@ const GROUND_OBJECTS = [
 
   // ────────────────────────────────── MUTFAK
   { kind: 'box', name: 'Kitchen counter (west)',  rect: [482, 999, 519, 1213], h: 0.9, mat: 'counter' },
-  { kind: 'box', name: 'Kitchen counter (south)', rect: [519, 1213, 730, 1250], h: 0.9, mat: 'counter' },
+  { kind: 'box', name: 'Kitchen counter (south)', rect: [586, 1213, 730, 1250], h: 0.9, mat: 'counter' },
+  // Secret appliance wardrobe (owner's request) at the west end of the south
+  // run, by the corner: coffee machine, kettle and toaster on a worktop behind
+  // sliding pocket doors (drawn slid open), cabinets above it to the ceiling.
+  {
+    kind: 'appliancenook', name: 'Appliance wardrobe (coffee machine, kettle, toaster)',
+    rect: [520, 1213, 586, 1250], back: 'S', h: 2.95, microwave: false,
+  },
   { kind: 'box', name: 'Buzdolabı — MUTFAK',      rect: [658, 1209, 695, 1247], h: 2.1, mat: 'cabinet' },
   { kind: 'box', name: 'Kitchen island',          rect: [649, 999, 717, 1123], h: 0.92, mat: 'counter' },
   { kind: 'hob',       name: 'Ocak — MUTFAK',     rect: [652, 1046, 683, 1079], y: 0.92 },
   { kind: 'appliance', name: 'Bulaşık Mak.',      rect: [485, 1078, 516, 1131] },
+  // Upper cabinets to the ceiling over both worktop runs (owner's request; the
+  // sheet draws base units only). 0.35 m deep (21 px); the west run stops
+  // either side of the 180/110 window, and the section over the fridge starts
+  // above it rather than at 1.5 m.
+  { kind: 'wallcabinet', name: 'Upper cabinets — MUTFAK west (north of window)', rect: [482, 999, 503, 1062], back: 'W' },
+  { kind: 'wallcabinet', name: 'Upper cabinets — MUTFAK west (south of window)', rect: [482, 1178, 503, 1250], back: 'W' },
+  { kind: 'wallcabinet', name: 'Upper cabinets — MUTFAK south',                  rect: [586, 1229, 658, 1250], back: 'S' },
+  { kind: 'wallcabinet', name: 'Upper cabinet — over the MUTFAK fridge',         rect: [658, 1229, 695, 1250], back: 'S', y: 2.15 },
+  { kind: 'wallcabinet', name: 'Upper cabinets — MUTFAK south (east end)',       rect: [695, 1229, 730, 1250], back: 'S' },
   { kind: 'stool', name: 'Bar stool', rect: [711, 1012, 737, 1038] },
   { kind: 'stool', name: 'Bar stool', rect: [711, 1052, 737, 1078] },
   { kind: 'stool', name: 'Bar stool', rect: [711, 1087, 737, 1113] },
@@ -688,6 +704,14 @@ const GROUND_OBJECTS = [
   { kind: 'box', name: 'Buzdolabı — Y.MUTFAK',   rect: [658, 1259, 695, 1297], h: 2.1, mat: 'cabinet' },
   { kind: 'hob',  name: 'Ocak — Y.MUTFAK',       rect: [573, 1259, 606, 1291], y: 0.9 },
   { kind: 'oven', name: 'Fırın — Y.MUTFAK',      rect: [573, 1259, 606, 1293], face: 'S' },
+  // Upper cabinets to the ceiling on both long walls (owner's request). Over
+  // the hob they start at 2.0 m to leave it clear, over the fridge above it.
+  { kind: 'wallcabinet', name: 'Upper cabinets — KILER north',          rect: [482, 1256, 573, 1277], back: 'N' },
+  { kind: 'wallcabinet', name: 'Upper cabinet — over the KILER hob',    rect: [573, 1256, 606, 1277], back: 'N', y: 2.0 },
+  { kind: 'wallcabinet', name: 'Upper cabinets — KILER north (middle)', rect: [606, 1256, 658, 1277], back: 'N' },
+  { kind: 'wallcabinet', name: 'Upper cabinet — over the KILER fridge', rect: [658, 1256, 695, 1277], back: 'N', y: 2.15 },
+  { kind: 'wallcabinet', name: 'Upper cabinets — KILER north (east)',   rect: [695, 1256, 730, 1277], back: 'N' },
+  { kind: 'wallcabinet', name: 'Upper cabinets — KILER south',          rect: [482, 1387, 792, 1408], back: 'S' },
 
   // ────────────────────────────────── W.C (west wing)
   // Both fixtures stand against the west wall, so they are turned 270°.
