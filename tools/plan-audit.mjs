@@ -4,7 +4,7 @@
  *   node tools/plan-audit.mjs            # reconcile doors, list windows
  *   node tools/plan-audit.mjs 780 1690 1140 2040   # dump segments in a box
  *
- * The PDF is the authoritative source: assets/VILLA KHAN 20092026.pdf is a
+ * The PDF is the authoritative source: the PDF named by PLAN.pdf is a
  * true vector drawing, so wall lines, door arcs and dimension text can be
  * read exactly rather than eyeballed off the JPEG. PDF points map onto the
  * sheet-pixel space used by floorplan.js by a single scale (the JPEG was
@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { FLOORS, PLAN } from '../src/floorplan.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const PDF = path.join(ROOT, 'assets', 'VILLA KHAN 20092026.pdf');
+const PDF = path.join(ROOT, PLAN.pdf);
 const SHEET_W = 3509; // px width of the rendered JPEG
 
 const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
@@ -33,6 +33,10 @@ const doc = await pdfjs.getDocument({ data: new Uint8Array(fs.readFileSync(PDF))
 const page = await doc.getPage(1);
 const vp = page.getViewport({ scale: 1 });
 const S = SHEET_W / vp.width;
+// A revision can be re-plotted at a slightly different scale and position on
+// the page. The model keeps its pixel frame, so page px are mapped back into it.
+const { scale: SK, offset: [TX, TY] } = PLAN.pdfToSheet;
+const toSheet = (x, y) => [(x - TX) / SK, (y - TY) / SK];
 
 const mul = (a, b) => [
   a[0]*b[0]+a[2]*b[1], a[1]*b[0]+a[3]*b[1],
@@ -42,7 +46,7 @@ const mul = (a, b) => [
 const px = (m, x, y) => {
   const wx = m[0]*x + m[2]*y + m[4];
   const wy = m[1]*x + m[3]*y + m[5];
-  return [wx * S, (vp.height - wy) * S];
+  return toSheet(wx * S, (vp.height - wy) * S);
 };
 
 // pdfjs 6 packs subpaths as a flat [opcode, ...coords] stream.
@@ -85,7 +89,10 @@ for (let i = 0; i < ops.fnArray.length; i++) {
 
 const texts = (await page.getTextContent()).items
   .filter((t) => t.str.trim())
-  .map((t) => ({ s: t.str.trim(), x: t.transform[4]*S, y: (vp.height - t.transform[5])*S }));
+  .map((t) => {
+    const [x, y] = toSheet(t.transform[4]*S, (vp.height - t.transform[5])*S);
+    return { s: t.str.trim(), x, y };
+  });
 
 // ── segment dump mode ───────────────────────────────────────────────────
 const box = process.argv.slice(2).map(Number);
@@ -119,7 +126,9 @@ for (const c of curves) {
   const r0 = Math.hypot(x0-cx, y0-cy), r1 = Math.hypot(x3-cx, y3-cy);
   if (Math.abs(r0-r1) > 0.06*r0) continue;
   const r = (r0+r1)/2;
-  if (r < 30 || r > 90) continue;               // 0.5 m .. 1.5 m leaves
+  // 0.65 m .. 1.5 m leaves. The garden trees are drawn as r≈32 px quarter
+  // arcs, so the floor is set above that; the narrowest door, K1:80, is ~43.
+  if (r < 38 || r > 90) continue;
   const ang = Math.abs(Math.atan2(y3-cy, x3-cx) - Math.atan2(y0-cy, x0-cx));
   const sweep = Math.min(ang, 2*Math.PI-ang) * 180/Math.PI;
   if (sweep < 55 || sweep > 100) continue;
@@ -155,7 +164,7 @@ for (const a of arcs) {
 
 console.log(`doors: ${matched}/${arcs.length} arcs matched`);
 problems.forEach((p) => console.log('  ! ' + p));
-console.log('  (two arcs at ~1198,1927 are the curved sofa, not doors)');
+console.log('  (four arcs at ~1198,1720 and ~666,1727 are the two curved sofas, not doors)');
 
 // ── window schedule from dimension text ─────────────────────────────────
 console.log('\nwindow schedule (width/height cm @ sheet px, centre of opening):');

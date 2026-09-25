@@ -90,10 +90,11 @@ function apronGeometry() {
   for (const [, dx, , floors] of LAYOUTS) {
     const pool = floors.find((f) => f.storey === 0)?.objects.find((o) => o.kind === 'pool');
     if (!pool) continue;
+    const ground = floors.find((f) => f.storey === 0);
     const [x0, y0, x1, y1] = poolBasinPx(pool.rect);
     // Shape +Y is world -Z once the apron is laid flat, hence the flip.
     const corners = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
-      .map((c) => toWorld(c, [0, 0]))
+      .map((c) => toWorld(c, ground.alignPx))
       .map(([x, z]) => new THREE.Vector2(x + dx, -z));
     shape.holes.push(new THREE.Path(corners));
   }
@@ -115,11 +116,14 @@ scene.add(apron);
  * coordinates are in the same sheet pixels, which is what keeps the
  * extrusions registered to the drawing.
  */
-let sheet;
+// A floor may name its own `image` (the ground-floor copy keeps the P.13
+// sheet it was traced from); everything else uses PLAN.image.
+const sheets = new Map();
 try {
-  sheet = await new THREE.ImageLoader()
-    .setCrossOrigin('anonymous')
-    .loadAsync(encodeURI(PLAN.image));
+  const images = new Set([PLAN.image, ...LAYOUTS.flatMap(([, , , floors]) => floors.map((f) => f.image ?? PLAN.image))]);
+  await Promise.all([...images].map(async (src) => {
+    sheets.set(src, await new THREE.ImageLoader().setCrossOrigin('anonymous').loadAsync(encodeURI(src)));
+  }));
 } catch (err) {
   document.getElementById('loading').textContent =
     'Could not load the floor plan image — serve this folder over HTTP.';
@@ -168,7 +172,7 @@ function cropTexture(floor) {
   const ctx = canvas.getContext('2d');
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, w, h);
-  ctx.drawImage(sheet, x, y, w, h, 0, 0, w, h);
+  ctx.drawImage(sheets.get(floor.image ?? PLAN.image), x, y, w, h, 0, 0, w, h);
 
   if (floor.parquet?.length) {
     ctx.save();
@@ -213,6 +217,11 @@ function slabShape(floor) {
       .lineTo(w / 2, h / 2).lineTo(-w / 2, h / 2).closePath();
 
   for (const v of floor.voids ?? []) {
+    // A void is a `rect`, or a `path` polygon where two openings meet.
+    if (v.path) {
+      shape.holes.push(new THREE.Path(v.path.map((p) => new THREE.Vector2(...local(p)))));
+      continue;
+    }
     const [x0, y0] = local([v.rect[0], v.rect[1]]);
     const [x1, y1] = local([v.rect[2], v.rect[3]]);
     const [lo, hi] = [Math.min(x0, x1), Math.max(x0, x1)];

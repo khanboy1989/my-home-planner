@@ -10,8 +10,15 @@
  *
  * Note the copy has its own street-wall gates, plot wall and pool, and the
  * ground apron gets a pool hole for it as well.
+ *
+ * It was taken from P.13 (the 20/09/2026 sheet), before P.14 moved the house
+ * 3.4 m north and turned the garage into rooms. It stays a P.13 experiment:
+ * it keeps that sheet as its texture and its own crop, and `alignPx` carries
+ * its P.13 coordinates into the shared frame (crop + alignPx = ORIGIN).
  */
 import { ORIGIN } from './floorplan.js';
+
+const P13_CROP = { x: 385, y: 1180, w: 1060, h: 855 };
 
 const COPY_WALLS = [
   // ────────────────────────────────── kitchen / dining block (north)
@@ -532,7 +539,8 @@ export const GROUND_COPY = {
   base: 'ground', // floor-visibility keys (1/2/0) treat it as the ground floor
   name: 'ZEMIN (COPY)',
   label: 'Ground floor (copy)',
-  crop: { ...ORIGIN },
+  image: 'assets/VILLA KHAN 20092026_page-0001.jpg',
+  crop: P13_CROP,
     // Laminate parquet throughout, kitchens included. Only the W.C, the stair
     // and the garage keep the plain finish. Rects are approximate room
     // interiors; the walls hide the edges.
@@ -552,7 +560,7 @@ export const GROUND_COPY = {
       [718, 1442, 930, 1616],   // ANA KORIDOR
       [812, 1730, 931, 1872],   // GIRIS HOLU
     ],
-  alignPx: [0, 0],
+  alignPx: [ORIGIN.x - P13_CROP.x, ORIGIN.y - P13_CROP.y],
   storey: 0,
   walls: COPY_WALLS,
   objects: COPY_OBJECTS,

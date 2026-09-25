@@ -53,11 +53,11 @@ const FOV = 72;            // wider than the orbit camera — you are inside now
 // the bounce. Both are restored on the way out so the orbit view is untouched.
 const INDOOR = { ambient: 0.62, hemi: 1.9, exposure: 1.3 };
 
-// Where you appear: just inside the pedestrian gate on the street wall, on the
-// lawn, looking across the garden at the front door — so the walk starts with
+// Where you appear: on the path just inside the pedestrian gate (past its open
+// leaf), looking straight up it at the front door — so the walk starts with
 // the plot and the house in front of you rather than pressed against a wall.
 // Sheet pixels of the ground floor; heading in radians, 0 = north / -Z.
-const SPAWN = { px: [1024, 2180], storey: 0, heading: 0.48 };
+const SPAWN = { px: [869, 2100], storey: 0, heading: 0 };
 
 export function createWalkMode({
   renderer, camera, scene, orbit, floorGroups, labelGroup, statusEl,

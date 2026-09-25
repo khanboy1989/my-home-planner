@@ -20,7 +20,6 @@ const read = (p) => readFileSync(join(root, p));
 const dataUrl = (type, buf) => `data:${type};base64,${Buffer.from(buf).toString('base64')}`;
 
 const SRC = ['floorplan.js', 'groundCopy.js', 'buildWalls.js', 'objects.js', 'walk.js', 'main.js'];
-const IMAGE = 'assets/VILLA KHAN 20092026_page-0001.jpg';
 
 // three.module.js re-exports from './three.core.js'; a data: URL has no base
 // to resolve that against, so the core goes in the map under its own name.
@@ -40,9 +39,8 @@ for (const name of SRC) {
   let code = read(`src/${name}`).toString();
   // './floorplan.js' → 'app:floorplan.js', the name the import map defines.
   code = code.replace(/from '\.\/([\w.]+)'/g, "from 'app:$1'");
-  if (name === 'floorplan.js') {
-    code = code.replace(`'${IMAGE}'`, JSON.stringify(dataUrl('image/jpeg', read(IMAGE))));
-  }
+  // Every plan sheet a module names ('assets/….jpg') is inlined as a data: URL.
+  code = code.replace(/'(assets\/[^']+\.jpg)'/g, (_, img) => JSON.stringify(dataUrl('image/jpeg', read(img))));
   imports[`app:${name}`] = dataUrl('text/javascript', code);
 }
 

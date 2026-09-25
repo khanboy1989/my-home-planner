@@ -2,9 +2,11 @@
 
 ## Read this first, every session
 
-**`assets/VILLA KHAN 20092026.pdf` is the authoritative source for all
-geometry — check it before touching `src/floorplan.js`, and re-check it
-whenever the owner reports something is in the wrong place.**
+**`assets/VILLA KHAN 24092026.pdf` (P.14, `PLAN.pdf`) is the authoritative
+source for all geometry — check it before touching `src/floorplan.js`, and
+re-check it whenever the owner reports something is in the wrong place.**
+The P.13 sheet (`VILLA KHAN 20092026.pdf`) is kept only because
+`groundCopy.js` is still a P.13 experiment.
 
 It is a true vector drawing, so walls, door swings and dimensions can be read
 *exactly*. The JPEG is only a raster of the same sheet, used at runtime as the
@@ -18,13 +20,25 @@ node tools/plan-audit.mjs 780 1690 1140 2040    # dump wall segments in a box
 ```
 
 `npm run audit` cross-checks every door arc in the PDF against the openings in
-`floorplan.js`. It should report **12/14 arcs matched**; the two leftovers are
-the curved sofa in OTURMA ODASI, not doors. If it reports anything else, the
-model has drifted from the drawing — fix the model, not the audit.
+`floorplan.js`. It should report **17/21 arcs matched**; the four leftovers are
+the two curved sofas (OTURMA ODASI and OYUN ODASI), not doors. (Garden trees
+are drawn as r≈32 px arcs and are filtered out by radius.) If it reports
+anything else, the model has drifted from the drawing — fix the model, not the
+audit.
 
-The PDF is also revised often (the sheet lists a dozen P.n dates). If the owner
-supplies a newer one, re-run the audit before assuming anything still holds,
-and reconcile the **Departures from the sheet** section below.
+The PDF is also revised often (the sheet lists fourteen P.n dates). If the
+owner supplies a newer one:
+
+1. Render both sheets and diff them — a revision can be **re-plotted** at a
+   different scale and position on the page, not just edited (P.14 came out
+   1.6% larger and shifted). Fit `new = k·old + t` on room labels that did not
+   move (`getTextContent()` positions); a clean replot fits to < 0.5 px.
+2. Put the fit in `PLAN.pdfToSheet` and the file in `PLAN.pdf`, then
+   `node tools/render-sheet.mjs` re-renders `PLAN.image` **into the model's
+   existing pixel frame**, so unchanged walls stay registered and
+   `metersPerPixel` still holds. The audit reads through the same transform.
+3. Re-run the audit, overlay the walls on the new texture, and reconcile the
+   **Departures from the sheet** section below.
 
 ---
 
@@ -54,7 +68,7 @@ troubleshooting table; `AGENTS.md` is the entry point for non-Claude agents.
 
 | Path | What it is |
 | --- | --- |
-| `assets/` | Source drawings. `VILLA KHAN 20092026_page-0001.jpg` is the full sheet (3509×2482) and the only one the app reads. The WhatsApp JPEG is a CAD screenshot kept for reference. |
+| `assets/` | Source drawings. `VILLA KHAN 24092026_page-0001.jpg` is the P.14 sheet rendered into the model frame (3509×2482, `tools/render-sheet.mjs`) and is what the app reads; `…20092026_page-0001.jpg` is P.13, read only by the ground-floor copy. The WhatsApp JPEG is an old CAD screenshot kept for reference. |
 | `index.html` | Shell, HUD, import map. |
 | `src/floorplan.js` | **The data.** Per-floor crop, alignment, every wall centreline + opening, and the furniture schedule. |
 | `src/buildWalls.js` | Turns one floor's wall data into geometry, including door and window joinery. |
@@ -78,11 +92,16 @@ Because walls and texture share one pixel space, the extrusions stay registered 
 the drawing for free. **Keep it that way** — to move a wall, move its pixel
 coordinates; don't introduce a metre-space offset.
 
-The first floor's `alignPx` of `(-1762, +1)` was derived by matching structural
-walls the two plans share — the north block's west and east walls and the
-living/master block's north wall all land within ~5 px (<0.1 m) of each other.
-That alignment is what makes the `stacked` layout meaningful, so preserve it even
+The first floor's `alignPx` of `(-1763, -204)` was derived from P.14's wall
+faces — the kitchen block / north block north walls and the living room /
+master suite north and east walls agree to 1 px. (It was `(-1762, +1)` under
+P.13; P.14 moved the ground-floor house 3.4 m north on the plot.) That
+alignment is what makes the `stacked` layout meaningful, so preserve it even
 though the default view puts the floors apart.
+
+`main.js` centres each floor's slab on its container, so **`crop.xy + alignPx`
+must equal `ORIGIN.xy` for every floor** — move `ORIGIN` when the ground floor
+moves (it is `{384, 975}` now), and derive `alignPx` from it for any other.
 
 `metersPerPixel = 0.0168` was calibrated against the `K1:100/230` doors (1.00 m
 clear opening) and cross-checked against `GARAJ 42.00 m²`. The drawing's printed
@@ -180,9 +199,10 @@ How the PDF encodes things, so you don't have to rediscover it:
 Two things are modelled that this sheet revision does **not** draw. They were
 added on the owner's instruction and are commented at their definitions:
 
-1. **Bedroom → EBEVEYN D.ODASI glazed slider**, black joinery. Parks westward so
-   the leaf clears both the DUS W.C door and the wardrobe run; the wardrobe was
-   shortened to the east end for the same reason.
+1. **Bedroom → EBEVEYN D.ODASI glazed slider**, black joinery. P.14 now draws
+   the opening (x 3069..3118); the slider fills it. Parks westward so the leaf
+   clears both the DUS W.C door and the wardrobe run, whose west leg starts at
+   y 1868 for the same reason.
 2. **Window joinery is black** throughout, as is the slider.
 
 Also added on the owner's instruction (see comments in `floorplan.js`):
@@ -192,31 +212,34 @@ Also added on the owner's instruction (see comments in `floorplan.js`):
    `island`; Y.ODASI 2 D.ODASI is the same U with **no island**. The thin
    partition between YATAK ODASI 2 and its dressing room is 0.1 m (PDF faces
    y 1445/1451); the long block on its bedroom side is a desk, not a wardrobe.
-4. **BALKON TERASI is half glazed, front/back.** The back half (y 1744..1872,
-   against the house) is a `glassroom` — black frames, mono-pitch glass roof
-   leaning on the house wall, sliding door in its glass front. The front half
-   (y 1872..2000) stays open, with its balustrade, for laundry.
-5. **Ground-floor terrace:** the whole L-shaped terrace (`paving`) east of
-   the house is under a flat oak roof (another `paving` slab, `y: 2.65`,
-   cantilevering past the free edges, black corner posts) — in the stacked
-   model only, like the tile roofs. Under it: dining
-   table + six chairs, timber planters, potted topiary, and a rubble-stone
-   barbecue beside the kitchen whose flue passes up through the roof (it sits
-   on the open north edge because the kitchen's east windows fill the wall
-   side). `O` hides the roof (any `paving` item with `roof: true`) so the
-   terrace can be seen from above. The pool (HAVUZ) and four ŞEZLONG loungers
-   are from the sheet, north of the house and outside the floor crop, so they
-   carry their own deck and shell; a parasol stands between each pair of
-   loungers. The pool water and floor use unlit `MeshBasicMaterial` so the
-   house's shadow can't blacken them. The basin is sunk below the ground
-   `apron` in `main.js`, which therefore has a hole cut over the pool
-   (`poolBasinPx()` in `objects.js`) — move the pool and the hole follows.
-6. **Garage door is a white roller shutter** (`kind: 'garage'`), drawn closed.
-   Set `raise` (0 closed .. 1 rolled up) on the opening to leave it partly
-   open.
-7. **The garage cars are a Mercedes-Benz C220 d** (left bay, graphite) **and a
-   Mitsubishi L200 double-cab pickup, 2018** (right bay, white), built by the
-   `sedan` and `pickup` makers at their real sizes, nose to the north wall.
+4. **KAPALI TERAS — the old glass room, now on the sheet.** The owner's
+   glazed back half of the balcony is drawn in P.14 as KAPALI TERAS (11 m²),
+   an enclosed room: solid west wall with a 185/110 window, a 600/230 glazed
+   front (modelled as black fixed panes either side of a slider), entered from
+   ANA KORIDOR through the 251/230, which is a black slider. It sits under the
+   ÇAMSIR hip roof; the `glassroom` object is gone. BALKON TERASI (y 1873..2020)
+   stays open in front of it, with its balustrade, for laundry.
+5. **İÇBAHÇE TERASI (ground, east of the kitchen, 60 m²)** is under a flat oak
+   roof (a `paving` slab, `y: 2.65`, leaning on the kitchen and living walls,
+   cantilevering past the free edges, black posts) — in the stacked model
+   only, like the tile roofs. Under it: dining table + six chairs, a timber
+   planter, potted topiary, and a rubble-stone barbecue at the open north edge
+   beside the kitchen, whose flue passes up through the roof (the kitchen's
+   300/230 window fills its east wall). `O` hides the roof (any `paving` item
+   with `roof: true`). The pool (HAVUZ) is from the sheet — P.14 moved it 1 m
+   west and 3.7 m north — and carries its own deck and shell. P.14 dropped the
+   ŞEZLONG loungers; the four are kept on the wide paved deck west of the
+   pool, with a parasol between each pair. The pool water and floor use unlit
+   `MeshBasicMaterial` so the house's shadow can't blacken them. The basin is
+   sunk below the ground `apron` in `main.js`, which therefore has a hole cut
+   over the pool (`poolBasinPx()` in `objects.js`) — move the pool and the hole
+   follows.
+6. **(Retired with P.14.)** The garage and its white roller shutter are gone:
+   P.14 turned the garage into ÇALIŞMA ODASI, OYUN ODASI and a W.C.
+7. **The family's cars — a Mercedes-Benz C220 d** (graphite) **and a
+   Mitsubishi L200 double-cab pickup, 2018** (white), built by the `sedan` and
+   `pickup` makers at their real sizes — stand in the two open parking bays
+   P.14 draws in front of the west wing, nose to the house.
 8. **Black tile roofs** — the sheet draws none (the old "roof is not modelled"
    note no longer holds for BIRINCI KAT). Four `hiproof` items sit on the first
    floor's blocks (`roof: true`, eaves at 3.0 m), in charcoal S-tile after the
@@ -230,22 +253,23 @@ Also added on the owner's instruction (see comments in `floorplan.js`):
    scale calibration. It is cut away over the pool basin.
 10. **Plot wall and front gates.** A 2 m × 0.2 m boundary wall runs on the plot
     line (same four corners as the `land` item). The street is the south edge.
-    It has two `gate` openings (black-lined, no leaf), each with a black bar gate
-    object (`gate` kind, `streetGate()` in `floorplan.js`): one 9 m opening serves
-    the garage door and the side parking strip (a paved pad west of the garage,
-    x 246..404, with the two parked cars the sheet draws there) and carries a
-    bi-parting sliding gate, drawn closed; a 1.2 m opening at the GIRIS entrance
-    carries a pedestrian gate swung open 70° inward.
+    It has the two openings P.14 draws (black-lined `gate` openings, each with
+    a black bar gate object — `gate` kind, `streetGate()` in `floorplan.js`): a
+    6.2 m opening onto the parking bays (x 420..792, a concrete pad between two
+    1 m low walls) with a bi-parting sliding gate, drawn closed; and a 2.1 m
+    opening onto the paved path up to GIRIS (x 807..931) with a pedestrian gate
+    swung open 70° inward. P.14's hatched areas are one `paving` patio round the
+    house and pool, with `holes` for both; the rest of the plot is lawn.
 11. **Laminate parquet floors** in the living areas (`parquet` rects on each
     floor). `cropTexture()` in `main.js` multiplies a plank pattern over the
     plan, so printed lines and labels survive. Kitchens included; only the
-    W.Cs, showers, laundry, the stair and the garage stay plain. Interiors are never grass: the `land` sits *under* the
+    W.Cs, showers, laundry, DEPO and the stair stay plain. Interiors are never grass: the `land` sits *under* the
     slabs.
 12. **Exotic fruit planting** just inside the plot wall: date and papaya palms,
     banana clumps, and mango / fig / pomegranate / orange / lemon / avocado
     trees (`PLANTING` in `floorplan.js`; `palm`, `banana` and `fruittree`
-    makers). Clear of the street gates, the parking strip, the terrace and
-    the pool.
+    makers). Only in the lawns P.14 draws — the north strip, the east and front
+    gardens, the strip beside the parking — clear of the gates, path and patio.
 13. **Floor slab body.** Storeys are 3.0 m of wall on a 3.40 m floor-to-floor, so
     an upper floor gets a 0.4 m structural slab under it (`slabBody()` in
     `main.js`, same outline and voids) and the walls below meet it with no gap.
@@ -264,7 +288,9 @@ Also added on the owner's instruction (see comments in `floorplan.js`):
     floor's `erase` rects (`cropTexture()` overpaints them with plain parquet). The fireplace
     is a requirement — keep one (now the hanging one) if the room is restyled again.
 15. **Ground-floor copy** (branch `feature/ground-floor-copy`). `src/groundCopy.js`
-    is a full, independent source copy of the ground floor — walls, plot, planting,
+    is a **P.13** experiment: it keeps the P.13 sheet (`image`), its own crop,
+    and an `alignPx` that carries it into the shared frame, and was not
+    re-traced to P.14. It is a full, independent source copy of the ground floor — walls, plot, planting,
     gates, objects, parquet — drawn as a third model 30 m west of the origin (key
     `5` fits it). It exists to try changes without touching the original; edit it
     freely. Changes made only there so far: the kitchen's **appliance wardrobe**
@@ -305,22 +331,23 @@ Also added on the owner's instruction (see comments in `floorplan.js`):
 
 Settled questions — do not re-litigate these without new instruction:
 
-- **There is no door through the Y.MUTFAK / garage party wall** (y=1586). That
-  wall is straight and solid. It carries the EV charger and one continuous
-  tezgah, the full width of the garage, for unloading shopping.
-- **The garage's only internal door is the `K1:100/230` into ANA KORIDOR**, in
-  the horizontal wall at y=1624 (x 727..783) at the garage's stepped north-east
-  corner — reached up the right-hand side of the right-hand car, directly
-  opposite. From ANA KORIDOR you then reach Y.MUTFAK KILER via its `K1:80/230`.
-- **The main entrance is into GIRIS HOLU**, through the `K1:100/230` in the wall
-  at y≈1878 off GIRIS TERASI. The W.C block's south wall carries a 210/110
-  **window**, not a door.
+- **P.14 has no garage** and no EV charger / unloading tezgah; the cars park
+  outside. (The P.13 garage questions still apply to `groundCopy.js` only.)
+- **The main entrance is into GIRIS HOLU**, through the `K1:180/230` double
+  door in the wall at y 1747 off GIRIS TERASI, both leaves opening inward.
+  East of it the same wall carries the stair's 210/110 **window**, not a door.
+- **GIRIS HOLU is double height**: the first floor's GALERI BOSLUGU is the
+  void above it, and the stair is open to it along x 943 (a drawn edge, not a
+  wall).
+- **The kitchen block's doors:** MUTFAK ↔ ANA KORIDOR is a `K1:180/230` double
+  door at y 1303; MUTFAK ↔ Y.MUTFAK KILER a `K1:90/230` in the thin partition
+  at y 1253 (x 738..788); KILER has its own `K1:90/230` service door out to
+  the west (y 1309..1365).
 - **ORTAK W.C opens onto ANA KORIDOR**, through the `K1:80/230` in its **east**
   wall (gap at y 1557..1612). There is **no** door between the W.C and ÇAMSIR
   ODASI — that shared wall is solid.
-- **GIRIS HOLU has no coat room.** The recess at x 894..931, y 1724..1869 holds
-  a freestanding **vestiyer/dolap** — a cupboard, not an enclosed room. No
-  partition walls, no door.
+- **GIRIS HOLU has no coat room.** The block at x 770..807, y 1516..1724 on its
+  west side is a freestanding **vestiyer/dolap** facing the hall — no door.
 
 If the plan is revised, reconcile these first — they are the parts a fresh trace
 would not reproduce.
@@ -331,9 +358,12 @@ Modelled on the **first** floor, not the ground floor — BIRINCI KAT is the pla
 that draws the whole flight, and the ZEMIN plan only draws treads 1–12 (which
 stay part of the texture). It hangs off the first-floor slab and descends:
 levels in its `stairs` items are relative to that slab, so `from: -3.40` is
-ground level. Flight 1 rises south (treads 1–9), a half-landing at -1.70 m,
-then flight 2 rises north (treads 10–18), and a final riser lands at 0 — the
-first floor slab, exactly 3.40 m above grade.
+ground level. Flight 1 rises south (treads 1–9) in the **west** column,
+x 2709..2784, a half-landing at -1.70 m, then flight 2 rises north (treads
+10–18) in the east column, x 2796..2870, and a final riser lands at 0 — the
+first floor slab, exactly 3.40 m above grade. (P.14 swapped the columns; in
+P.13 flight 1 was the east one.) DEPO, the ground floor's store, is under the
+top of flight 2, so its walls stop at 3.2 m (north) and 2.1 m (south).
 
 Because the stair descends from its own storey, **both layout modes keep each
 floor at its true level** (`placement()` returns `storey * floorToFloor` either
@@ -344,13 +374,13 @@ y=0 would bury the flight underground.
 was once traced as a small W.C with a basin and a toilet, its walls held to
 `height: 2.3` so the flight could pass "over" it. It cannot: flight 2's soffit
 starts at 1.64 m, so its lower treads ran through the room, above the toilet.
-`node tools/plan-audit.mjs 900 1690 1160 1990` settles it — the sheet draws
-treads in **both** columns, x 1033..1108 (flight 1) and x 946..1021 (flight 2),
-exactly where the two flights are modelled. The stair was right; the W.C was
-the mis-trace. The fixtures are gone, those walls are full height, and the bay
-is the stair hall. The house's shared W.C is ORTAK W.C, which is unaffected.
+The PDF settled it — treads drawn in both columns — and P.14 confirms it:
+`node tools/plan-audit.mjs 940 1500 1120 1760` shows both flights (x 946..1021
+and 1033..1108, ground px) with DEPO under the top of the east one. The
+ground floor's W.C is now the one in the west wing.
 
-The flight stays `solid: false` (treads and risers only, open soffit).
+Flight 2 stays `solid: false` (treads and risers only, open soffit), because
+DEPO is under it.
 
 **The stairwell void must cover the half-landing, not just the flights.** The
 first floor's `voids` entry runs to y 1942. Stop it at the flights and that

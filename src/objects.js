@@ -1478,6 +1478,12 @@ function buildPaving(item, offsetPx, floor) {
   const pts = item.path.map((p) => toWorld(p, offsetPx));
   const shape = new THREE.Shape(pts.map(([x, z]) => new THREE.Vector2(x, z)));
 
+  // `holes`: polygons (sheet px) left open — a patio round a house and a pool.
+  for (const hole of item.holes ?? []) {
+    const ring = hole.map((p) => toWorld(p, offsetPx));
+    shape.holes.push(new THREE.Path(ring.map(([x, z]) => new THREE.Vector2(x, z))));
+  }
+
   // Land is cut away over any pool basin, which is sunk below it.
   if (item.kind === 'land') {
     for (const pool of (floor.objects ?? []).filter((o) => o.kind === 'pool')) {

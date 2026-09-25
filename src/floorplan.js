@@ -1,30 +1,41 @@
 /**
  * Villa Khan — plan data, traced off the architectural sheet in assets/.
  *
- * Coordinates are PIXELS OF THE ORIGINAL SHEET IMAGE (3509 x 2482), not
- * metres. The sheet carries both floors side by side, so each floor also
- * records `offsetPx`, which shifts its own drawing into the shared world
- * frame anchored on the ground floor.
+ * Coordinates are PIXELS OF THE SHEET IMAGE (3509 x 2482), not metres. The
+ * frame is P.13's (the 20/09/2026 sheet); later revisions are mapped into it
+ * by PLAN.pdfToSheet, so nothing here had to be rescaled when P.14 arrived
+ * re-plotted at a different size. The sheet carries both floors side by side,
+ * so each floor also records `alignPx`, which shifts its own drawing into the
+ * shared world frame anchored on the ground floor.
  *
- *   sharedPx = floorPx + floor.offsetPx
+ *   sharedPx = floorPx + floor.alignPx
  *   world X  = (sharedPx.x - (origin.x + origin.w / 2)) * metersPerPixel
  *   world Z  = (sharedPx.y - (origin.y + origin.h / 2)) * metersPerPixel
  *
- * The first floor's offset (-1762, +1) was derived by matching structural
- * walls the two plans share — the north block's west wall, its east wall,
- * and the living/master block's north wall all land within ~5 px (<0.1 m).
+ * The first floor's alignment (-1763, -204) was derived by matching wall faces
+ * the two plans share in P.14 — the kitchen block / north block north wall,
+ * the living room / master suite north and east walls — to within 1 px.
  *
  * metersPerPixel was calibrated against the K1:100/230 doors (1.00 m clear
- * opening) and cross-checked against GARAJ 42.00 m².
+ * opening) and cross-checked against the old GARAJ 42.00 m².
  */
 
 export const PLAN = {
-  image: 'assets/VILLA KHAN 20092026_page-0001.jpg',
+  image: 'assets/VILLA KHAN 24092026_page-0001.jpg',
+  // The vector source. P.14 (24/09/2026) was re-plotted 1.6% larger and
+  // shifted on the page, so `pdfToSheet` maps its page px (3509 across, as
+  // rendered at 150 dpi) back into this model's pixel frame, which is P.13's:
+  //   sheetPx = (pagePx - offset) / scale
+  // Fitted on the first-floor room labels, residual < 0.3 px. PLAN.image is
+  // rendered through the same transform by `node tools/render-sheet.mjs`.
+  pdf: 'assets/VILLA KHAN 24092026.pdf',
+  pdfToSheet: { scale: 1.016043, offset: [-23.125, -12.957] },
   metersPerPixel: 0.0168,
   storeyHeight: 3.0,
-  // The stair is annotated MÜ: 20 (17x30) — 20 risers at 17 cm — so the real
-  // floor-to-floor is 3.40 m. That drives the stacked layout; storeyHeight is
-  // the clear wall height below the slab.
+  // The ground-floor stair is annotated MÜ: 20 (17x30) — 20 risers at 17 cm —
+  // so the real floor-to-floor is 3.40 m. (P.14's first-floor copy of the note
+  // reads 18; the ground floor's still reads 20.) That drives the stacked
+  // layout; storeyHeight is the clear wall height below the slab.
   floorToFloor: 3.4,
   thickness: { exterior: 0.25, interior: 0.15 },
   head: 2.3,
@@ -32,7 +43,7 @@ export const PLAN = {
 };
 
 /** World origin: the ground-floor crop defines the shared frame. */
-export const ORIGIN = { x: 385, y: 1180, w: 1060, h: 855 };
+export const ORIGIN = { x: 384, y: 975, w: 1060, h: 855 };
 
 /**
  * Wall entries:
@@ -42,232 +53,282 @@ export const ORIGIN = { x: 385, y: 1180, w: 1060, h: 855 };
  *   openings   – from / to are distances along the wall from `a`, IN PIXELS;
  *                sill / head are metres above that floor's finished floor.
  *                Omit them for window defaults (0.9 / 2.3); doors pass sill: 0.
+ *                `swing: 1` opens to the right of a → b as seen on the page.
+ *
+ * ZEMIN was re-traced from P.14. The house sits 204 px (3.4 m) further north
+ * on the plot than in P.13, the garage is gone — it is a study (ÇALIŞMA
+ * ODASI), a play room (OYUN ODASI) and a W.C, and the cars park outside — and
+ * GIRIS HOLU is now a double-height hall under the first floor's GALERI
+ * BOSLUGU, entered through a K1:180/230 double door.
  */
 const GROUND_WALLS = [
   // ────────────────────────────────── kitchen / dining block (north)
   {
-    name: 'Kitchen block — west exterior',
-    type: 'exterior',
-    a: [474, 1195], b: [474, 1620],
-    openings: [
-      { from: 87, to: 195, sill: 1.1, kind: 'window' }, // 180/110
-      { from: 297, to: 375, sill: 1.1, kind: 'window' }, // 130/110
-    ],
-  },
-  {
     name: 'Kitchen block — north exterior',
     type: 'exterior',
-    a: [474, 1195], b: [937, 1195],
+    a: [474, 992], b: [938, 992],
     openings: [
       { from: 54, to: 166, kind: 'window' },  // 180/230
       // Dining → back garden: a glazed slider straight out to the pool
       // terrace, behind the dining table. The sheet draws a 250/230 window
       // here; the owner asked for a door, so it keeps the drawn opening
-      // (x 754..909, 2.60 m — already centred on the table) and only drops to
-      // the floor. Black joinery, like the other slider. It parks eastward so
-      // the leaf ends up over the solid wall rather than across the second
-      // window.
+      // (x 754..909, 2.60 m — centred on the table) and only drops to the
+      // floor. Black joinery, like the other slider. It parks eastward so the
+      // leaf ends up over the solid wall rather than across the other window.
       { from: 280, to: 435, sill: 0, kind: 'sliding', swing: -1 },
+    ],
+  },
+  {
+    name: 'Kitchen block — west exterior',
+    type: 'exterior',
+    a: [474, 992], b: [474, 1416],
+    openings: [
+      { from: 72, to: 184, sill: 1.1, kind: 'window' },  // 180/110
+      // K1:90/230 service door into Y.MUTFAK KILER; its leaf is drawn open
+      // eastward into the pantry, hinged at the south jamb.
+      { from: 318, to: 373, sill: 0, kind: 'door', swing: -1, hinge: 'to' },
     ],
   },
   {
     name: 'Kitchen / corridor — east exterior',
     type: 'exterior',
-    a: [937, 1195], b: [937, 1624],
+    a: [938, 992], b: [938, 1416],
     openings: [
-      { from: 76, to: 219, kind: 'window' },  // 250/230
-      { from: 269, to: 380, kind: 'window' }, // 200/230
-    ],
-  },
-  {
-    name: 'Y.MUTFAK / garage party wall',
-    type: 'exterior',
-    // Straight and solid, as drawn (PDF faces at y=1578 and y=1594). This wall
-    // carries the EV charger and one continuous tezgah for unloading shopping.
-    a: [474, 1586], b: [709, 1586],
-    openings: [],
-  },
-  {
-    // The garage's north edge steps ~0.6 m south here. The K1:100/230 in this
-    // wall is the garage → ANA KORIDOR door: up the right-hand side of the
-    // car, directly opposite. Its leaf is drawn OPEN (running north); the
-    // closed position is along this wall, x 727..783.
-    name: 'Garage — north-east wall',
-    type: 'exterior',
-    a: [709, 1624], b: [799, 1624],
-    openings: [
-      { from: 18, to: 74, sill: 0, kind: 'door', swing: -1 }, // K1:100/230 to ANA KORIDOR
+      { from: 66, to: 252, kind: 'window' }, // 300/230, onto İÇBAHÇE TERASI
     ],
   },
 
-  // ────────────────────────────────── garage (GARAJ, 42 m²)
+  // ────────────────────────────────── south block: north face
   {
-    // The garage footprint steps ~0.7 m south of the kitchen block here.
-    name: 'Garage — north-west return',
+    name: 'West wing — north exterior (W.C)',
     type: 'exterior',
-    a: [412, 1620], b: [478, 1620],
+    a: [412, 1416], b: [474, 1416],
     openings: [],
   },
   {
-    name: 'Garage — west exterior',
+    name: 'Hall / living — north exterior',
     type: 'exterior',
-    a: [412, 1620], b: [412, 1999],
+    a: [938, 1416], b: [1422, 1416],
     openings: [
-      { from: 58, to: 130, kind: 'window' },  // 120/230
-      { from: 281, to: 353, kind: 'window' }, // 120/230
+      { from: 33, to: 157, kind: 'window' },  // 200/230, over the stair
+      { from: 244, to: 399, kind: 'window' }, // 250/230, OTURMA ODASI
     ],
-  },
-  {
-    name: 'Garage — south exterior (GARAJ GIRISI)',
-    type: 'exterior',
-    a: [412, 1999], b: [798, 1999],
-    openings: [
-      { from: 18, to: 368, sill: 0, head: 2.4, kind: 'garage' }, // white roller shutter (raise: 0..1 rolls it up)
-    ],
-  },
-  {
-    name: 'Garage — east wall',
-    type: 'exterior',
-    a: [799, 1624], b: [799, 1999],
-    openings: [],
   },
 
-  // ────────────────────────────────── living block (south-east)
-  {
-    name: 'Living / terrace — north exterior',
-    type: 'exterior',
-    a: [937, 1624], b: [1430, 1624],
-    openings: [
-      { from: 46, to: 165, kind: 'window' },  // 200/230
-      { from: 257, to: 405, kind: 'window' }, // 250/230
-    ],
-  },
+  // ────────────────────────────────── living block (OTURMA ODASI, south-east)
   {
     name: 'Living room — east exterior',
     type: 'exterior',
-    a: [1430, 1624], b: [1430, 2012],
+    a: [1422, 1416], b: [1422, 1809],
     openings: [],
   },
   {
     name: 'Living room — south exterior',
     type: 'exterior',
-    a: [1430, 2012], b: [1115, 2012],
+    a: [1422, 1809], b: [1116, 1809],
     openings: [
-      { from: 76, to: 148, kind: 'window' }, // 120/230
+      { from: 85, to: 240, kind: 'window' }, // 250/230
     ],
   },
   {
     name: 'Living room — west wall',
     type: 'exterior',
-    a: [1115, 1624], b: [1115, 2012],
+    a: [1116, 1416], b: [1116, 1809],
     openings: [
-      { from: 16, to: 66, sill: 0, kind: 'door', swing: -1 }, // K1:90/230 from GIRIS HOLU
+      { from: 12, to: 68, sill: 0, kind: 'door', swing: -1 }, // K1:90/230 from the hall
     ],
   },
 
-  // ────────────────────────────────── entrance hall + W.C
+  // ────────────────────────────────── entrance front + west wing (south)
   {
-    // The main entrance. It opens into GIRIS HOLU off the GIRIS TERASI —
-    // not through the W.C block, whose south wall carries a window instead.
-    name: 'GIRIS HOLU — entrance wall',
+    // The main entrance: a K1:180/230 double door from GIRIS TERASI into
+    // GIRIS HOLU, both leaves drawn open inward (north). East of it the same
+    // wall closes the stair and carries its 210/110 window.
+    name: 'GIRIS HOLU / stair — south exterior',
     type: 'exterior',
-    a: [807, 1878], b: [931, 1878],
+    a: [800, 1747], b: [1116, 1747],
     openings: [
-      { from: 10, to: 65, sill: 0, kind: 'door', swing: -1 }, // K1:100/230 front door
+      { from: 18, to: 70, sill: 0, kind: 'door', swing: -1 },               // front door, west leaf
+      { from: 70, to: 121, sill: 0, kind: 'door', swing: -1, hinge: 'to' }, // front door, east leaf
+      { from: 166, to: 290, sill: 1.1, kind: 'window' },                    // 210/110
     ],
   },
   {
-    name: 'GIRIS HOLU — east return',
+    // South-west pier of the entrance, down to the west wing's front.
+    name: 'GIRIS HOLU — west pier',
     type: 'exterior',
-    a: [931, 1878], b: [931, 1962],
+    a: [800, 1724], b: [800, 1809],
     openings: [],
   },
   {
-    name: 'W.C block — south exterior',
+    name: 'West wing — south exterior',
     type: 'exterior',
-    a: [931, 1954], b: [1123, 1954],
+    a: [412, 1809], b: [800, 1809],
     openings: [
-      { from: 43, to: 168, sill: 1.1, kind: 'window' }, // 210/110
+      { from: 51, to: 163, kind: 'window' },  // 180/230, ÇALIŞMA ODASI
+      { from: 200, to: 311, kind: 'window' }, // 180/230, OYUN ODASI
     ],
+  },
+  {
+    name: 'West wing — west exterior',
+    type: 'exterior',
+    a: [412, 1416], b: [412, 1809],
+    openings: [
+      { from: 103, to: 153, sill: 1.1, kind: 'window' }, // 80/110, W.C
+    ],
+  },
+
+  // ────────────────────────────────── interior partitions
+  {
+    // Thin (PDF faces y 1250/1256), with the pantry door at its east end.
+    name: 'MUTFAK / Y.MUTFAK KILER partition',
+    type: 'interior',
+    thickness: 0.1,
+    a: [474, 1253], b: [800, 1253],
+    openings: [
+      { from: 264, to: 314, sill: 0, kind: 'door', swing: 1, hinge: 'to' }, // K1:90/230 into the pantry
+    ],
+  },
+  {
+    name: 'Y.MUTFAK KILER / ANA KORIDOR partition',
+    type: 'interior',
+    thickness: 0.25,
+    a: [800, 1253], b: [800, 1416],
+    openings: [],
+  },
+  {
+    // K1:180/230 double door between the dining end of MUTFAK and ANA
+    // KORIDOR, both leaves drawn open north into the dining room.
+    name: 'Dining / ANA KORIDOR partition',
+    type: 'interior',
+    thickness: 0.1,
+    a: [800, 1303], b: [938, 1303],
+    openings: [
+      { from: 18, to: 70, sill: 0, kind: 'door', swing: -1 },
+      { from: 70, to: 121, sill: 0, kind: 'door', swing: -1, hinge: 'to' },
+    ],
+  },
+  {
+    // The pantry's south wall is the west wing's hall wall (faces 1408/1423).
+    name: 'Y.MUTFAK KILER — south wall',
+    type: 'interior',
+    thickness: 0.25,
+    a: [474, 1416], b: [800, 1416],
+    openings: [],
+  },
+  {
+    name: 'W.C — east wall',
+    type: 'interior',
+    thickness: 0.1,
+    a: [497, 1416], b: [497, 1578],
+    openings: [
+      { from: 17, to: 60, sill: 0, kind: 'door', swing: 1 }, // K1:80/230, opens into the W.C
+    ],
+  },
+  {
+    name: 'W.C — south wall',
+    type: 'interior',
+    thickness: 0.1,
+    a: [412, 1578], b: [497, 1578],
+    openings: [],
+  },
+  {
+    // The hall's south side: ÇALIŞMA and OYUN ODASI doors, both K1:90/230
+    // opening south into their rooms, hinged on the jambs either side of the
+    // partition between them.
+    name: 'ÇALIŞMA / OYUN — hall wall',
+    type: 'interior',
+    thickness: 0.1,
+    a: [497, 1504], b: [800, 1504],
+    openings: [
+      { from: 31, to: 84, sill: 0, kind: 'door', swing: 1, hinge: 'to' }, // ÇALIŞMA ODASI
+      { from: 109, to: 161, sill: 0, kind: 'door', swing: 1 },            // OYUN ODASI
+    ],
+  },
+  {
+    name: 'ÇALIŞMA / OYUN partition',
+    type: 'interior',
+    thickness: 0.1,
+    a: [593, 1504], b: [593, 1809],
+    openings: [],
+  },
+  {
+    // OYUN ODASI's east wall. The GIRIS HOLU side of it carries a cupboard
+    // (x 770..807); the play room side a wardrobe run and the DOLAP.
+    name: 'OYUN / GIRIS HOLU partition',
+    type: 'interior',
+    thickness: 0.1,
+    a: [767, 1504], b: [767, 1739],
+    openings: [],
+  },
+
+  // ────────────────────────────────── stair + DEPO
+  // The stair is open to GIRIS HOLU along its west side (the sheet draws a
+  // single edge line at x 943, not a wall); it is modelled on BIRINCI KAT,
+  // descending. DEPO is the store under the top of flight 2, entered from the
+  // hall by a K1:80/230 opening south.
+  {
+    // The spine between the two flights (PDF faces x 1021..1033).
+    name: 'Stair — central wall',
+    type: 'interior',
+    thickness: 0.2,
+    a: [1027, 1513], b: [1027, 1672],
+    openings: [],
+  },
+  {
+    // Sits under the arrival of flight 2, so it stops short of the slab.
+    name: 'DEPO — north wall',
+    type: 'interior',
+    thickness: 0.1,
+    height: 3.2,
+    a: [1027, 1519], b: [1116, 1519],
+    openings: [
+      { from: 28, to: 71, sill: 0, kind: 'door', swing: 1, hinge: 'to' }, // K1:80/230
+    ],
+  },
+  {
+    // Under flight 2, whose treads pass ~2.2 m above this line.
+    name: 'DEPO — south wall',
+    type: 'interior',
+    thickness: 0.1,
+    height: 2.1,
+    a: [1027, 1629], b: [1116, 1629],
+    openings: [],
+  },
+
+  // ────────────────────────────────── front yard
+  // Low walls either side of the open parking bays (PDF faces x 404/420 and
+  // 792/807), running from the front paving to the street.
+  {
+    name: 'Parking — west wall',
+    type: 'exterior', height: 1.0,
+    a: [412, 1910], b: [412, 2218],
+    openings: [],
+  },
+  {
+    name: 'Parking — east wall',
+    type: 'exterior', height: 1.0,
+    a: [800, 1910], b: [800, 2240],
+    openings: [],
   },
 
   // ────────────────────────────────── plot boundary wall
   // 2 m garden wall on the plot line (the `land` polygon in GROUND_OBJECTS),
-  // 0.2 m thick. The street is the south edge (D→C): one 9 m vehicle opening
-  // serves both the garage door (x 412..798) and the side parking strip west
-  // of it (x 246..404), and a 1.2 m pedestrian opening lines up with the GIRIS
-  // entrance (x ≈ 1024). Openings are pixels along each wall.
+  // 0.2 m thick. The street is the south edge (D→C): P.14 opens it for the
+  // parking bays (x 420..792, 6.2 m) and for the path to GIRIS (x 807..931,
+  // 2.1 m). Openings are pixels along each wall.
   {
     name: 'Plot wall — south (street)',
     type: 'exterior', thickness: 0.2, height: 2.0,
     a: [224, 2209], b: [1590, 2294],
     openings: [
-      { from: 21, to: 560, sill: 0, head: 2.0, kind: 'gate' },      // parking strip + garage
-      { from: 767, to: 838, sill: 0, head: 2.0, kind: 'gate' },     // GIRIS
+      { from: 196, to: 569, sill: 0, head: 2.0, kind: 'gate' },     // parking bays
+      { from: 584, to: 708, sill: 0, head: 2.0, kind: 'gate' },     // path to GIRIS
     ],
   },
   { name: 'Plot wall — east',  type: 'exterior', thickness: 0.2, height: 2.0, a: [1590, 2294], b: [1643, 530], openings: [] },
   { name: 'Plot wall — north', type: 'exterior', thickness: 0.2, height: 2.0, a: [1643, 530],  b: [254, 161],   openings: [] },
   { name: 'Plot wall — west',  type: 'exterior', thickness: 0.2, height: 2.0, a: [254, 161],   b: [224, 2209],  openings: [] },
-
-  // ────────────────────────────────── interior partitions
-  {
-    name: 'MUTFAK / Y.MUTFAK partition',
-    type: 'interior',
-    a: [482, 1434], b: [709, 1434],
-    openings: [],
-  },
-  {
-    // PDF faces at x=702 and x=717, running y 1389..1624 with one gap.
-    name: 'Kitchen / ANA KORIDOR partition',
-    type: 'interior',
-    a: [709, 1389], b: [709, 1624],
-    openings: [
-      { from: 136, to: 180, sill: 0, kind: 'door', swing: 1, hinge: 'to' }, // K1:80/230 to Y.MUTFAK
-    ],
-  },
-  {
-    // Runs the full width at y=1434: the MUTFAK doorway at its west end, then
-    // the 225/230 glazed panel onto ANA KORIDOR.
-    name: 'Dining / ANA KORIDOR partition',
-    type: 'interior',
-    a: [709, 1434], b: [937, 1434],
-    openings: [
-      { from: 18, to: 74, sill: 0, kind: 'door', swing: -1 },                 // K1:100/230
-      { from: 83, to: 210, sill: 0, head: 2.3, kind: 'opening' },  // 225/230
-    ],
-  },
-  // This bay is the STAIR HALL, not a W.C. It used to be traced as a small
-  // W.C. with a basin and a toilet, its walls held down to 2.3 m so the upper
-  // flight could pass "over" it. It cannot: flight 2's soffit starts at 1.64 m
-  // and its lower treads ran through the room, over the toilet. The PDF
-  // settles it — `node tools/plan-audit.mjs 900 1690 1160 1990` shows drawn
-  // treads in BOTH columns, x 1033..1108 (flight 1) and x 946..1021
-  // (flight 2), which is exactly where the two flights are modelled. So the
-  // stair is right and the W.C was the mis-trace; the fixtures are gone and
-  // these walls are full height, enclosing a stair hall open to the floor
-  // above. The house's shared W.C is ORTAK W.C, which is unaffected.
-  {
-    name: 'Stair hall — west wall (ground)',
-    type: 'interior',
-    a: [946, 1725], b: [946, 1947],
-    openings: [],
-  },
-  {
-    name: 'Stair hall — north wall (ground)',
-    type: 'interior',
-    a: [946, 1725], b: [1031, 1725],
-    openings: [
-      { from: 10, to: 53, sill: 0, kind: 'door', swing: 1 }, // K1:80/230 in from the corridor
-    ],
-  },
-  {
-    // The thin wall between the two flights (PDF faces x 1030 / 1033).
-    name: 'Stair — central wall',
-    type: 'interior',
-    a: [1031, 1718], b: [1031, 1879],
-    openings: [],
-  },
 ];
 
 const FIRST_WALLS = [
@@ -354,27 +415,30 @@ const FIRST_WALLS = [
     ],
   },
 
-  // ────────────────────────────────── laundry + balcony (west)
+  // ────────────────────────────────── laundry + KAPALI TERAS + balcony (west)
   {
     // Solid: the ORTAK W.C's south wall. There is no door between the W.C
     // and ÇAMSIR ODASI — the W.C is entered from ANA KORIDOR.
     name: 'ÇAMSIR ODASI — north wall',
     type: 'exterior',
-    a: [2174, 1620], b: [2389, 1620],
+    a: [2175, 1620], b: [2389, 1620],
     openings: [],
   },
   {
     name: 'ÇAMSIR ODASI — west exterior',
     type: 'exterior',
-    a: [2174, 1620], b: [2174, 1744],
+    a: [2175, 1620], b: [2175, 1744],
     openings: [],
   },
   {
-    name: 'Laundry / balcony — south exterior',
+    // ÇAMSIR ODASI and ANA KORIDOR against KAPALI TERAS. P.14 enclosed the
+    // terrace, so the 251/230 in this wall is its way in: a black glazed
+    // slider, parked west over the solid wall.
+    name: 'ÇAMSIR / ANA KORIDOR — south wall',
     type: 'exterior',
-    a: [2174, 1744], b: [2560, 1744],
+    a: [2175, 1744], b: [2562, 1744],
     openings: [
-      { from: 230, to: 380, kind: 'window' }, // 251/230
+      { from: 221, to: 370, sill: 0, kind: 'sliding', swing: -1 }, // 251/230
     ],
   },
   {
@@ -383,34 +447,48 @@ const FIRST_WALLS = [
     a: [2382, 1625], b: [2382, 1744],
     openings: [{ from: 66, to: 110, sill: 0, kind: 'door', swing: 1, hinge: 'to' }], // K1:80/230
   },
-
-  // ────────────────────────────────── gallery void + stair hall
   {
-    name: 'GALERI BOSLUGU — west exterior',
+    // KAPALI TERAS (11 m²) is drawn in P.14 as an enclosed room: a solid
+    // west wall with a 185/110 window and a 600/230 glazed front onto BALKON
+    // TERASI. That is the owner's earlier glass room, now on the sheet.
+    name: 'KAPALI TERAS — west exterior',
     type: 'exterior',
-    a: [2560, 1744], b: [2560, 1872],
-    openings: [],
-  },
-  {
-    name: 'GALERI BOSLUGU — south exterior',
-    type: 'exterior',
-    a: [2560, 1872], b: [2698, 1872],
+    a: [2175, 1744], b: [2175, 1870],
     openings: [
-      { from: 26, to: 86, sill: 1.1, kind: 'window' }, // 100/110
+      { from: 14, to: 116, sill: 1.1, kind: 'window' }, // 185/110
     ],
   },
   {
-    name: 'Stair hall — west wall',
-    type: 'interior',
-    a: [2698, 1720], b: [2698, 1950],
+    // The 600/230 glazed front, in black: fixed panes either side of a
+    // sliding door out to the balcony. The fixed panes stand on a 5 cm sill
+    // so they read as glazing rather than doorways.
+    name: 'KAPALI TERAS — glazed front',
+    type: 'exterior',
+    thickness: 0.12,
+    a: [2175, 1870], b: [2562, 1870],
+    openings: [
+      { from: 8, to: 132, sill: 0.05, kind: 'window' },
+      { from: 132, to: 256, sill: 0, kind: 'sliding' },
+      { from: 256, to: 380, sill: 0.05, kind: 'window' },
+    ],
+  },
+
+  // ────────────────────────────────── GALERI BOSLUGU + stair hall
+  // The gallery is now the whole bay x 2570..2706, open over the ground
+  // floor's GIRIS HOLU; the stair beside it has no wall on that side.
+  {
+    name: 'GALERI BOSLUGU — west exterior',
+    type: 'exterior',
+    a: [2562, 1744], b: [2562, 1951],
     openings: [],
   },
   {
-    name: 'Stair hall — south exterior',
+    name: 'GALERI / stair hall — south exterior',
     type: 'exterior',
-    a: [2698, 1950], b: [2870, 1950],
+    a: [2562, 1951], b: [2878, 1951],
     openings: [
-      { from: 38, to: 163, sill: 1.1, kind: 'window' }, // 210/110
+      { from: 18, to: 124, kind: 'window' },             // 180/230, GALERI
+      { from: 166, to: 290, sill: 1.1, kind: 'window' }, // 210/110, stair
     ],
   },
 
@@ -418,52 +496,50 @@ const FIRST_WALLS = [
   {
     name: 'Master suite — north exterior',
     type: 'exterior',
-    a: [2692, 1621], b: [3187, 1621],
+    a: [2701, 1620], b: [3185, 1620],
     openings: [
-      { from: 53, to: 173, kind: 'window' },  // 200/230
-      { from: 271, to: 423, kind: 'window' }, // 255/230
+      { from: 33, to: 157, kind: 'window' },  // 200/230
+      { from: 250, to: 408, kind: 'window' }, // 255/230
     ],
   },
   {
     name: 'Master suite — east exterior',
     type: 'exterior',
-    a: [3187, 1621], b: [3187, 2019],
+    a: [3185, 1620], b: [3185, 2013],
     openings: [],
   },
   {
     name: 'Master suite — south exterior',
     type: 'exterior',
-    a: [2870, 2019], b: [3187, 2019],
+    a: [2878, 2013], b: [3185, 2013],
     openings: [],
   },
   {
+    // Also the stair hall's east wall.
     name: 'EBEVEYN Y.ODASI — west wall',
     type: 'interior',
-    a: [2875, 1631], b: [2875, 1840],
-    openings: [{ from: 6, to: 56, sill: 0, kind: 'door', swing: -1 }], // K1:90/230
-  },
-  {
-    name: 'DUS W.C — west wall',
-    type: 'interior',
-    a: [2882, 1840], b: [2882, 2019],
-    openings: [],
+    thickness: 0.25,
+    a: [2878, 1620], b: [2878, 2013],
+    openings: [{ from: 12, to: 68, sill: 0, kind: 'door', swing: -1 }], // K1:90/230
   },
   {
     name: 'EBEVEYN Y.ODASI — south wall',
     type: 'interior',
-    a: [2886, 1840], b: [3187, 1840],
+    thickness: 0.1,
+    a: [2878, 1842], b: [3185, 1842],
     openings: [
-      { from: 69, to: 124, sill: 0, kind: 'door', swing: 1, hinge: 'to' }, // K1:80/230 into DUS W.C
-      // Bedroom ↔ EBEVEYN D.ODASI: glazed slider in black joinery. Not on
-      // this sheet revision; added per the owner. It parks westward so the
-      // leaf clears both the DUS W.C door and the wardrobe run.
-      { from: 200, to: 260, sill: 0, kind: 'sliding', swing: -1 },
+      { from: 77, to: 122, sill: 0, kind: 'door', swing: 1, hinge: 'to' }, // K1:80/230 into DUS W.C
+      // Bedroom ↔ EBEVEYN D.ODASI. P.14 draws this opening (x 3069..3118);
+      // the owner's black glazed slider fills it. It parks westward, over
+      // the wall between it and the DUS W.C door.
+      { from: 191, to: 240, sill: 0, kind: 'sliding', swing: -1 },
     ],
   },
   {
     name: 'DUS W.C / EBEVEYN D.ODASI partition',
     type: 'interior',
-    a: [3005, 1840], b: [3005, 2019],
+    thickness: 0.1,
+    a: [3007, 1842], b: [3007, 2013],
     openings: [],
   },
 ];
@@ -489,27 +565,28 @@ function plotPoint(edge, t, inset) {
 
 /**
  * Exotic fruit planting just inside the wall: [edge, t, kind, options].
- * Gaps are deliberate: the street gates (edge 2, t 528..599 and 806..1345),
- * the side parking strip on the west edge (t < 900), the terrace on the east
- * edge (t ~ 870..1230) and the pool are all kept clear.
+ * P.14 draws its trees in three lawns — the north strip (above y 358), the
+ * east garden and the front garden east of the path — plus the lawn strip
+ * west of the parking bays, so that is where they go. The paved patio round
+ * the house and pool, the street openings (edge 2, t 660..1172) and the path
+ * are kept clear.
  */
 const PLANTING = [
-  // north edge, well clear of the pool
-  [0, 200, 'fruittree', { fruit: 'mango' }],   [0, 420, 'palm', { species: 'date' }],
-  [0, 640, 'banana'],                          [0, 860, 'fruittree', { fruit: 'fig' }],
+  // north edge: the lawn strip west of x 1006, and the east garden past x 1210
+  [0, 180, 'fruittree', { fruit: 'mango' }],   [0, 380, 'palm', { species: 'date' }],
+  [0, 580, 'banana'],                          [0, 740, 'fruittree', { fruit: 'fig' }],
   [0, 1080, 'palm', { species: 'date' }],      [0, 1300, 'banana'],
-  // east edge, stops before the terrace and resumes south of it
+  // east edge: lawn its whole length now the terrace no longer reaches it
   [1, 120, 'palm', { species: 'date' }],       [1, 340, 'banana'],
   [1, 560, 'palm', { species: 'papaya' }],     [1, 780, 'fruittree', { fruit: 'pomegranate' }],
-  [1, 1250, 'fruittree', { fruit: 'orange' }], [1, 1450, 'palm', { species: 'date' }],
-  [1, 1620, 'banana'],
-  // south (street) edge, between the two gates and east of the entrance
+  [1, 1000, 'fruittree', { fruit: 'avocado' }], [1, 1250, 'fruittree', { fruit: 'orange' }],
+  [1, 1450, 'palm', { species: 'date' }],      [1, 1620, 'banana'],
+  // south (street) edge: the front garden east of the path
   [2, 130, 'fruittree', { fruit: 'lemon' }],   [2, 300, 'palm', { species: 'papaya' }],
-  [2, 450, 'banana'],                          [2, 700, 'palm', { species: 'date' }],
-  // west edge, north of the parking strip
-  [3, 950, 'banana'],                          [3, 1200, 'fruittree', { fruit: 'avocado' }],
-  [3, 1450, 'palm', { species: 'date' }],      [3, 1700, 'fruittree', { fruit: 'mango' }],
-  [3, 1900, 'palm', { species: 'papaya' }],
+  [2, 450, 'banana'],                          [2, 600, 'palm', { species: 'date' }],
+  // west edge: the lawn strip beside the parking, and the north lawn
+  [3, 90, 'palm', { species: 'papaya' }],      [3, 230, 'fruittree', { fruit: 'mango' }],
+  [3, 1930, 'palm', { species: 'date' }],
 ].map(([edge, t, kind, opts], i) => {
   const [x, y] = plotPoint(edge, t, 65);
   return { kind, name: `${kind} ${i + 1}`, rect: [x - 6, y - 6, x + 6, y + 6], seed: i + 1, ...opts };
@@ -533,15 +610,24 @@ function streetGate(from, to, extra) {
   };
 }
 
+/** Outer faces of the ground-floor house, clockwise from the kitchen's NW corner. */
+const GROUND_FOOTPRINT = [
+  [466, 984], [946, 984], [946, 1408], [1430, 1408], [1430, 1817], [1108, 1817],
+  [1108, 1755], [807, 1755], [807, 1817], [404, 1817], [404, 1408], [466, 1408],
+];
+
+/** HAVUZ outline. P.14 moved the pool (59, 221) px — 1 m west, 3.7 m north. */
+const POOL_RECT = [454, 448, 1129, 882];
+
 const GROUND_OBJECTS = [
   ...PLANTING,
 
   // ────────────────────────────────── front gates (street wall)
-  // Both black bar gates. The wide one is a bi-parting sliding gate over the
-  // garage + side parking opening, drawn closed; the pedestrian gate at GIRIS
-  // is a single leaf swung open 70 degrees inward so it reads from above.
-  streetGate(21, 560, { name: 'Vehicle gate', style: 'sliding', open: 0 }),
-  streetGate(767, 838, { name: 'Pedestrian gate', style: 'swing', openDeg: 70 }),
+  // Both black bar gates. The wide one is a bi-parting sliding gate across
+  // the parking bays, drawn closed; the gate onto the path to GIRIS is a
+  // single leaf swung open 70 degrees inward so it reads from above.
+  streetGate(196, 569, { name: 'Vehicle gate', style: 'sliding', open: 0 }),
+  streetGate(584, 708, { name: 'Pedestrian gate', style: 'swing', openDeg: 70 }),
   // ────────────────────────────────── the plot
   // Inner boundary line on the sheet (the double line round the site). At the
   // model's scale it encloses ~744 m² against the stated 726 m² — within the
@@ -552,71 +638,90 @@ const GROUND_OBJECTS = [
     path: PLOT,
   },
 
-  // ────────────────────────────────── side parking (west of the garage)
-  // The sheet draws two cars on the strip between the plot wall and the
-  // garage (x 245..368). A paved pad runs the length of it to the street gate.
-  { kind: 'paving', name: 'Side parking pad', path: [[246, 1350], [404, 1350], [404, 2198], [246, 2198]] },
-  { kind: 'sedan', name: 'Parked car 1', rect: [255, 1366, 375, 1646], nose: 'S', paint: 0xb8bcc4 },
-  { kind: 'sedan', name: 'Parked car 2', rect: [255, 1680, 375, 1960], nose: 'S', paint: 0x6b2b2b },
+  // ────────────────────────────────── paving (the hatched areas of P.14)
+  // One patio wraps the house and the pool: the pool deck, İÇBAHÇE TERASI,
+  // the west side and GIRIS TERASI down the path to the street. Lawn is
+  // everything else. The house and the pool are cut out of it.
+  {
+    kind: 'paving', name: 'Patio',
+    path: [
+      [251, 358], [1006, 358], [1210, 412], [1210, 984], [1492, 984], [1492, 1941],
+      [931, 1941], [931, 2242], [807, 2242], [807, 1910], [228, 1910],
+    ],
+    holes: [GROUND_FOOTPRINT, [[454, 448], [1129, 448], [1129, 882], [454, 882]]],
+  },
+  { kind: 'paving', name: 'Parking bays', mat: 'coping', path: [[420, 1910], [792, 1910], [792, 2232], [420, 2232]] },
 
-  // ────────────────────────────────── GARAJ
-  { kind: 'sedan',  name: 'Mercedes-Benz C220 d', rect: [457, 1677, 577, 1963] },
-  // The L200 is 5.30 m long, so its rect starts further north than the old car's;
-  // it stays west of x=740 to keep the K1:100/230 door (x 727..783) reachable.
-  { kind: 'pickup', name: 'Mitsubishi L200 Pickup (2018)', rect: [626, 1648, 736, 1963] },
-  // One continuous worktop the full width of the party wall, for unloading
-  // shopping, with the EV charger wall-mounted above its east end.
-  { kind: 'box', name: 'Tezgah — unloading worktop', rect: [420, 1594, 702, 1631], h: 0.9, mat: 'counter' },
-  { kind: 'box', name: 'ARAÇ ŞARJ İSTASYONU — EV charger', rect: [660, 1596, 698, 1612], h: 0.55, y: 1.1, mat: 'dark' },
+  // ────────────────────────────────── the cars (open parking)
+  // P.14 has no garage; the two bays in front of the west wing take the
+  // family's cars, nose to the house, as drawn.
+  { kind: 'sedan',  name: 'Mercedes-Benz C220 d', rect: [457, 1915, 577, 2201] },
+  { kind: 'pickup', name: 'Mitsubishi L200 Pickup (2018)', rect: [621, 1912, 731, 2227] },
 
   // ────────────────────────────────── MUTFAK
-  { kind: 'box', name: 'Kitchen counter (west)',  rect: [481, 1205, 519, 1390], h: 0.9, mat: 'counter' },
-  { kind: 'box', name: 'Kitchen counter (south)', rect: [482, 1389, 702, 1426], h: 0.9, mat: 'counter' },
-  { kind: 'box', name: 'Tall units / fridge',     rect: [484, 1208, 524, 1250], h: 2.1, mat: 'cabinet' },
-  { kind: 'box', name: 'Kitchen island',          rect: [649, 1206, 717, 1330], h: 0.92, mat: 'counter' },
-  { kind: 'hob',       name: 'Ocak — MUTFAK',        rect: [652, 1253, 683, 1286], y: 0.92 },
-  { kind: 'oven',      name: 'Fırın — MUTFAK',       rect: [485, 1249, 519, 1283], face: 'E' },
-  { kind: 'appliance', name: 'Bulaşık Mak.',         rect: [485, 1285, 516, 1338] },
-  { kind: 'stool', name: 'Bar stool', rect: [711, 1216, 737, 1242] },
-  { kind: 'stool', name: 'Bar stool', rect: [711, 1256, 737, 1282] },
-  { kind: 'stool', name: 'Bar stool', rect: [711, 1291, 737, 1317] },
+  { kind: 'box', name: 'Kitchen counter (west)',  rect: [482, 999, 519, 1213], h: 0.9, mat: 'counter' },
+  { kind: 'box', name: 'Kitchen counter (south)', rect: [519, 1213, 730, 1250], h: 0.9, mat: 'counter' },
+  { kind: 'box', name: 'Buzdolabı — MUTFAK',      rect: [658, 1209, 695, 1247], h: 2.1, mat: 'cabinet' },
+  { kind: 'box', name: 'Kitchen island',          rect: [649, 999, 717, 1123], h: 0.92, mat: 'counter' },
+  { kind: 'hob',       name: 'Ocak — MUTFAK',     rect: [652, 1046, 683, 1079], y: 0.92 },
+  { kind: 'appliance', name: 'Bulaşık Mak.',      rect: [485, 1078, 516, 1131] },
+  { kind: 'stool', name: 'Bar stool', rect: [711, 1012, 737, 1038] },
+  { kind: 'stool', name: 'Bar stool', rect: [711, 1052, 737, 1078] },
+  { kind: 'stool', name: 'Bar stool', rect: [711, 1087, 737, 1113] },
 
   // ────────────────────────────────── dining
-  { kind: 'box', name: 'Dining table', rect: [827, 1241, 889, 1390], h: 0.75, mat: 'wood' },
+  { kind: 'box', name: 'Dining table', rect: [816, 1027, 878, 1176], h: 0.75, mat: 'wood' },
   // Eight chairs round it, each turned so its back is to the table's outside:
   // `rot` is degrees clockwise on the page and the maker backs a chair north
   // at 0, so the west run is 270, the east run 90, and the ends 0 and 180.
   // Without it every chair faced north and the two runs sat back to back.
-  { kind: 'chair', name: 'Dining chair', rect: [798, 1264, 825, 1291], rot: 270 },
-  { kind: 'chair', name: 'Dining chair', rect: [798, 1302, 825, 1329], rot: 270 },
-  { kind: 'chair', name: 'Dining chair', rect: [798, 1339, 825, 1366], rot: 270 },
-  { kind: 'chair', name: 'Dining chair', rect: [891, 1264, 918, 1291], rot: 90 },
-  { kind: 'chair', name: 'Dining chair', rect: [891, 1302, 918, 1329], rot: 90 },
-  { kind: 'chair', name: 'Dining chair', rect: [891, 1339, 918, 1366], rot: 90 },
-  { kind: 'chair', name: 'Dining chair', rect: [844, 1213, 871, 1240], rot: 0 },
-  { kind: 'chair', name: 'Dining chair', rect: [844, 1391, 871, 1418], rot: 180 },
+  ...[1050, 1088, 1125].flatMap((y) => [
+    { kind: 'chair', name: 'Dining chair', rect: [787, y, 814, y + 27], rot: 270 },
+    { kind: 'chair', name: 'Dining chair', rect: [880, y, 907, y + 27], rot: 90 },
+  ]),
+  { kind: 'chair', name: 'Dining chair', rect: [834, 1000, 861, 1026], rot: 0 },
+  { kind: 'chair', name: 'Dining chair', rect: [834, 1178, 861, 1205], rot: 180 },
 
   // ────────────────────────────────── Y.MUTFAK KILER
-  { kind: 'box', name: 'Pantry counter (west)', rect: [481, 1486, 517, 1573], h: 0.9, mat: 'counter' },
-  { kind: 'box', name: 'Pantry counter',        rect: [514, 1441, 700, 1476], h: 0.9, mat: 'counter' },
-  { kind: 'box', name: 'Buzdolabı — Y.MUTFAK', rect: [658, 1445, 695, 1483], h: 2.1, mat: 'cabinet' },
-  { kind: 'hob',  name: 'Ocak — Y.MUTFAK',     rect: [573, 1445, 606, 1476], y: 0.9 },
-  { kind: 'oven', name: 'Fırın — Y.MUTFAK',    rect: [573, 1445, 606, 1479], face: 'S' },
+  { kind: 'box', name: 'Pantry counter (north)', rect: [482, 1256, 730, 1293], h: 0.9, mat: 'counter' },
+  { kind: 'box', name: 'Pantry counter (south)', rect: [482, 1371, 792, 1408], h: 0.9, mat: 'counter' },
+  { kind: 'box', name: 'Buzdolabı — Y.MUTFAK',   rect: [658, 1259, 695, 1297], h: 2.1, mat: 'cabinet' },
+  { kind: 'hob',  name: 'Ocak — Y.MUTFAK',       rect: [573, 1259, 606, 1291], y: 0.9 },
+  { kind: 'oven', name: 'Fırın — Y.MUTFAK',      rect: [573, 1259, 606, 1293], face: 'S' },
 
-  // ────────────────────────────────── stair hall
-  // No basin and no toilet here: this bay is the stair's lower run, not a
-  // W.C. (see 'Stair hall — west wall (ground)' for why). The stair itself
-  // belongs to BIRINCI KAT — its plan is the one that draws the whole flight,
-  // and it is modelled there descending to this floor.
+  // ────────────────────────────────── W.C (west wing)
+  // Both fixtures stand against the west wall, so they are turned 270°.
+  { kind: 'basin',  name: 'Lavabo — W.C', rect: [414, 1463, 451, 1488], rot: 270 },
+  { kind: 'toilet', name: 'Klozet — W.C', rect: [422, 1529, 458, 1565], rot: 270 },
+
+  // ────────────────────────────────── ÇALIŞMA ODASI
+  { kind: 'box', name: 'KÜTÜPHANE — bookshelves', rect: [420, 1581, 457, 1691], h: 2.1, mat: 'cabinet' },
+  { kind: 'box', name: 'ÇALIŞMA MASASI — desk',   rect: [420, 1691, 457, 1801], h: 0.75, mat: 'wood' },
+  { kind: 'chair', name: 'Desk chair', rect: [455, 1728, 481, 1755], rot: 90 },
+  { kind: 'lounge', name: 'Armchair (north)', rect: [542, 1655, 585, 1695], back: 'N', seats: 1 },
+  { kind: 'lounge', name: 'Armchair (south)', rect: [542, 1745, 585, 1785], back: 'S', seats: 1 },
+  { kind: 'sidetable', name: 'Side table', rect: [548, 1706, 574, 1732] },
+
+  // ────────────────────────────────── OYUN ODASI
+  // A corner sofa as drawn: a long run on the west wall, a short one on the south.
+  { kind: 'sofa', name: 'Corner sofa (west run)',  rect: [603, 1582, 643, 1795], back: 'W' },
+  { kind: 'sofa', name: 'Corner sofa (south run)', rect: [643, 1752, 690, 1795], back: 'S' },
+  { kind: 'wardrobe', name: 'Wardrobe — OYUN ODASI', rect: [739, 1507, 764, 1739], back: 'E' },
+  { kind: 'box', name: 'DOLAP', rect: [739, 1739, 792, 1801], h: 2.2, mat: 'cabinet' },
 
   // ────────────────────────────────── GIRIS HOLU
-  // Not a room — a freestanding vestiyer/dolap in the recess the sheet draws
-  // at x 894..931, y 1724..1869. No partition, no door.
-  { kind: 'box', name: 'VESTIYER / DOLAP', rect: [894, 1724, 931, 1869], h: 2.2, mat: 'cabinet' },
+  // The cupboard block on the hall's west side (x 770..807): no door drawn,
+  // so a vestiyer/dolap facing the hall, not a room.
+  { kind: 'box', name: 'VESTIYER / DOLAP', rect: [770, 1516, 807, 1724], h: 2.2, mat: 'cabinet' },
+
+  // ────────────────────────────────── stair
+  // The stair belongs to BIRINCI KAT — its plan draws the whole flight — and
+  // is modelled there descending to this floor. DEPO sits under flight 2.
 
   // ────────────────────────────────── OTURMA ODASI
   // Restyled from the owner's reference: cream and gold, a media wall, and a
-  // marble coffee table on a patterned rug.
+  // marble coffee table on a patterned rug. P.14 moved the room 207 px north
+  // but not its drawn furniture relative to it, so everything below moved with it.
   // At the owner's request the three-seat sofa, both armchairs, the console
   // table and the ficus were removed (their printed symbols are painted out by
   // `erase` on the floor).
@@ -627,67 +732,64 @@ const GROUND_OBJECTS = [
   // corner, beside the window and the start of the media wall, its mouth turned
   // into the room. The 3-seater sits on the west wall facing the TV, the
   // 2-seater on the south side, the armchairs side by side at the window.
-  { kind: 'lounge', name: '3-seat sofa',     rect: [1124, 1787, 1188, 1924], back: 'W', seats: 3 },
-  { kind: 'lounge', name: '2-seat sofa',     rect: [1225, 1938, 1326, 2002], back: 'S', seats: 2 },
-  { kind: 'lounge', name: 'Armchair (west)', rect: [1196, 1655, 1256, 1719], back: 'N', seats: 1 },
-  { kind: 'lounge', name: 'Armchair (east)', rect: [1262, 1655, 1322, 1719], back: 'N', seats: 1 },
-  { kind: 'hangingfire', name: 'Hanging fireplace', rect: [1361, 1688, 1373, 1700], faceDeg: 53 },
-  { kind: 'rug',      name: 'Rug',          rect: [1196, 1735, 1392, 1935] },
-  { kind: 'coffee',   name: 'Coffee table', rect: [1240, 1836, 1300, 1872] },
-  // Media wall on the east wall (inner face x ~ 1422): TV, floating unit, niches.
-  // The fireplace is not here; it hangs in the north-east corner.
-  { kind: 'tvwall',   name: 'Media wall (TV)', rect: [1398, 1745, 1422, 1965], back: 'E', fireplace: false },
-  { kind: 'curtain',  name: 'Curtains', rect: [1176, 1631, 1360, 1640] },
-  { kind: 'lamp',     name: 'Floor lamp', rect: [1140, 1748, 1156, 1764] },
-  { kind: 'sidetable', name: 'Side table', rect: [1140, 1943, 1168, 1971] },
-  { kind: 'sidetable', name: 'Side table', rect: [1336, 1960, 1364, 1988] },
+  { kind: 'lounge', name: '3-seat sofa',     rect: [1124, 1580, 1188, 1717], back: 'W', seats: 3 },
+  { kind: 'lounge', name: '2-seat sofa',     rect: [1225, 1731, 1326, 1795], back: 'S', seats: 2 },
+  { kind: 'lounge', name: 'Armchair (west)', rect: [1196, 1448, 1256, 1512], back: 'N', seats: 1 },
+  { kind: 'lounge', name: 'Armchair (east)', rect: [1262, 1448, 1322, 1512], back: 'N', seats: 1 },
+  { kind: 'hangingfire', name: 'Hanging fireplace', rect: [1355, 1481, 1367, 1493], faceDeg: 53 },
+  { kind: 'rug',      name: 'Rug',          rect: [1196, 1528, 1384, 1728] },
+  { kind: 'coffee',   name: 'Coffee table', rect: [1240, 1629, 1300, 1665] },
+  // Media wall against the east wall's built-in (inner face x ~1414): TV,
+  // floating unit, niches. The fireplace is not here; it hangs in the corner.
+  { kind: 'tvwall',   name: 'Media wall (TV)', rect: [1390, 1538, 1414, 1758], back: 'E', fireplace: false },
+  { kind: 'curtain',  name: 'Curtains', rect: [1176, 1424, 1343, 1433] },
+  { kind: 'lamp',     name: 'Floor lamp', rect: [1140, 1541, 1156, 1557] },
+  { kind: 'sidetable', name: 'Side table', rect: [1140, 1736, 1168, 1764] },
+  { kind: 'sidetable', name: 'Side table', rect: [1336, 1753, 1364, 1781] },
 
-  // ────────────────────────────────── TERRACE (east of the kitchen/hall/living)
-  // The L drawn dashed on the sheet: x 946..1191 beside the kitchen, widening
-  // to x 1604 along the living room's north wall.
-  { kind: 'paving', name: 'Terrace', path: [[946, 1188], [1191, 1188], [1191, 1402], [1604, 1402], [1604, 1615], [946, 1615]] },
-  { kind: 'table', name: 'Dining table', rect: [1330, 1478, 1450, 1532] },
-  ...[1338, 1378, 1418].flatMap((x) => [
-    { kind: 'chair', name: 'Dining chair', rect: [x, 1449, x + 27, 1476] },
-    { kind: 'chair', name: 'Dining chair', rect: [x, 1534, x + 27, 1561], rot: 180 },
+  // ────────────────────────────────── İÇBAHÇE TERASI (east of the kitchen)
+  // The 60 m² terrace between the kitchen's east wall and the living room's
+  // north wall, x 946..1492, y 984..1416.
+  { kind: 'table', name: 'Dining table', rect: [1230, 1170, 1350, 1224] },
+  ...[1238, 1278, 1318].flatMap((x) => [
+    { kind: 'chair', name: 'Dining chair', rect: [x, 1141, x + 27, 1168] },
+    { kind: 'chair', name: 'Dining chair', rect: [x, 1226, x + 27, 1253], rot: 180 },
   ]),
-  // Rubble-stone barbecue beside the kitchen, backed onto the terrace's open
-  // north edge (the kitchen's east windows fill the wall side, so it can't
-  // stand against that). Working face to the south; its flue runs up through
-  // the roof (soffit 2.65 m, top 2.93 m).
-  { kind: 'barbecue', name: 'Stone barbecue', rect: [1000, 1190, 1101, 1232], back: 'N', flueTop: 3.3 },
+  // Rubble-stone barbecue at the terrace's open north edge, beside the
+  // kitchen (whose east wall is taken by the 300/230 window). Working face to
+  // the south; its flue runs up through the roof (soffit 2.65 m, top 2.93 m).
+  { kind: 'barbecue', name: 'Stone barbecue', rect: [1000, 988, 1101, 1030], back: 'N', flueTop: 3.3 },
 
   // Timber roof over the whole terrace: a flat oak slab with a thick fascia
-  // and plank soffit, leaning on the house walls to the west and south and
-  // cantilevering ~0.3 m past the free edges. Slim black posts at the corners.
-  // Stacked model only, so the side-by-side ground floor can be seen into.
+  // and plank soffit, leaning on the kitchen wall to the west and the living
+  // room to the south, cantilevering ~0.3 m past the free edges. Slim black
+  // posts at the free corners and mid-span. Stacked model only, so the
+  // side-by-side ground floor can be seen into.
   {
     kind: 'paving', name: 'Terrace — wooden roof', mat: 'oak', y: 2.65, h: 0.28, roof: true, only: 'stacked',
-    path: [[946, 1170], [1209, 1170], [1209, 1384], [1622, 1384], [1622, 1615], [946, 1615]],
+    path: [[946, 966], [1510, 966], [1510, 1416], [946, 1416]],
   },
-  ...[[952, 1176], [1203, 1176], [1203, 1378], [1400, 1378], [1616, 1378], [1616, 1608]].map(([x, y]) => (
+  ...[[952, 972], [1228, 972], [1504, 972], [1504, 1195], [1504, 1410]].map(([x, y]) => (
     { kind: 'box', name: 'Roof post', rect: [x - 3, y - 3, x + 3, y + 3], h: 2.65, mat: 'frame', only: 'stacked' }
   )),
 
-  // Greenery under the roof: timber planters along the open edges, potted
-  // topiary by the table.
-  { kind: 'planter', name: 'Planter', rect: [1165, 1240, 1189, 1370] },
-  { kind: 'planter', name: 'Planter', rect: [1215, 1405, 1520, 1429] },
-  { kind: 'planter', name: 'Planter', rect: [1580, 1425, 1604, 1595] },
-  ...[[1225, 1470], [1225, 1560], [1570, 1450], [1570, 1600]].map(([x, y]) => (
+  // Greenery under the roof: a timber planter along the open east edge,
+  // potted topiary round the table.
+  { kind: 'planter', name: 'Planter', rect: [1466, 1040, 1490, 1360] },
+  ...[[1195, 1150], [1195, 1250], [1385, 1150], [1385, 1250]].map(([x, y]) => (
     { kind: 'topiary', name: 'Potted topiary', rect: [x - 11, y - 11, x + 11, y + 11] }
   )),
 
   // ────────────────────────────────── POOL (HAVUZ, AL. 51.70 m²)
-  // North of the house. Loungers sit at the centres of the sheet's four
-  // ŞEZLONG labels, turned ~25° as drawn.
-  { kind: 'pool', name: 'Havuz', rect: [513, 669, 1188, 1103] },
-  ...[[1305, 758], [1305, 834], [1305, 942], [1305, 1018]].map(([cx, cy]) => (
-    { kind: 'lounger', name: 'Şezlong', rect: [cx - 60, cy - 21, cx + 60, cy + 21], rot: 25 }
+  // North of the house. P.14 no longer draws the ŞEZLONG loungers; the four
+  // are kept, on the broad paved deck west of the pool, facing it, with a
+  // parasol between each pair.
+  { kind: 'pool', name: 'Havuz', rect: POOL_RECT },
+  ...[560, 610, 740, 790].map((cy) => (
+    { kind: 'lounger', name: 'Şezlong', rect: [280, cy - 21, 400, cy + 21] }
   )),
-  // One parasol in the gap between each pair of loungers.
-  ...[796, 980].map((cy) => (
-    { kind: 'parasol', name: 'Parasol', rect: [1305 - 6, cy - 6, 1305 + 6, cy + 6], radius: 1.3 }
+  ...[585, 765].map((cy) => (
+    { kind: 'parasol', name: 'Parasol', rect: [334, cy - 6, 346, cy + 6], radius: 1.3 }
   )),
 ];
 
@@ -728,27 +830,30 @@ const FIRST_OBJECTS = [
 
   // ────────────────────────────────── EBEVEYN suite
   { kind: 'bed', name: 'Bed — EBEVEYN Y. ODASI', rect: [3049, 1676, 3169, 1783], head: 'E' },
-  { kind: 'box', name: 'Wardrobe — master',      rect: [2884, 1689, 2925, 1777], h: 2.2, mat: 'cabinet' },
+  { kind: 'box', name: 'Wardrobe — master',      rect: [2886, 1690, 2923, 1767], h: 2.2, mat: 'cabinet' },
   { kind: 'box', name: 'Desk — EBEVEYN Y. ODASI', rect: [2923, 1789, 2949, 1818], h: 0.75, mat: 'wood' },
   { kind: 'tv',  name: 'TV — EBEVEYN Y. ODASI',  rect: [2927, 1700, 2933, 1770], h: 0.62, y: 1.1 },
-  // EBEVEYN D.ODASI: U of wardrobes round three walls with a glass-top island
-  // in the middle. It opens north onto the slider; the west run starts south
-  // of y 1868 so the slider's parked leaf clears it.
-  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (west)',  rect: [3010, 1868, 3040, 1976], back: 'W' },
-  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (east)',  rect: [3147, 1845, 3177, 1976], back: 'E' },
-  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (south)', rect: [3010, 1976, 3177, 2006], back: 'S' },
+  // EBEVEYN D.ODASI: P.14 now draws the U of wardrobes round three walls; the
+  // glass-top island in the middle is the owner's. It opens north onto the
+  // slider; the west run starts south of y 1868 so the slider's parked leaf
+  // clears it.
+  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (west)',  rect: [3012, 1868, 3048, 1969], back: 'W' },
+  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (east)',  rect: [3140, 1847, 3177, 1969], back: 'E' },
+  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (south)', rect: [3012, 1969, 3177, 2006], back: 'S' },
   { kind: 'island',   name: 'Dressing island',                    rect: [3073, 1896, 3115, 1946] },
-  { kind: 'basin',  rect: [2886, 1863, 2916, 1896] },
+  { kind: 'basin',  rect: [2886, 1863, 2911, 1900] },
   { kind: 'toilet', rect: [2964, 1963, 2988, 2000] },
-  { kind: 'shower', name: 'DUS', rect: [2888, 1925, 2960, 2010] },
+  { kind: 'shower', name: 'DUS', rect: [2886, 1919, 2948, 2006] },
 
   // ────────────────────────────────── stair, descending to ZEMIN
   // MÜ: 20 (17x30) switchback. Levels are relative to this floor's slab, so
-  // the flights run from -3.40 m up to the final riser at 0.
-  { kind: 'stairs', name: 'Stair flight 1 (treads 1–9)',   rect: [2796, 1715, 2871, 1876], dir: 'S', steps: 9, riser: 0.17, from: -3.40 },
-  { kind: 'box',    name: 'Stair half-landing',            rect: [2710, 1876, 2871, 1946], h: 1.70, y: -3.40, mat: 'counter' },
-  // Open soffit: this flight passes over the ground-floor W.C.
-  { kind: 'stairs', name: 'Stair flight 2 (treads 10–18)', rect: [2710, 1721, 2784, 1876], dir: 'N', steps: 9, riser: 0.17, from: -1.70, solid: false },
+  // the flights run from -3.40 m up to the final riser at 0. P.14 swapped the
+  // columns: flight 1 now climbs south in the WEST column (beside the
+  // gallery), and flight 2 comes back north in the east one.
+  { kind: 'stairs', name: 'Stair flight 1 (treads 1–9)',   rect: [2709, 1721, 2784, 1876], dir: 'S', steps: 9, riser: 0.17, from: -3.40 },
+  { kind: 'box',    name: 'Stair half-landing',            rect: [2709, 1876, 2870, 1944], h: 1.70, y: -3.40, mat: 'counter' },
+  // Open soffit: DEPO is under this flight on the ground floor.
+  { kind: 'stairs', name: 'Stair flight 2 (treads 10–18)', rect: [2796, 1721, 2870, 1876], dir: 'N', steps: 9, riser: 0.17, from: -1.70, solid: false },
   { kind: 'railing', name: 'Stair balustrade', path: [[2790, 1721], [2790, 1876]], h: 1.0, y: -1.7 },
 
   // ────────────────────────────────── roofs
@@ -756,36 +861,25 @@ const FIRST_OBJECTS = [
   // black stone-coated S-tile hip roof, one per block, eaves at wall height.
   // Stacked only (`only: 'stacked'`): the side-by-side first floor stays open
   // so it can be seen into from above. Stacked, they cover the ground floor too.
-  { kind: 'hiproof', name: 'Roof — YATAK ODASI block',     rect: [2237, 1194, 2704, 1627], y: 3.0, roof: true, only: 'stacked' },
-  { kind: 'hiproof', name: 'Roof — ÇAMSIR / ANA KORIDOR', rect: [2174, 1620, 2560, 1744], y: 3.0, roof: true, only: 'stacked' },
-  { kind: 'hiproof', name: 'Roof — stair hall',            rect: [2560, 1620, 2870, 1950], y: 3.0, roof: true, only: 'stacked' },
-  { kind: 'hiproof', name: 'Roof — EBEVEYN suite',         rect: [2870, 1621, 3187, 2019], y: 3.0, roof: true, only: 'stacked' },
+  { kind: 'hiproof', name: 'Roof — YATAK ODASI block',       rect: [2237, 1194, 2704, 1627], y: 3.0, roof: true, only: 'stacked' },
+  { kind: 'hiproof', name: 'Roof — ÇAMSIR / KAPALI TERAS',   rect: [2175, 1620, 2562, 1870], y: 3.0, roof: true, only: 'stacked' },
+  { kind: 'hiproof', name: 'Roof — gallery and stair hall',  rect: [2562, 1620, 2878, 1951], y: 3.0, roof: true, only: 'stacked' },
+  { kind: 'hiproof', name: 'Roof — EBEVEYN suite',           rect: [2878, 1620, 3185, 2013], y: 3.0, roof: true, only: 'stacked' },
 
   // ────────────────────────────────── open edges
-  // BALKON TERASI is split front/back. The back half (y 1744..1872, against
-  // the house) is a glazed room in black frames under a glass roof, with a
-  // sliding door in its glass front. The front half (y 1872..2000) stays open
-  // for laundry and keeps the balustrade. The room's east side is the GALERI
-  // wall, so only its west and south edges are glass.
+  // BALKON TERASI (14 m²) runs the width of KAPALI TERAS in front of its
+  // glazed wall, out to y 2020. It stays open, with its balustrade, for laundry.
   {
     kind: 'railing',
     name: 'BALKON TERASI balustrade',
-    path: [[2174, 1872], [2174, 2000], [2560, 2000], [2560, 1874]],
+    path: [[2170, 1873], [2170, 2020], [2566, 2020], [2566, 1959]],
     h: 1.1,
   },
   {
-    kind: 'glassroom',
-    name: 'BALKON TERASI glass room',
-    rect: [2174, 1744, 2560, 1872],
-    sides: [
-      { side: 'S', door: true },
-      { side: 'W' },
-    ],
-  },
-  {
+    // Round the head of the void over GIRIS HOLU and the stair's west flight.
     kind: 'railing',
     name: 'GALERI BOSLUGU balustrade',
-    path: [[2569, 1744], [2690, 1744]],
+    path: [[2570, 1738], [2706, 1738], [2706, 1717], [2790, 1717]],
     h: 1.1,
   },
 ];
@@ -796,27 +890,34 @@ export const FLOORS = [
     name: 'ZEMIN',
     label: 'Ground floor',
     crop: { ...ORIGIN },
+    // The slab is the house only; outside it the patio and lawn take over.
+    outline: GROUND_FOOTPRINT,
     // The first floor sits on this one, so these walls run the full 3.40 m to
     // the underside of its slab rather than stopping at the 3.0 m clear
-    // height. Walls with their own `height` (the W.C block under the stair)
-    // are unaffected.
+    // height. Walls with their own `height` (DEPO, the front yard) are
+    // unaffected.
     wallTop: PLAN.floorToFloor,
-    // Laminate parquet throughout, kitchens included. Only the W.C, the stair
-    // and the garage keep the plain finish. Rects are approximate room
-    // interiors; the walls hide the edges.
+    // Laminate parquet throughout, kitchens included. Only the W.C, DEPO and
+    // the stair keep the plain finish. Rects are approximate room interiors;
+    // the walls hide the edges.
     // Plan symbols painted over with plain parquet: the removed armchairs and
     // console table, the removed three-seat sofa and the replaced sectional.
     erase: [
-      [1196, 1646, 1378, 1697],
-      [1186, 1738, 1354, 1806],
-      [1126, 1812, 1272, 1998], // the sectional
+      [1196, 1439, 1378, 1490],
+      [1186, 1531, 1354, 1599],
+      [1126, 1605, 1272, 1791], // the sectional
     ],
     parquet: [
-      [1124, 1633, 1421, 2004], // OTURMA ODASI
-      [482, 1203, 930, 1428],   // MUTFAK + dining
-      [482, 1441, 702, 1580],   // Y.MUTFAK KILER
-      [718, 1442, 930, 1616],   // ANA KORIDOR
-      [812, 1730, 931, 1872],   // GIRIS HOLU
+      [1123, 1423, 1414, 1801], // OTURMA ODASI
+      [482, 999, 931, 1250],    // MUTFAK + dining
+      [807, 1250, 931, 1300],   // dining alcove by the double door
+      [482, 1256, 792, 1408],   // Y.MUTFAK KILER
+      [807, 1306, 931, 1423],   // ANA KORIDOR
+      [497, 1423, 1108, 1501],  // hall
+      [807, 1501, 943, 1740],   // GIRIS HOLU
+      [420, 1581, 590, 1801],   // ÇALIŞMA ODASI
+      [500, 1507, 590, 1581],   // ÇALIŞMA ODASI (beside the W.C)
+      [596, 1507, 764, 1801],   // OYUN ODASI
     ],
     alignPx: [0, 0],
     storey: 0,
@@ -834,38 +935,38 @@ export const FLOORS = [
       [2476, 1201, 2697, 1559], // YATAK ODASI 2 + vestibule
       [2548, 1559, 2697, 1612], // Y.ODASI 2 D.ODASI (south part)
       [2389, 1562, 2540, 1627], // ANA KORIDOR (north strip, below the bedroom doors)
-      [2389, 1627, 2560, 1737], // ANA KORIDOR
-      [2560, 1627, 2870, 1872], // stair hall / gallery, inside the south wall
-      [2702, 1872, 2870, 1946], // stair landing (the strip south of the gallery is outdoors)
-      [2890, 1638, 3180, 1834], // EBEVEYN Y. ODASI
-      [3010, 1845, 3177, 2006], // EBEVEYN D.ODASI
+      [2389, 1627, 2870, 1737], // ANA KORIDOR, out to the head of the stair
+      [2890, 1638, 3177, 1834], // EBEVEYN Y. ODASI
+      [3012, 1847, 3177, 2006], // EBEVEYN D.ODASI
     ],
-    alignPx: [-1762, 1],
+    // alignPx + crop.xy must equal ORIGIN.xy: main.js centres each floor's
+    // slab on its container.
+    alignPx: [-1763, -204],
     storey: 1,
     walls: FIRST_WALLS,
     objects: FIRST_OBJECTS,
-    // The slab is clipped to the building's footprint. Without it the whole
-    // crop (mostly empty paper) hangs 3.4 m up in the stacked model and hides
-    // the ground-floor terrace and its roof.
+    // The slab is clipped to the building's footprint (wall centrelines, the
+    // balcony to its edge). Without it the whole crop (mostly empty paper)
+    // hangs 3.4 m up in the stacked model and hides the ground-floor terrace.
     outline: [
-      [2237, 1194], [2704, 1194], [2704, 1620], [3187, 1620], [3187, 2019],
-      [2870, 2019], [2870, 1950], [2560, 1950], [2560, 2000], [2174, 2000],
-      [2174, 1620], [2237, 1620],
+      [2237, 1194], [2704, 1194], [2704, 1620], [3185, 1620], [3185, 2013],
+      [2878, 2013], [2878, 1951], [2566, 1951], [2566, 2020], [2170, 2020],
+      [2170, 1620], [2237, 1620],
     ],
-    // Openings cut clean through the slab (stairwell void).
+    // Openings cut clean through the slab: GALERI BOSLUGU and the stairwell
+    // are one void. The stair comes up through it, arriving at the north edge,
+    // and it has to clear the HALF-LANDING as well as the two flights (the
+    // landing runs to y 1944): stopping at the flights left this slab as a
+    // ceiling 1.30 m above the landing. It stops at 1942, just inside the south
+    // wall's inner face, NOT on its centreline: walls are 3.0 m on a 3.40 m
+    // floor-to-floor, so the 0.4 m band between them is filled by the slab
+    // body alone. Run the void out to the wall and that band becomes an open
+    // slot to the sky.
     voids: [
-      { name: 'GALERI BOSLUGU', rect: [2569, 1744, 2690, 1864] },
-      // The stair comes up through here, arriving at the north edge. It has to
-      // clear the HALF-LANDING as well as the two flights (the landing runs to
-      // y 1946): stopping the void at the flights left this slab as a ceiling
-      // 1.30 m above the landing, which walled the upper storey off — you
-      // could climb flight 1 and then not stand up — and cut the stair hall,
-      // and its window, in half.
-      // Stops at 1942, just inside the south wall's inner face, NOT on its
-      // centreline: walls are 3.0 m on a 3.40 m floor-to-floor, so the 0.4 m
-      // band between them is filled by the slab body alone. Run the void out
-      // to the wall and that band becomes an open slot to the sky.
-      { name: 'Stair well', rect: [2702, 1715, 2872, 1942] },
+      {
+        name: 'GALERI BOSLUGU + stair well',
+        path: [[2570, 1738], [2706, 1738], [2706, 1715], [2870, 1715], [2870, 1942], [2570, 1942]],
+      },
     ],
   },
 ];
