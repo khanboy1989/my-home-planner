@@ -2,11 +2,23 @@
 
 ## Read this first, every session
 
-**`assets/VILLA KHAN 24092026.pdf` (P.14, `PLAN.pdf`) is the authoritative
-source for all geometry — check it before touching `src/floorplan.js`, and
-re-check it whenever the owner reports something is in the wrong place.**
-The P.13 sheet (`VILLA KHAN 20092026.pdf`) is kept only because
-`groundCopy.js` is still a P.13 experiment.
+**The newest sheet in `assets/` is the authoritative source for all geometry —
+check it before touching `src/floorplan.js`, and re-check it whenever the owner
+reports something is in the wrong place.** That is currently
+`assets/VILLA KHAN 24092026.pdf` (**P.14**), which `src/floorplan.js` names as
+`PLAN.pdf`.
+
+**Start every session by confirming that is still true:**
+
+```bash
+ls -t assets/*.pdf | head -1        # newest sheet the owner has supplied
+grep -n "pdf:\|image:" src/floorplan.js | head -2   # what the model actually reads
+```
+
+If the newest PDF is not the one `PLAN.pdf` names, the owner has supplied a
+revision and the model has not been moved onto it yet — follow *A newer sheet*
+below before doing anything else. Older sheets are kept only as revision
+history, for the diff in step 1; nothing reads them.
 
 It is a true vector drawing, so walls, door swings and dimensions can be read
 *exactly*. The JPEG is only a raster of the same sheet, used at runtime as the
@@ -26,7 +38,9 @@ are drawn as r≈32 px arcs and are filtered out by radius.) If it reports
 anything else, the model has drifted from the drawing — fix the model, not the
 audit.
 
-The PDF is also revised often (the sheet lists fourteen P.n dates). If the
+### A newer sheet
+
+The PDF is revised often (the sheet lists fourteen P.n dates). If the
 owner supplies a newer one:
 
 1. Render both sheets and diff them — a revision can be **re-plotted** at a
@@ -68,12 +82,13 @@ troubleshooting table; `AGENTS.md` is the entry point for non-Claude agents.
 
 | Path | What it is |
 | --- | --- |
-| `assets/` | Source drawings. `VILLA KHAN 24092026_page-0001.jpg` is the P.14 sheet rendered into the model frame (3509×2482, `tools/render-sheet.mjs`) and is what the app reads; `…20092026_page-0001.jpg` is P.13, read only by the ground-floor copy. The WhatsApp JPEG is an old CAD screenshot kept for reference. |
+| `assets/` | Source drawings. `VILLA KHAN 24092026_page-0001.jpg` is the P.14 sheet rendered into the model frame (3509×2482, `tools/render-sheet.mjs`) and is the only one the app reads. The P.13 sheet and the WhatsApp CAD screenshot are kept as revision history — nothing loads them. |
 | `index.html` | Shell, HUD, import map. |
 | `src/floorplan.js` | **The data.** Per-floor crop, alignment, every wall centreline + opening, and the furniture schedule. |
 | `src/buildWalls.js` | Turns one floor's wall data into geometry, including door and window joinery. |
 | `src/objects.js` | Furniture/fixture makers, keyed by `kind`. |
-| `src/main.js` | Scene, camera, lights, slab textures, layout, interaction. |
+| `src/main.js` | Scene, camera, sun and times of day, slab textures, layout, interaction. |
+| `src/lights.js` | The shared spot-light pool every fitting in the house draws from. |
 
 ## The coordinate system (important)
 
@@ -275,7 +290,9 @@ Also added on the owner's instruction (see comments in `floorplan.js`):
     `main.js`, same outline and voids) and the walls below meet it with no gap.
 14. **OTURMA ODASI restyle** after the owner's reference photo: cream and gold.
     Media wall on the east wall (`tvwall`: backlit niches, one floating unit,
-    TV above, `fireplace: false`) and a **ceiling-hung fireplace** (`hangingfire`,
+    TV above, `fireplace: false`; the TV is sized from a `tv` diagonal in
+    inches, **85" by the owner's instruction**, 16:9 plus a bezel and clamped
+    to the centre section between the niches) and a **ceiling-hung fireplace** (`hangingfire`,
     black flue and steel bowl with the fire) hung in the **north-east corner** of
     the salon, its mouth turned into the room (`faceDeg`), cream sofas with gold rails
     (`fabric: 'cream'`, `trim: true`), patterned `rug`, marble `coffee` table,
@@ -287,32 +304,21 @@ Also added on the owner's instruction (see comments in `floorplan.js`):
     removed; the plan's printed symbols for them are painted out via the
     floor's `erase` rects (`cropTexture()` overpaints them with plain parquet). The fireplace
     is a requirement — keep one (now the hanging one) if the room is restyled again.
-15. **Ground-floor copy** (branch `feature/ground-floor-copy`). `src/groundCopy.js`
-    is a **P.13** experiment: it keeps the P.13 sheet (`image`), its own crop,
-    and an `alignPx` that carries it into the shared frame, and was not
-    re-traced to P.14. It is a full, independent source copy of the ground floor — walls, plot, planting,
-    gates, objects, parquet — drawn as a third model 30 m west of the origin (key
-    `5` fits it). It exists to try changes without touching the original; edit it
-    freely. Changes made only there so far: the kitchen's **appliance wardrobe**
-    (`appliancenook`), the east 1.6 m of the south run, hiding a coffee machine,
-    kettle, toaster and microwave behind pocket doors; both kitchens' **west
-    doors** onto a cement service path down to the parked cars; and the
-    **garage split in three**. GARAJ (41.4 m² at this scale) is cut by a
-    partition at x=575 into a 24 m² single-bay closed garage to the east and a
-    2.74 m strip to the west, itself halved at y=1810 into a games / library
-    room (north: bookshelves, PC desk under the window, TV for the
-    PlayStation, sofa) and the son's play room (south), ~9 m² each — not the
-    12 + 12 asked for, which does not fit alongside 24. The play room is laid
-    out for a toddler — a foam `playmat` floor, `rockinghorse`, `teepee`,
-    `ballpit`, `blocks`, `teddy` and toddler-height `toyshelf` cubbies, all new
-    makers in `objects.js` on a `TOY_COLOURS` palette — with no hard edge above
-    knee height and the west window left clear. Both rooms open off
-    the garage; the Y.MUTFAK party wall stays solid. The roller shutter was
-    narrowed to the bay, the worktop to the bay's width, the Mercedes centred
-    in it and the L200 moved out to the side parking strip. The plan texture
-    still prints `GARAJ 42.00 m²` across all three.
-    Each model has a colour-coded name plate in front of it (blue side by side,
-    green stacked, orange copy; `LABELS` in `main.js`, `N` toggles) and the hover
+15. **(Retired.) The ground-floor copy is gone.** `src/groundCopy.js` was a
+    full, independent duplicate of the ground floor drawn as a third model 30 m
+    west of the origin (key `5`), kept as a scratch copy to try changes on. It
+    was never re-traced past **P.13**, so under P.14 it modelled a house that no
+    longer exists — most of what it tried out was the garage split in three,
+    and P.14 has no garage at all. It was removed rather than re-traced:
+    experiment on a git branch instead. The work worth keeping was already
+    carried into the real model — the kitchen **appliance wardrobe**
+    (`appliancenook`, item 18) and the **dining slider** (item 16). Its toddler
+    makers (`playmat`, `rockinghorse`, `teepee`, `ballpit`, `blocks`, `teddy`,
+    `toyshelf`, `TOY_COLOURS`) are still in `objects.js`, unused, and are the
+    obvious furniture for P.14's own OYUN ODASI. The history is on the branch
+    `feature/ground-floor-copy`.
+    Each model still has a colour-coded name plate in front of it (blue side by
+    side, green stacked; `LABELS` in `main.js`, `N` toggles) and the hover
     readout ends with the model's name.
 
 16. **Dining → back garden slider.** The sheet draws a 250/230 window in the
@@ -320,8 +326,7 @@ Also added on the owner's instruction (see comments in `floorplan.js`):
     instruction it is a glazed slider to the floor instead, out to the pool
     terrace. It keeps the drawn opening (x 754..909, 2.60 m — already centred
     on the table) and only drops its sill to 0. Black joinery, parking east so
-    the leaf lands on solid wall rather than across the other window. Applied
-    to `groundCopy.js` too, so the copy stays a copy.
+    the leaf lands on solid wall rather than across the other window.
 17. **The dining chairs face the table.** Each carries a `rot` (degrees
     clockwise on the page; the `chair` maker backs a chair north at 0), so the
     west run is 270, the east run 90 and the ends 0 and 180. Without it all
@@ -337,10 +342,103 @@ Also added on the owner's instruction (see comments in `floorplan.js`):
     `microwave: false`) at the west end of its south run: coffee machine,
     kettle and toaster behind sliding pocket doors, drawn open.
 
+19. **The lit band between the storeys — stacked model only.** Not on the
+    sheet; the owner's instruction. The first floor's structural slab (3.0–3.4 m,
+    the 0.4 m `slabBody`) is pushed out past the facade into a projecting band,
+    and **facade downlights are recessed into its soffit**, washing the ground
+    floor and the garden. It is deliberately the *storey line* — between the
+    ground-floor wall head and the first-floor slab — not an eaves band.
+    - `BAND_OFFSET` in `main.js` is `exterior/2 + BAND_PROUD`: the first floor's
+      `outline` runs on the exterior wall **centrelines**, so the offset has to
+      clear half a wall (0.125 m) before any of it shows. `BAND_PROUD` (0.12 m)
+      is what actually stands clear of the facade. Change `BAND_PROUD`, not the
+      sum.
+    - `offsetOutline()` offsets the outline outward. It is exact **only because
+      every floor outline is rectilinear** — it intersects neighbouring offset
+      edges by taking x from the vertical one and y from the horizontal one. Add
+      a diagonal edge to an outline and it must be generalised.
+    - Apart, the floors have no ground floor under them for a band to belong to,
+      so `banded` is false and `slabBody` is built flush, as before.
+    - **`L` toggles night** (`setNight()`): sun 2.4 → 0.12, ambient 0.25 → 0.05,
+      sky and fog darkened, fixtures on. The lights are hidden by day — they are
+      invisible against full sun, and hiding them keeps the whole pool out of
+      the render. They **cast no shadows**; a shadow map each would cost more
+      than the rest of the scene. The sun stays the only shadow caster. The
+      band's 21 fixtures no longer own their spots — see *Lighting*, below.
+    - `LIGHT_SPACING` (3.4 m) was set against the render. The fixture sits 0.12 m
+      off the wall, so the cone is cut near its apex and makes a ~1.2 m scallop
+      on the wall (distinct, about one per window bay) while opening to a ~4.2 m
+      pool on the ground 3 m below, where the pools overlap into a continuous
+      wash. Do not "fix" the gaps between the wall scallops — they are the
+      intended rhythm, and closing them needs ~34 lights per model.
+
+20. **Time of day.** `K` steps the sun on through Morning → Midday →
+    Afternoon → Sunset → Night and `J` steps back; `L` still jumps straight to
+    night and back to whichever daylight hour you left. `TIMES` in `main.js`
+    holds the sun direction, intensity, tint, ambient, hemisphere and sky/fog
+    for each. **The sheet's "up" is not compass north** — the owner's
+    orientation is that the pool side (the model's -Z) faces **east** and the
+    entrance and parking side (+Z) faces **west**, which makes +X real south.
+    So every daylight sun in `TIMES` has a positive X: in the northern
+    hemisphere the sun never crosses the north. The sun rises out of -Z over
+    the pool, crosses +X and sets into +Z over the parking.
+
+21. **The interior lighting, and why no fitting owns a light.** On the owner's
+    instruction the house is lit for walk mode, not just from outside:
+    - **A dropped perimeter ceiling in every room** (`coffer` in
+      `objects.js`): a band **0.20 m wide** round the inside of the room,
+      **0.15 m below** the slab soffit, with a downlight recessed into it at
+      **each corner**. Room rects live with the other objects in
+      `floorplan.js` and are written at **wall centrelines**, like the walls;
+      `ROOM_INSET` (0.1 m) takes them back to the plaster, which is 2–3 cm out
+      against an exterior wall and invisible at 2.85 m. Stacked model only,
+      like the roofs — apart, these floors have no ceiling to hang from.
+      GIRIS HOLU's is at 6.40 m because it is open to GALERI BOSLUGU.
+    - **Under-cabinet strips** in both kitchens and KILER, built into the
+      `wallcabinet` maker so moving a run takes its light along; `lit: false`
+      opts out.
+    - **The dressing rooms** get one `ceilinglight` in the middle instead of a
+      coffer — they are small and walled with wardrobe — and their `wardrobe`
+      runs carry `lit: true`, which lights the open bay inside.
+    - **A `chandelier`** over the dining table in MUTFAK: two tiers of candle
+      lamps on gold arms with crystal drops.
+    - **Sconces** (`walllight`): a pair flanking the front door on the south
+      face of the entrance wall, and two on BALKON TERASI — the balcony's only
+      solid wall is the gallery's west exterior where it passes the terrace.
+
+    **None of these owns a `SpotLight`.** There are ~165 emitters in the
+    scene and a WebGL fragment shader pays for every light on every lit pixel,
+    so `src/lights.js` keeps a fixed pool of **18** spots and hands them to
+    whichever emitters are nearest the camera, re-aiming them as you move.
+    Interior fittings are dropped beyond 13 m and otherwise count as half as
+    far as they are, so the room you are standing in beats the facade band
+    outside its window. **The pool size must not change while the lights are
+    on:** three.js compiles a shader per light count, so growing and shrinking
+    the set as you walk would recompile every material several times a second.
+    Spare slots park below the world at zero intensity. The whole pool is
+    hidden by day, which is the one moment the count may change.
+
+    To add a fitting, call `emitter(parent, {...})` from its maker and put the
+    glowing parts in a `nightGroup()` — `setTime()` shows and hides those.
+
+22. **Two things that made night laggy, both fixed in `main.js`.**
+    - The 4096² sun shadow map was re-rendering **every frame**. Nothing in
+      the scene moves, so `renderer.shadowMap.autoUpdate` is now `false` and
+      `invalidateShadows()` is called after the build and after anything that
+      changes what casts — floor visibility, roofs, x-ray, walk mode, resize,
+      and every `setTime()`, because the sun moves. **If you add a toggle that
+      hides or shows geometry, call it**, or the shadows will be of the old
+      scene.
+    - Resolution is adaptive: `adaptResolution()` steps the pixel ratio down
+      towards 1× when the running frame average passes 22 ms and back up under
+      13 ms, held for ~½ s each way so it settles instead of oscillating. That
+      is what pays for the light count at night; day usually sits at the 2×
+      cap.
+
 Settled questions — do not re-litigate these without new instruction:
 
 - **P.14 has no garage** and no EV charger / unloading tezgah; the cars park
-  outside. (The P.13 garage questions still apply to `groundCopy.js` only.)
+  outside. The P.13 garage questions are closed with it.
 - **The main entrance is into GIRIS HOLU**, through the `K1:180/230` double
   door in the wall at y 1747 off GIRIS TERASI, both leaves opening inward.
   East of it the same wall carries the stair's 210/110 **window**, not a door.
@@ -359,6 +457,15 @@ Settled questions — do not re-litigate these without new instruction:
 
 If the plan is revised, reconcile these first — they are the parts a fresh trace
 would not reproduce.
+
+23. **`5` shows one model at a time.** Both models are built and both sit in
+    the scene; `5` cycles both → stacked only → side by side only, which is
+    how you get the real house on its own. It composes with `1`/`2`/`0`:
+    `showFloors()` and the model filter are two pieces of state applied
+    together in `applyVisibility()`, not two things each writing
+    `container.visible`. The name plates hide with their model, and
+    `LightPool` skips a hidden model's emitters so they cannot take slots from
+    the one you are looking at.
 
 ## The stair
 
@@ -389,6 +496,33 @@ ground floor's W.C is now the one in the west wing.
 
 Flight 2 stays `solid: false` (treads and risers only, open soffit), because
 DEPO is under it.
+
+**The riser-board sign bug, in case it comes back.** In the open-soffit branch
+of the `stairs` maker the riser board's position was `sign * (centre - sign *
+run / 2)`. `centre` is already expressed in the flight's own direction, so
+applying `sign` a second time mirrored every board to the **far end of the
+flight**. Flight 1 is solid and never took that branch, so only flight 2 showed
+it — and there the top tread's board ended up standing at y 3.00–3.17, right
+across the bottom of the climb at chest height. You could climb flight 1 and
+the landing and then go no further without jumping. It is now
+`centre - sign * run / 2`. If the stair ever needs a jump again, walk it under
+script (below) rather than guessing.
+
+**The korkuluk.** An iron balustrade rakes up flight 1's **west** edge — the
+open one, x 2706 in first-floor px, with no wall along it — from -3.40 at the
+foot to -1.87 at the top, then runs on round the half-landing's west edge at
+-1.70. Flight 2 has the central wall on one side and the living room's west
+wall on the other, so it takes a **wall-mounted handrail** (`wall: true`:
+handrail on brackets, no balusters, no mid-rail) rather than a balustrade
+standing inside the plaster. Railing path points may carry their own height as
+a third element (`[px, py, y]`), which is what makes a rail rake; the balusters
+stay plumb and a path with no heights behaves exactly as it always did.
+
+**Walking the house under script.** `walk.update()` does nothing without the
+pointer lock, which is why a scripted climb looks like the player is frozen.
+`walk.hold(key, down)` and `walk.step(dt)` are the handles for this: hold `w`,
+call `step` in a loop and read `walk.debug().pos`. Teleporting with `goTo` and
+reading `probe()` is not a substitute — a climb can fail only while moving.
 
 **The stairwell void must cover the half-landing, not just the flights.** The
 first floor's `voids` entry runs to y 1942. Stop it at the flights and that
@@ -422,9 +556,11 @@ You move only while a key is held, and every route out of the keyboard (blur,
 tab away, leaving pointer lock) clears the held keys — a lost `keyup` would
 otherwise read as walking off on your own.
 
-`walk.goTo([px, py], storey, heading, feetY)`, `walk.probe()` and
-`walk.stairBounds()` are the debugging handles, reachable from the console via
-`window.villa`. `probe()` names what is blocking you rather than leaving you to
+`walk.goTo([px, py], storey, heading, feetY)`, `walk.probe()`,
+`walk.stairBounds()`, `walk.hold(key, down)` and `walk.step(dt)` are the
+debugging handles, reachable from the console via `window.villa`. `heading` is
+in **radians**, and the facing it gives is `(-sin θ, 0, -cos θ)` — so `Math.PI`
+faces +Z. `probe()` names what is blocking you rather than leaving you to
 guess from coordinates.
 
 ### The desktop app (macOS / Windows)
@@ -463,6 +599,14 @@ main.js drops you inside the house. The desktop app opens `walk.html`.
 ## Controls
 
 `F` walk inside (see below) · `drag` orbit · `scroll` zoom ·
-`3`/`4`/`5` fit side-by-side / stacked / ground-copy model ·
-`1`/`2`/`0` floor visibility · `T` top view · `R` refit · `X` x-ray walls · `O` hide roofs · `N` hide the model name plates · `G` grid. Hovering a
+`3`/`4` fit side-by-side / stacked model ·
+`1`/`2`/`0` floor visibility · `5` both models / stacked only / side by side only ·
+`T` top view · `R` refit · `X` x-ray walls · `O` hide roofs ·
+`K`/`J` time of day, forward and back · `L` night / all the lights ·
+`N` hide the model name plates · `G` grid. Hovering a
 wall shows its floor and name in the bottom-left readout.
+
+`F`, `K`, `J`, `L`, `O` and `X` are the only keys that still work **inside**
+walk mode — the rest would fight WASD, but changing the hour or the lights is
+exactly what you want while standing in a room. (`walk.html` had long listed
+`O` and `X`; before this they were swallowed by the guard.)

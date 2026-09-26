@@ -445,7 +445,7 @@ export function createWalkMode({
   return {
     get active() { return active; },
     get model() { return set; },
-    /** Walk a different model ('apart' | 'stacked' | 'copy'); re-enters if inside. */
+    /** Walk a different model ('apart' | 'stacked'); re-enters if inside. */
     setModel(next) {
       if (next === set) return;
       const was = active;
@@ -463,6 +463,15 @@ export function createWalkMode({
     goTo,
     stairBounds,
     probe,
+    /**
+     * Hold or release a key from the console, and advance the simulation
+     * without the pointer lock `update()` waits for. Between them these walk
+     * the player under script — which is how a climb that fails only when you
+     * are actually moving gets diagnosed, rather than by teleporting with
+     * `goTo` and guessing from `probe`.
+     */
+    hold(key, down = true) { down ? keys.add(key) : keys.delete(key); },
+    step(dt = 1 / 60) { if (active) step(Math.min(dt, 0.05)); },
     toggle() { active ? leave() : enter(); },
     enter,
     leave,

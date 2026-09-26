@@ -15,8 +15,7 @@ A Three.js viewer for a real house — **Villa Khan**. It lays the architect's 2
 floor plans down as ground textures and extrudes the walls, joinery and
 furniture back out of them. Two storeys: `ZEMIN` (ground) and `BIRINCI KAT`
 (first), drawn **twice** on screen: as separate models side by side, and — to
-the east — stacked as the real building (plus a third model, the ground-floor
-copy, west of the origin). The site is modelled too: a plot (`land`), a
+the east — stacked as the real building. The site is modelled too: a plot (`land`), a
 boundary wall, a pool, a paved terrace and side parking.
 
 It is also **walkable in first person** (`F`, or `walk.html`) and ships as a
@@ -61,8 +60,10 @@ under pointer lock the owner's real mouse steers it.
 
 ## The rules that matter
 
-1. **`assets/VILLA KHAN 20092026.pdf` is the authoritative source for all
-   geometry.** It is a true vector drawing. Read it with
+1. **`assets/VILLA KHAN 24092026.pdf` (P.14, the latest revision) is the
+   authoritative source for all geometry.** Always check that the file named
+   as `PLAN.pdf` in `src/floorplan.js` is the newest sheet in `assets/` before
+   you trust any geometry. It is a true vector drawing. Read it with
    `node tools/plan-audit.mjs <x0> <y0> <x1> <y1>`, which dumps wall segments
    and text in a region of the sheet.
 
@@ -93,11 +94,6 @@ under pointer lock the owner's real mouse steers it.
 
 ## Things that bite
 
-- **`src/groundCopy.js` is a deliberate duplicate** of the ground floor, drawn as
-  a third model west of the origin, for experiments. Edit the copy, not the
-  original, unless the owner says otherwise; the two are not linked. Plain bug
-  fixes to shared data (a maker, a chair's orientation) are worth applying to
-  both so the copy stays a copy.
 - **Both models are built from the same data.** `main.js` calls `buildModel()`
   twice, so anything you add to a floor appears in both. Use `only:` to restrict.
 - **The pool is sunk below the ground.** The ground `apron` in `main.js` and the

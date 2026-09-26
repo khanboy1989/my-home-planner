@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { PLAN, toWorld } from './floorplan.js';
+import { emitter } from './lights.js';
 
 /**
  * Furniture, fixtures and fittings, traced off the drawings.
@@ -163,7 +164,16 @@ Object.assign(M, {
   hearth:    new THREE.MeshStandardMaterial({ color: 0x151515, roughness: 0.45, metalness: 0.6, side: THREE.DoubleSide }),
   ember:     new THREE.MeshBasicMaterial({ color: 0xff6a1a }),
   parasol:   new THREE.MeshStandardMaterial({ color: 0xf3eee3, roughness: 0.8, side: THREE.DoubleSide }),
+  ceilBand:  new THREE.MeshStandardMaterial({ color: 0xf2efe8, roughness: 0.95 }),
 });
+
+/**
+ * Rooms are written at their wall centrelines, like the walls. This is the
+ * inset back to the plaster: half an interior wall is 0.075 m and half an
+ * exterior 0.125 m, so one figure between them is a couple of centimetres out
+ * at worst — nothing at ceiling height, and it keeps the room table readable.
+ */
+const ROOM_INSET = 0.1;
 
 
 /** Pool rim, working inwards from the drawn outline: kerb, channel, coping (m). */
@@ -174,6 +184,21 @@ export function poolBasinPx([x0, y0, x1, y1]) {
   const inset = (POOL_RIM.kerb + POOL_RIM.chan + POOL_RIM.cope) / PLAN.metersPerPixel;
   return [x0 + inset, y0 + inset, x1 - inset, y1 - inset];
 }
+/**
+ * A sub-group that only exists after dark: the glowing lenses of a fitting and
+ * the emitters that go with them. `setTime()` in main.js shows and hides every
+ * group tagged this way, so a fitting's housing stays on the wall by day while
+ * its light does not. Emitters inside a hidden group are still collected —
+ * the pool checks the clock, not the group.
+ */
+function nightGroup(parent) {
+  const g = new THREE.Group();
+  g.userData.nightLight = true;
+  g.visible = false;
+  parent.add(g);
+  return g;
+}
+
 const RUN_TURN = { N: 0, S: Math.PI, W: Math.PI / 2, E: -Math.PI / 2 };
 
 /**
@@ -337,6 +362,24 @@ const KINDS = {
       run.add(box(len * 0.97, 0.02, depth * 0.85, M.cabinet, 0, drawerTop + 0.04 + openH * t, face - depth * 0.42));
     }
     run.add(box(len * 0.95, 0.025, 0.025, M.metal, 0, drawerTop + openH * 0.62 - 0.08, face));
+
+    // Light inside the wardrobe, on the owner's instruction — the dressing
+    // rooms' runs are open bays, so a strip under the top of the carcass
+    // lights the rail and the shelves. `lit: false` opts out (the bedroom and
+    // playroom runs are closed cupboards).
+    if (it.lit) {
+      const lamp = nightGroup(run);
+      const top = drawerTop + 0.04 + openH - 0.03;
+      lamp.add(box(len * 0.9, 0.012, 0.03, M.warm, 0, top, face - 0.05));
+      const spots = Math.max(1, Math.round(len / 0.8));
+      for (let i = 0; i < spots; i++) {
+        emitter(lamp, {
+          at: [-len / 2 + (len / spots) * (i + 0.5), top - 0.02, face - 0.06],
+          aim: [0, -1, -0.15],
+          intensity: 1.8, distance: 2.2, angle: 0.9, penumbra: 0.85, interior: true,
+        });
+      }
+    }
   },
 
   /**
@@ -359,6 +402,23 @@ const KINDS = {
       run.add(box(doorW - 0.012, h - 0.02, 0.012, M.linen, x, y + 0.01, face));
       const pull = x + (i % 2 ? -1 : 1) * (doorW / 2 - 0.06);
       run.add(box(0.02, 0.16, 0.02, M.metal, pull, y + 0.08, face + 0.012));
+    }
+
+    // Under-cabinet lighting, on the owner's instruction: a recessed strip
+    // along the front edge of every kitchen and KILER run, washing the
+    // worktop below. It is part of the cabinet rather than a separate item so
+    // that moving a run takes its light with it. `lit: false` opts out.
+    if (it.lit !== false) {
+      const lamp = nightGroup(run);
+      lamp.add(box(len - 0.1, 0.012, 0.03, M.warm, 0, y - 0.006, depth / 2 - 0.05));
+      const spots = Math.max(1, Math.round(len / 0.9));
+      for (let i = 0; i < spots; i++) {
+        emitter(lamp, {
+          at: [-len / 2 + (len / spots) * (i + 0.5), y - 0.02, depth / 2 - 0.05],
+          aim: [0, -1, 0.35],                       // down and out over the worktop
+          intensity: 2.6, distance: 2.6, angle: 0.85, penumbra: 0.8, interior: true,
+        });
+      }
     }
   },
 
@@ -838,9 +898,167 @@ const KINDS = {
       }
     }
 
-    const tw = Math.min(1.4, cw - 0.3);                                           // television
-    run.add(box(tw, 0.78, 0.04, M.dark, 0, 1.15, backZ + 0.08));
-    run.add(box(tw + 0.04, 0.01, 0.045, M.gold, 0, 1.15, backZ + 0.08));
+    // Television. `tv` is the diagonal in inches (the owner asked for a bigger
+    // one than the 63" this used to draw); the panel is 16:9 plus a thin bezel,
+    // and is held to whatever the centre section between the niches will take.
+    const diag = (it.tv ?? 85) * 0.0254;
+    const tw = Math.min(diag * 0.871 + 0.03, cw - 0.2);       // 16:9 width + bezel
+    const th = (tw - 0.03) * 0.5625 + 0.03;
+    run.add(box(tw, th, 0.04, M.dark, 0, 1.25, backZ + 0.08));
+    run.add(box(tw + 0.04, 0.01, 0.045, M.gold, 0, 1.25, backZ + 0.08));
+  },
+
+  /**
+   * Wall-mounted sconce — an up/down washer in matt black, on the owner's
+   * instruction: two on the balcony's solid return and a pair flanking the
+   * front door, so those two places have real light rather than only the
+   * band's downlights washing past them.
+   *
+   * `back` names the wall it hangs on (the side its back is against) and the
+   * item's `z` is the mount height; 2.0 m suits a 2.30 m door head. The
+   * housing is there day and night — it is a real fitting on the wall — but
+   * the lens and the light live in a group tagged `nightLight`, which
+   * `setNight()` in main.js switches with the facade band. One spot each,
+   * thrown downward: the upward lens does the rest of the look for nothing,
+   * and every real light here is paid for by every lit pixel in the scene.
+   */
+  walllight(g, { w, d }, it) {
+    const { run, depth } = backedRun(g, { w, d }, it.back);
+    const faceZ = -depth / 2;                       // the wall face
+    const bw = 0.1, bh = 0.26, bd = 0.1;            // housing
+
+    run.add(box(bw, bh, bd, M.dark, 0, 0, faceZ + bd / 2));
+    run.add(box(bw + 0.03, 0.02, 0.02, M.dark, 0, 0, faceZ + 0.01));   // back plate
+
+    const lit = new THREE.Group();
+    lit.userData.nightLight = true;
+    lit.visible = false;                            // day is the default view
+    run.add(lit);
+
+    for (const s of [-1, 1]) {                      // the two lenses, up and down
+      lit.add(box(bw - 0.02, 0.012, bd - 0.02, M.warm, 0, s * (bh / 2 - 0.006), faceZ + bd / 2));
+    }
+
+    emitter(lit, {                                  // down the wall, splaying out
+      at: [0, -bh / 2, faceZ + bd / 2],
+      aim: [0, -2.4, -0.4],
+      intensity: it.watts ?? 7, distance: 6.5, angle: 0.72, penumbra: 0.62,
+    });
+  },
+
+  /**
+   * The dropped perimeter ceiling and its corner spots, one per room, on the
+   * owner's instruction: a band 20 cm wide round the inside of the room,
+   * dropped 15 cm below the slab soffit, with a downlight recessed into it at
+   * each corner. That is what gives walk mode real light in every room instead
+   * of a flat wash from the sky.
+   *
+   * The `rect` is the room at its **wall centrelines**, which is how the walls
+   * themselves are written; `ROOM_INSET` takes it back to the plaster. Half a
+   * wall is 0.125 m on an exterior and 0.075 m on an interior, so a single
+   * inset is 2–3 cm out at worst, which at 2.85 m above the floor nobody sees.
+   *
+   * `h` is the ceiling — 3.0 m, the underside of the slab above, and 6.4 m
+   * over a double-height room like GIRIS HOLU. The corner spots sit in from
+   * the corner by the band's own width so the cone clears the return.
+   */
+  coffer(g, { w, d }, it) {
+    const ceiling = it.h ?? PLAN.storeyHeight;
+    const band = it.band ?? 0.2;                  // how far in from the wall
+    const drop = it.drop ?? 0.15;                 // how far below the ceiling
+    const iw = w - ROOM_INSET * 2;
+    const id = d - ROOM_INSET * 2;
+    if (iw < band * 2.5 || id < band * 2.5) return;   // too small to coffer
+    const y = ceiling - drop / 2;
+
+    // The band as four returns, mitred by shortening the side pieces.
+    g.add(box(iw, drop, band, M.ceilBand, 0, y, -id / 2 + band / 2));
+    g.add(box(iw, drop, band, M.ceilBand, 0, y, id / 2 - band / 2));
+    g.add(box(band, drop, id - band * 2, M.ceilBand, -iw / 2 + band / 2, y, 0));
+    g.add(box(band, drop, id - band * 2, M.ceilBand, iw / 2 - band / 2, y, 0));
+
+    const lamp = nightGroup(g);
+    const soffit = ceiling - drop;
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        const x = sx * (iw / 2 - band / 2);
+        const z = sz * (id / 2 - band / 2);
+        lamp.add(cyl(0.05, 0.01, M.warm, x, soffit + 0.004, z, 12));
+        emitter(lamp, {
+          at: [x, soffit, z],
+          aim: [-sx * 0.55, -1, -sz * 0.55],       // down and back into the room
+          intensity: it.watts ?? 5.5, distance: 7, angle: 0.72, penumbra: 0.6,
+          interior: true,
+        });
+      }
+    }
+  },
+
+  /**
+   * One flush ceiling light in the middle of the room — what the dressing
+   * rooms get instead of a coffer, on the owner's instruction, because they
+   * are small and walled with wardrobe.
+   */
+  ceilinglight(g, _size, it) {
+    const ceiling = it.h ?? PLAN.storeyHeight;
+    g.add(cyl(0.16, 0.05, M.ceilBand, 0, ceiling - 0.025, 0, 20));
+    const lamp = nightGroup(g);
+    lamp.add(cyl(0.14, 0.012, M.warm, 0, ceiling - 0.052, 0, 20));
+    emitter(lamp, {
+      at: [0, ceiling - 0.06, 0],
+      aim: [0, -1, 0],
+      intensity: it.watts ?? 9, distance: 7, angle: 1.12, penumbra: 0.9,
+      interior: true,
+    });
+  },
+
+  /**
+   * The chandelier over the dining table, on the owner's instruction: a big
+   * romantic one, so two tiers of candle lamps on gold arms under a ring of
+   * crystal drops. It hangs from the ceiling on a slim stem; `h` is the
+   * ceiling and `drop` how far the lowest tier hangs below it.
+   */
+  chandelier(g, { w, d }, it) {
+    const ceiling = it.h ?? PLAN.storeyHeight;
+    const r = it.r ?? Math.min(w, d) * 0.42;
+    const hang = it.drop ?? 0.95;
+    const hub = ceiling - hang;
+
+    g.add(cyl(0.09, 0.04, M.gold, 0, ceiling - 0.02, 0, 16));          // ceiling rose
+    g.add(cyl(0.012, hang - 0.1, M.gold, 0, hub + (hang - 0.1) / 2, 0, 8));  // stem
+    g.add(ball(0.07, M.gold, 0, hub, 0));                               // hub
+
+    const lamp = nightGroup(g);
+    const tiers = [
+      { n: 8, r, y: hub + 0.06, len: 0.26 },
+      { n: 5, r: r * 0.58, y: hub + 0.34, len: 0.2 },
+    ];
+    for (const t of tiers) {
+      g.add(new THREE.Mesh(
+        new THREE.TorusGeometry(t.r, 0.012, 6, 40),
+        M.gold,
+      ).rotateX(Math.PI / 2).translateZ(-t.y));                          // gold ring
+      for (let i = 0; i < t.n; i++) {
+        const a = (i / t.n) * Math.PI * 2;
+        const x = Math.cos(a) * t.r;
+        const z = Math.sin(a) * t.r;
+        g.add(cyl(0.01, t.len, M.gold, x, t.y + t.len / 2, z, 6));       // candle arm
+        g.add(cyl(0.022, 0.1, M.linen, x, t.y + t.len + 0.05, z, 8));    // candle
+        lamp.add(ball(0.03, M.warm, x, t.y + t.len + 0.12, z, 0));       // flame
+      }
+      for (let i = 0; i < t.n * 3; i++) {                                // crystal drops
+        const a = ((i + 0.5) / (t.n * 3)) * Math.PI * 2;
+        const len = 0.1 + (i % 3) * 0.05;
+        g.add(cyl(0.011, len, M.glass, Math.cos(a) * t.r, t.y - len / 2, Math.sin(a) * t.r, 6));
+      }
+    }
+
+    emitter(lamp, {
+      at: [0, hub + 0.1, 0],
+      aim: [0, -1, 0],
+      intensity: it.watts ?? 11, distance: 8, angle: 1.2, penumbra: 0.95,
+      interior: true,
+    });
   },
 
   /** Flat rug; the cream-and-gold pattern comes from the texture. */
@@ -1152,7 +1370,7 @@ const KINDS = {
     g.add(cyl(0.04, 0.66, M.metal));
   },
 
-  // ── toddler play room (COPY) ───────────────────────────────────────────
+  // ── toddler play room ──────────────────────────────────────────────────
   /**
    * Interlocking foam play tiles, laid to fill the rect. `tile` sets the
    * nominal tile size (0.6 m); the grid is rounded to whole tiles and the
@@ -1461,8 +1679,13 @@ const KINDS = {
       g.add(vertical
         ? box(w, tread, run, M.counter, 0, top - tread, centre)
         : box(run, tread, d, M.counter, centre, top - tread, 0));
-      // Riser board closing the back of each tread.
-      const rb = sign * (centre - sign * run / 2);
+      // Riser board closing the back of each tread — the face you step up
+      // off, so the edge at `centre` behind the direction of travel. `centre`
+      // is already in the flight's own direction; applying `sign` again here
+      // mirrored every board to the far end of the flight, which on flight 2
+      // left the top tread's board standing at chest height across the bottom
+      // of the climb. That is what made the stair need a jump.
+      const rb = centre - sign * run / 2;
       g.add(vertical
         ? box(w, riser, 0.04, M.counter, 0, top - riser - tread, rb)
         : box(0.04, riser, d, M.counter, rb, top - riser - tread, 0));
@@ -1471,27 +1694,64 @@ const KINDS = {
 };
 
 /** Posts-and-rails run along a polyline — balcony edges and the void. */
+/**
+ * A railing along a polyline. Iron throughout — `M.metal` — which is what the
+ * owner means by *korkuluk*.
+ *
+ * A path point is `[px, py]` at the item's own `y`, or `[px, py, y]` to set
+ * that corner's height: that is how a stair balustrade rakes. Each leg then
+ * runs from one corner's height to the next's, so the handrail climbs with
+ * the nosing line while the balusters stay plumb. A path with no heights
+ * behaves exactly as before.
+ *
+ * `wall: true` gives a handrail on brackets instead — no balusters and no
+ * mid-rail — for a flight enclosed by walls on both sides, where a full
+ * balustrade would stand inside the plaster.
+ */
 function buildRailing(item, offsetPx) {
   const group = new THREE.Group();
   group.name = item.name ?? 'railing';
   const h = item.h ?? 1.1;
-  const pts = item.path.map((p) => toWorld(p, offsetPx));
+  const base = item.y ?? 0;
+  const pts = item.path.map((p) => [...toWorld(p, offsetPx), p[2] ?? base]);
 
   for (let i = 0; i < pts.length - 1; i++) {
-    const [ax, az] = pts[i];
-    const [bx, bz] = pts[i + 1];
+    const [ax, az, ay] = pts[i];
+    const [bx, bz, by] = pts[i + 1];
     const len = Math.hypot(bx - ax, bz - az);
     if (len < 1e-3) continue;
+    const rise = by - ay;
+    const rake = Math.atan2(rise, len);
+    const slope = Math.hypot(len, rise);          // the handrail's own length
 
     const seg = new THREE.Group();
-    seg.position.set(ax, item.y ?? 0, az);
+    seg.position.set(ax, ay, az);
     seg.rotation.y = Math.atan2(-(bz - az), bx - ax);
 
-    seg.add(box(len, 0.06, 0.06, M.metal, len / 2, h - 0.06));
-    seg.add(box(len, 0.03, 0.04, M.metal, len / 2, h * 0.5));
-    const posts = Math.max(2, Math.round(len / 1.1));
-    for (let p = 0; p <= posts; p++) {
-      seg.add(box(0.05, h - 0.06, 0.05, M.metal, (len * p) / posts));
+    // The rails follow the rake; a level leg (rise 0) is the old flat case.
+    // `mid` is the rail's centre above the nosing line — `box()` measures from
+    // a bottom face, which a rotated rail does not have.
+    const rail = (mid, th, d) => {
+      const b = box(slope, th, d, M.metal);
+      b.position.set(len / 2, rise / 2 + mid, 0);
+      b.rotation.z = rake;
+      return b;
+    };
+    seg.add(rail(h - 0.03, 0.06, 0.06));                       // handrail
+    if (!item.wall) seg.add(rail(h * 0.5, 0.03, 0.04));        // mid rail
+
+    const n = Math.max(2, Math.round(len / 1.1));
+    for (let p = 0; p <= n; p++) {
+      const t = p / n;
+      const foot = rise * t;                                   // the nosing line
+      if (item.wall) {
+        // Bracket back to the wall, under the rail.
+        seg.add(box(0.06, 0.04, 0.16, M.metal, len * t, foot + h - 0.12, -0.09));
+        continue;
+      }
+      const b = box(0.05, h - 0.06, 0.05, M.metal, len * t, 0, 0);
+      b.position.y = foot + (h - 0.06) / 2;                    // plumb baluster
+      seg.add(b);
     }
     group.add(seg);
   }

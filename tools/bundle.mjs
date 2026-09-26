@@ -19,7 +19,27 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => readFileSync(join(root, p));
 const dataUrl = (type, buf) => `data:${type};base64,${Buffer.from(buf).toString('base64')}`;
 
-const SRC = ['floorplan.js', 'groundCopy.js', 'buildWalls.js', 'objects.js', 'walk.js', 'main.js'];
+/**
+ * The modules to inline: whatever `main.js` actually reaches, followed one
+ * import at a time. A hand-kept list silently drops a new module from the
+ * bundle — `lights.js` was missing from it for exactly that reason, and the
+ * offline file then fails only when someone opens it — while scanning the
+ * whole of src/ sweeps up modules nothing imports (`groundCopy.js`, retired
+ * with P.14) and the megabytes of inlined plan they drag in.
+ */
+function reachable(entry) {
+  const seen = new Set();
+  const queue = [entry];
+  while (queue.length) {
+    const name = queue.shift();
+    if (seen.has(name)) continue;
+    seen.add(name);
+    const code = read(`src/${name}`).toString();
+    for (const [, dep] of code.matchAll(/from '\.\/([\w.]+)'/g)) queue.push(dep);
+  }
+  return [...seen];
+}
+const SRC = reachable('main.js');
 
 // three.module.js re-exports from './three.core.js'; a data: URL has no base
 // to resolve that against, so the core goes in the map under its own name.

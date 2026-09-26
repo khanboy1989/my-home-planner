@@ -815,6 +815,51 @@ const GROUND_OBJECTS = [
   ...[585, 765].map((cy) => (
     { kind: 'parasol', name: 'Parasol', rect: [334, cy - 6, 346, cy + 6], radius: 1.3 }
   )),
+
+  // ────────────────────────────────── entrance sconces
+  // Owner's instruction: wall lights either side of the front door. They hang
+  // on the south face of the entrance wall (centreline y 1747, so the face is
+  // at y 1754), 6 px clear of each leaf of the K1:180/230 — the west one just
+  // clears the pier at x 800. Mounted at 2.0 m, below the 2.30 m head.
+  ...[812, 927].map((cx) => (
+    { kind: 'walllight', name: 'GIRIS — wall light', rect: [cx - 4, 1754, cx + 4, 1762], back: 'N', z: 2.0 }
+  )),
+
+  // ────────────────────────────────── ceilings and interior light
+  // The owner's lighting scheme: every room carries a dropped perimeter band
+  // 20 cm wide and 15 cm deep with a downlight in each corner (`coffer`), so
+  // walking through the house after dark you are lit by the house rather than
+  // by the sky. Rects are the room at its **wall centrelines** — the same
+  // space the walls are written in — and `coffer` insets to the plaster.
+  //
+  // Stacked only, like the roofs: apart, these floors have no ceiling for a
+  // dropped ceiling to hang from and the band would float over open walls.
+  ...[
+    ['MUTFAK',           [474, 992, 938, 1253]],
+    ['Y.MUTFAK KILER',   [474, 1253, 800, 1416]],
+    ['ANA KORIDOR',      [800, 1303, 938, 1416]],
+    ['Hall',             [497, 1416, 1116, 1504]],
+    ['ORTAK W.C',        [412, 1416, 497, 1578]],
+    ['ÇALIŞMA ODASI',    [412, 1578, 593, 1809]],
+    ['OYUN ODASI',       [593, 1504, 767, 1809]],
+    ['OTURMA ODASI',     [1116, 1416, 1422, 1809]],
+  ].map(([name, rect]) => (
+    { kind: 'coffer', name: `${name} — ceiling`, rect, only: 'stacked' }
+  )),
+  {
+    // GIRIS HOLU is open to GALERI BOSLUGU above it, so its ceiling is the
+    // first floor's: 3.40 m of storey plus 3.0 m of wall.
+    kind: 'coffer', name: 'GIRIS HOLU — ceiling (double height)',
+    rect: [767, 1504, 943, 1747], h: PLAN.floorToFloor + PLAN.storeyHeight, only: 'stacked',
+  },
+  {
+    // One big chandelier over the dining table, on the owner's instruction:
+    // two tiers of candle lamps on gold arms, crystal drops, hung from the
+    // MUTFAK ceiling on the table's centre (the table is x 816..878, y
+    // 1027..1176, so its centre is 847, 1102).
+    kind: 'chandelier', name: 'Dining chandelier',
+    rect: [802, 1057, 892, 1147], only: 'stacked',
+  },
 ];
 
 const FIRST_OBJECTS = [
@@ -842,9 +887,9 @@ const FIRST_OBJECTS = [
   { kind: 'tv',  name: 'TV — YATAK ODASI 2', rect: [2478, 1265, 2484, 1329], h: 0.55, y: 1.1 },
   // Y.ODASI 2 D.ODASI (Dolap Odası): wardrobes only round the walls, open
   // floor in the middle, no island. The U opens west onto the vestibule.
-  { kind: 'wardrobe', name: 'Wardrobe — Y.ODASI 2 D.ODASI (north)', rect: [2548, 1451, 2694, 1481], back: 'N' },
-  { kind: 'wardrobe', name: 'Wardrobe — Y.ODASI 2 D.ODASI (east)',  rect: [2664, 1481, 2694, 1582], back: 'E' },
-  { kind: 'wardrobe', name: 'Wardrobe — Y.ODASI 2 D.ODASI (south)', rect: [2548, 1582, 2694, 1612], back: 'S' },
+  { kind: 'wardrobe', name: 'Wardrobe — Y.ODASI 2 D.ODASI (north)', rect: [2548, 1451, 2694, 1481], back: 'N', lit: true },
+  { kind: 'wardrobe', name: 'Wardrobe — Y.ODASI 2 D.ODASI (east)',  rect: [2664, 1481, 2694, 1582], back: 'E', lit: true },
+  { kind: 'wardrobe', name: 'Wardrobe — Y.ODASI 2 D.ODASI (south)', rect: [2548, 1582, 2694, 1612], back: 'S', lit: true },
 
   // ────────────────────────────────── ÇAMSIR ODASI
   { kind: 'box',       name: 'Laundry counter', rect: [2187, 1627, 2385, 1670], h: 0.9, mat: 'counter' },
@@ -861,9 +906,9 @@ const FIRST_OBJECTS = [
   // glass-top island in the middle is the owner's. It opens north onto the
   // slider; the west run starts south of y 1868 so the slider's parked leaf
   // clears it.
-  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (west)',  rect: [3012, 1868, 3048, 1969], back: 'W' },
-  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (east)',  rect: [3140, 1847, 3177, 1969], back: 'E' },
-  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (south)', rect: [3012, 1969, 3177, 2006], back: 'S' },
+  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (west)',  rect: [3012, 1868, 3048, 1969], back: 'W', lit: true },
+  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (east)',  rect: [3140, 1847, 3177, 1969], back: 'E', lit: true },
+  { kind: 'wardrobe', name: 'Wardrobe — EBEVEYN D.ODASI (south)', rect: [3012, 1969, 3177, 2006], back: 'S', lit: true },
   { kind: 'island',   name: 'Dressing island',                    rect: [3073, 1896, 3115, 1946] },
   { kind: 'basin',  rect: [2886, 1863, 2911, 1900] },
   { kind: 'toilet', rect: [2964, 1963, 2988, 2000] },
@@ -878,7 +923,25 @@ const FIRST_OBJECTS = [
   { kind: 'box',    name: 'Stair half-landing',            rect: [2709, 1876, 2870, 1944], h: 1.70, y: -3.40, mat: 'counter' },
   // Open soffit: DEPO is under this flight on the ground floor.
   { kind: 'stairs', name: 'Stair flight 2 (treads 10–18)', rect: [2796, 1721, 2870, 1876], dir: 'N', steps: 9, riser: 0.17, from: -1.70, solid: false },
-  { kind: 'railing', name: 'Stair balustrade', path: [[2790, 1721], [2790, 1876]], h: 1.0, y: -1.7 },
+  // Korkuluk — the iron stair balustrade, on the owner's instruction. Path
+  // points carry their own height here, so the rail rakes with the flight
+  // while the balusters stay plumb (see `buildRailing`).
+  //
+  // Flight 1's **west** edge is the open one: the stair has no wall along
+  // x 2706 (ground px 943), it is open to GIRIS HOLU and the gallery above.
+  // So the balustrade climbs that edge from the foot at -3.40 to the top of
+  // flight 9 at -1.87, then runs on round the half-landing's west edge at
+  // -1.70. Flight 2 has the central wall on one side and the living room's
+  // west wall on the other, so it takes a wall-mounted handrail instead of a
+  // balustrade that would stand inside the plaster.
+  {
+    kind: 'railing', name: 'Stair korkuluk (flight 1 + landing)', h: 1.0,
+    path: [[2706, 1721, -3.40], [2706, 1876, -1.87], [2706, 1944, -1.70]],
+  },
+  {
+    kind: 'railing', name: 'Stair handrail (flight 2)', h: 1.0, wall: true,
+    path: [[2793, 1944, -1.70], [2793, 1876, -1.53], [2793, 1721, -0.17]],
+  },
 
   // ────────────────────────────────── roofs
   // The sheet draws no roof, so these are modelled from the owner's photo: a
@@ -906,6 +969,38 @@ const FIRST_OBJECTS = [
     path: [[2570, 1738], [2706, 1738], [2706, 1717], [2790, 1717]],
     h: 1.1,
   },
+
+  // ────────────────────────────────── balcony sconces
+  // Owner's instruction: real light on BALKON TERASI. The only solid wall the
+  // balcony has is the gallery's west exterior (centreline x 2562, face at
+  // x 2555) where it passes the terrace, y 1873..1951 — the rest of the
+  // balcony is the glazed front and its balustrade. Two washers on that face.
+  ...[1895, 1930].map((cy) => (
+    { kind: 'walllight', name: 'BALKON TERASI — wall light', rect: [2547, cy - 4, 2555, cy + 4], back: 'E', z: 2.0 }
+  )),
+
+  // ────────────────────────────────── ceilings and interior light
+  // As the ground floor: a dropped perimeter band with a downlight in each
+  // corner, per room, stacked model only. The two D.ODASI are the exception —
+  // see below.
+  ...[
+    ['YATAK ODASI 1',      [2237, 1194, 2468, 1456]],
+    ['YATAK ODASI 2',      [2468, 1194, 2704, 1448]],
+    ['ORTAK W.C',          [2237, 1456, 2379, 1616]],
+    ['ÇAMSIR ODASI',       [2175, 1620, 2382, 1744]],
+    ['ANA KORIDOR',        [2382, 1627, 2870, 1737]],
+    ['KAPALI TERAS',       [2175, 1744, 2562, 1870]],
+    ['EBEVEYN Y.ODASI',    [2878, 1620, 3185, 1842]],
+    ['DUS W.C',            [2878, 1842, 3007, 2013]],
+  ].map(([name, rect]) => (
+    { kind: 'coffer', name: `${name} — ceiling`, rect, only: 'stacked' }
+  )),
+
+  // The dressing rooms get one light in the middle of the ceiling instead of
+  // a coffer, on the owner's instruction — they are small and walled with
+  // wardrobe on three sides, and their runs are lit inside (`lit: true`).
+  { kind: 'ceilinglight', name: 'Y.ODASI 2 D.ODASI — ceiling light', rect: [2610, 1515, 2640, 1545], only: 'stacked' },
+  { kind: 'ceilinglight', name: 'EBEVEYN D.ODASI — ceiling light',   rect: [3080, 1912, 3110, 1942], only: 'stacked' },
 ];
 
 export const FLOORS = [

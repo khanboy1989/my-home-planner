@@ -79,14 +79,20 @@ drifted from the architect's PDF.
 | --- | --- |
 | drag | orbit |
 | scroll | zoom |
-| `3` `4` `5` | fit the side-by-side plans / the stacked model / the ground-floor copy |
+| `3` `4` | fit the side-by-side plans / the stacked model |
 | `1` `2` `0` | ground only / first only / both |
+| `5` | both models / the stacked one only / the side-by-side ones only |
 | `T` | top view |
 | `R` | refit view |
 | `X` | x-ray walls |
 | `O` | hide the roofs |
+| `K` `J` | the sun on through the day, and back — morning, midday, afternoon, sunset, night |
+| `L` | night: the facade band, the sconces and every room's ceiling lights |
 | `N` | hide the model name plates |
 | `G` | grid |
+
+`F`, `K`, `J`, `L`, `O` and `X` keep working inside walk mode; the rest would
+fight WASD.
 
 Hover a wall, a door or a piece of furniture to see its floor and name in the
 bottom-left readout.
