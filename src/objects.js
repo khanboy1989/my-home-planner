@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { PLAN, toWorld } from './floorplan.js';
 import { emitter } from './lights.js';
+import { circuitGroup, circuitMat } from './circuits.js';
 
 /**
  * Furniture, fixtures and fittings, traced off the drawings.
@@ -133,6 +134,9 @@ Object.assign(M, {
   stoneLite: new THREE.MeshStandardMaterial({ color: 0xa79e8f, roughness: 0.95 }),
   stoneDark: new THREE.MeshStandardMaterial({ color: 0x6f6858, roughness: 0.97 }),
   paving:    new THREE.MeshStandardMaterial({ color: 0xbdb5a7, roughness: 0.9 }),
+  // The exterior wall render (buildWalls.js), for the flat roof slab and its
+  // posts, so the first floor reads as one white box like the SketchUp model.
+  render:    new THREE.MeshStandardMaterial({ color: 0xe8e2d9, roughness: 0.92 }),
   coping:    new THREE.MeshStandardMaterial({ color: 0xe4dfd4, roughness: 0.7 }),
   poolTile:  new THREE.MeshStandardMaterial({ color: 0x7fc4d6, roughness: 0.4, emissive: 0x1f5f73 }),
   frame:     new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.45, metalness: 0.3 }),
@@ -165,6 +169,10 @@ Object.assign(M, {
   ember:     new THREE.MeshBasicMaterial({ color: 0xff6a1a }),
   parasol:   new THREE.MeshStandardMaterial({ color: 0xf3eee3, roughness: 0.8, side: THREE.DoubleSide }),
   ceilBand:  new THREE.MeshStandardMaterial({ color: 0xf2efe8, roughness: 0.95 }),
+  // Facade details from the architect's renders (assets/3D Rendered).
+  panel:     new THREE.MeshStandardMaterial({ color: 0xd6d1c9, roughness: 0.8 }),
+  panelJoint: new THREE.MeshStandardMaterial({ color: 0x8e8a83, roughness: 0.9 }),
+  louvre:    new THREE.MeshStandardMaterial({ color: 0x55585c, roughness: 0.5, metalness: 0.3 }),
 });
 
 /**
@@ -199,7 +207,24 @@ function nightGroup(parent) {
   return g;
 }
 
-const RUN_TURN = { N: 0, S: Math.PI, W: Math.PI / 2, E: -Math.PI / 2 };
+/**
+ * The glowing part of a fitting on a switched circuit (`src/circuits.js`), or,
+ * with no circuit, a `nightGroup` as before. `glow()` gives the material to
+ * light it with, so a circuit's fade reaches only its own fittings.
+ */
+function lampGroup(parent, circuit) {
+  if (!circuit) return nightGroup(parent);
+  const g = new THREE.Group();
+  parent.add(g);
+  return circuitGroup(circuit, g);
+}
+const glow = (mat, circuit) => (circuit ? circuitMat(circuit, mat) : mat);
+
+const RUN_TURN = {
+  N: 0, S: Math.PI, W: Math.PI / 2, E: -Math.PI / 2,
+  // Diagonal walls (the KILER door's stub): the rect is only a centre then.
+  NW: Math.PI / 4, SW: 3 * Math.PI / 4, NE: -Math.PI / 4, SE: -3 * Math.PI / 4,
+};
 
 /**
  * A group turned so its local -Z (the "back") faces `back`, plus the run's
@@ -279,6 +304,25 @@ function box(w, h, d, mat, x = 0, y = 0, z = 0) {
   return mesh;
 }
 
+/**
+ * A UK socket outlet (BS 1363, type G, 13 A switched), as the owner's house
+ * is wired to British standards: a white plate 86 mm high — 86 wide for a
+ * single, 146 for a double — each outlet with its vertical earth slot over
+ * the two flat pins and a rocker switch beside it. Built in a wall's plane:
+ * (x, y) is the plate's centre, z the wall face, +z out of the wall.
+ */
+function ukSocket(parent, x, y, z, n = 1) {
+  const pw = n === 1 ? 0.086 : 0.146;
+  parent.add(box(pw, 0.086, 0.01, M.ceramic, x, y - 0.043, z + 0.005));
+  const outlets = n === 1 ? [-0.012] : [-0.045, 0.025];
+  for (const ox of outlets) {
+    const cx = x + ox;
+    parent.add(box(0.004, 0.009, 0.002, M.dark, cx, y + 0.004, z + 0.011));                  // earth
+    for (const s of [-1, 1]) parent.add(box(0.007, 0.004, 0.002, M.dark, cx + s * 0.011, y - 0.018, z + 0.011)); // L, N
+    parent.add(box(0.01, 0.018, 0.005, M.ceilBand, cx + 0.028, y + 0.006, z + 0.012));     // switch
+  }
+}
+
 function cyl(r, h, mat, x = 0, y = 0, z = 0, seg = 16) {
   const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat);
   mesh.position.set(x, y + h / 2, z);
@@ -286,6 +330,141 @@ function cyl(r, h, mat, x = 0, y = 0, z = 0, seg = 16) {
   mesh.receiveShadow = true;
   return mesh;
 }
+
+/** The cove LED's wash over a havuz ceiling: bright at the edges, fading in. */
+function coveWashTexture() {
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const x = c.getContext('2d');
+  const img = x.createImageData(128, 128);
+  for (let j = 0; j < 128; j++) {
+    for (let i = 0; i < 128; i++) {
+      const edge = Math.min(i, 127 - i, j, 127 - j) / 64;    // 0 at the cove, 1 mid-room
+      const a = Math.max(0, 1 - edge * 2.2) ** 1.6;
+      const k = (j * 128 + i) * 4;
+      img.data.set([255, 214, 160, Math.round(a * 255)], k);
+    }
+  }
+  x.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+/**
+ * What the projector shows: an Android TV home screen, drawn rather than
+ * captured — a hero banner, a row of app tiles and a row of picks.
+ */
+function androidTvTexture() {
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas');
+  c.width = 1280;
+  c.height = 720;
+  const x = c.getContext('2d');
+  const bg = x.createLinearGradient(0, 0, 0, 720);
+  bg.addColorStop(0, '#1b2433');
+  bg.addColorStop(1, '#0b0f16');
+  x.fillStyle = bg;
+  x.fillRect(0, 0, 1280, 720);
+
+  x.font = '500 22px sans-serif';
+  x.fillStyle = '#e8eaed';
+  x.fillText('For you', 64, 58);
+  x.fillStyle = '#9aa0a6';
+  x.fillText('Movies', 170, 58);
+  x.fillText('Shows', 270, 58);
+  x.fillText('Apps', 362, 58);
+  x.fillStyle = '#e8eaed';
+  x.fillText('21:30', 1150, 58);
+  x.fillStyle = '#e8eaed';
+  x.fillRect(64, 66, 82, 3);
+
+  const hero = x.createLinearGradient(64, 100, 1216, 400);
+  hero.addColorStop(0, '#3a1c4d');
+  hero.addColorStop(0.55, '#a8432f');
+  hero.addColorStop(1, '#f2a65a');
+  x.fillStyle = hero;
+  x.beginPath();
+  x.roundRect(64, 96, 1152, 300, 18);
+  x.fill();
+  x.fillStyle = 'rgba(255,240,210,0.85)';            // a sun over dunes
+  x.beginPath();
+  x.arc(930, 250, 70, 0, Math.PI * 2);
+  x.fill();
+  x.fillStyle = '#5b2a2a';
+  x.beginPath();
+  x.moveTo(600, 396);
+  x.quadraticCurveTo(820, 260, 1216, 330);
+  x.lineTo(1216, 396);
+  x.fill();
+  x.fillStyle = '#ffffff';
+  x.font = 'bold 46px sans-serif';
+  x.fillText('Desert Light', 104, 290);
+  x.font = '22px sans-serif';
+  x.fillStyle = '#f1e3d3';
+  x.fillText('New film · 2h 4m', 104, 326);
+  x.fillStyle = '#ffffff';
+  x.beginPath();
+  x.roundRect(104, 346, 130, 36, 18);
+  x.fill();
+  x.fillStyle = '#1b2433';
+  x.font = 'bold 18px sans-serif';
+  x.fillText('▶  Watch', 128, 370);
+
+  x.fillStyle = '#e8eaed';
+  x.font = '500 22px sans-serif';
+  x.fillText('Your apps', 64, 440);
+  const apps = [['YouTube', '#e62117'], ['Netflix', '#141414'], ['Prime Video', '#1a98ff'],
+    ['Disney+', '#11306b'], ['Spotify', '#1db954'], ['TRT İzle', '#0a3d91'], ['Play Store', '#2a2f37']];
+  apps.forEach(([name, col], i) => {
+    const ax = 64 + i * 164;
+    x.fillStyle = col;
+    x.beginPath();
+    x.roundRect(ax, 456, 148, 84, 12);
+    x.fill();
+    if (i === 0) { x.strokeStyle = '#ffffff'; x.lineWidth = 4; x.stroke(); }
+    x.fillStyle = '#ffffff';
+    x.font = 'bold 19px sans-serif';
+    x.textAlign = 'center';
+    x.fillText(name, ax + 74, 504);
+    x.textAlign = 'left';
+  });
+
+  x.fillStyle = '#e8eaed';
+  x.font = '500 22px sans-serif';
+  x.fillText('Continue watching', 64, 588);
+  ['#2e5e4e', '#6b4f2a', '#2d3f6b', '#5a2d4f', '#3d5a2d'].forEach((col, i) => {
+    const ax = 64 + i * 232;
+    x.fillStyle = col;
+    x.beginPath();
+    x.roundRect(ax, 604, 216, 104, 12);
+    x.fill();
+    x.fillStyle = '#e8eaed';
+    x.fillRect(ax + 12, 690, 192 * (0.25 + 0.15 * i), 4);
+  });
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = 4;
+  return tex;
+}
+
+Object.assign(M, {
+  coveWash: new THREE.MeshBasicMaterial({
+    map: coveWashTexture(), transparent: true, depthWrite: false,
+    blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+  }),
+  apLed: new THREE.MeshBasicMaterial({ color: 0x4fc3ff }),
+  portLed: new THREE.MeshBasicMaterial({ color: 0x5cff7a }),
+  routerBody: new THREE.MeshStandardMaterial({ color: 0x1d2024, roughness: 0.5, metalness: 0.3 }),
+  panelSteel: new THREE.MeshStandardMaterial({ color: 0xe9eae6, roughness: 0.45, metalness: 0.2 }),
+  redHandle: new THREE.MeshStandardMaterial({ color: 0xb03a2e, roughness: 0.5 }),
+  screen: new THREE.MeshStandardMaterial({ color: 0xf4f4f2, roughness: 0.9, side: THREE.DoubleSide }),
+  screenBlack: new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.9 }),
+  screenCase: new THREE.MeshStandardMaterial({ color: 0xe8e6e1, roughness: 0.6 }),
+  projector: new THREE.MeshStandardMaterial({ color: 0xeceae6, roughness: 0.4 }),
+});
 
 M.headlight = new THREE.MeshStandardMaterial({ color: 0xfff6d8, emissive: 0xfff0b8, emissiveIntensity: 0.6 });
 M.taillight = new THREE.MeshStandardMaterial({ color: 0xc02020, emissive: 0x801010, emissiveIntensity: 0.6 });
@@ -384,14 +563,14 @@ const KINDS = {
 
   /**
    * Upper kitchen cabinets hung on a wall, from `y` (1.5 m, 0.6 m clear of
-   * the worktop) up to `top` (2.95 m, just under the 3.0 m ceiling that the
+   * the worktop) up to `top` (5 cm under the 2.72 m ceiling that the
    * first-floor slab makes). One door front per ~0.5 m, each with a pull near
    * its lower edge. `back` names the wall it hangs on.
    */
   wallcabinet(g, { w, d }, it) {
     const { run, len, depth } = backedRun(g, { w, d }, it.back);
     const y = it.y ?? 1.5;
-    const h = (it.top ?? 2.95) - y;
+    const h = (it.top ?? PLAN.storeyHeight - 0.05) - y;
     const face = depth / 2 + 0.006;
     run.add(box(len, h, depth, M.cabinet, 0, y, 0));
 
@@ -409,14 +588,15 @@ const KINDS = {
     // worktop below. It is part of the cabinet rather than a separate item so
     // that moving a run takes its light with it. `lit: false` opts out.
     if (it.lit !== false) {
-      const lamp = nightGroup(run);
-      lamp.add(box(len - 0.1, 0.012, 0.03, M.warm, 0, y - 0.006, depth / 2 - 0.05));
+      const lamp = lampGroup(run, it.circuit);
+      lamp.add(box(len - 0.1, 0.012, 0.03, glow(M.warm, it.circuit), 0, y - 0.006, depth / 2 - 0.05));
       const spots = Math.max(1, Math.round(len / 0.9));
       for (let i = 0; i < spots; i++) {
         emitter(lamp, {
           at: [-len / 2 + (len / spots) * (i + 0.5), y - 0.02, depth / 2 - 0.05],
           aim: [0, -1, 0.35],                       // down and out over the worktop
           intensity: 2.6, distance: 2.6, angle: 0.85, penumbra: 0.8, interior: true,
+          circuit: it.circuit,
         });
       }
     }
@@ -824,6 +1004,12 @@ const KINDS = {
       l.add(box(width, 0.07, 0.05, M.frame, width / 2, 0.14));
       l.add(box(width, 0.07, 0.05, M.frame, width / 2, h - 0.1));
       for (const x of [0.03, width - 0.03]) l.add(box(0.06, h - 0.1, 0.06, M.frame, x, 0.1));
+      if (it.slats === 'horizontal') {
+        // Flat slats 12 cm deep with a 3 cm gap, in anthracite (the renders).
+        const pitch = 0.15;
+        for (let y = 0.22; y < h - 0.2; y += pitch) l.add(box(width - 0.08, 0.12, 0.03, M.louvre, width / 2, y));
+        return l;
+      }
       const n = Math.max(1, Math.floor(width / bar));
       for (let i = 1; i < n; i++) l.add(box(0.02, h - 0.3, 0.02, M.frame, (width * i) / n, 0.18));
       return l;
@@ -846,6 +1032,48 @@ const KINDS = {
       g.add(l);
     }
     g.add(box(w, 0.05, 0.16, M.frame, 0, 0));                 // track
+  },
+
+  /**
+   * Rainscreen panel cladding on a wall face — the master suite's box in the
+   * renders, light grey panels with horizontal joints. The rect is the strip
+   * the cladding occupies outside the wall face (its long side along the
+   * wall); `back` is the wall. `y` is its foot and `h` its height, both off
+   * the floor; `panels` stacked panels with a 12 mm open joint between them.
+   */
+  cladding(g, { w, d }, it) {
+    const { run, len, depth } = backedRun(g, { w, d }, it.back);
+    const y0 = it.y ?? 0;
+    const h = it.h ?? 3;
+    const n = it.panels ?? 4;
+    const joint = 0.012;
+    // A dark backing shows through the joints.
+    run.add(box(len, h, depth * 0.4, M.panelJoint, 0, y0, -depth / 2 + depth * 0.2));
+    const ph = (h - joint * (n - 1)) / n;
+    for (let i = 0; i < n; i++) {
+      run.add(box(len, ph, depth * 0.6, M.panel, 0, y0 + i * (ph + joint), depth / 2 - depth * 0.3));
+    }
+  },
+
+  /**
+   * A ventilation louvre: a dark frame filled with horizontal blades, fixed
+   * high on a wall face (the renders put one on most side walls of the first
+   * floor). Rect is the strip on the face; `z` its sill and `h` its height.
+   */
+  louvre(g, { w, d }, it) {
+    const { run, len, depth } = backedRun(g, { w, d }, it.back);
+    const h = it.h ?? 0.6;
+    const fd = Math.min(depth, 0.08);
+    const z = -depth / 2 + fd / 2;
+    run.add(box(len, 0.04, fd, M.louvre, 0, 0, z));
+    run.add(box(len, 0.04, fd, M.louvre, 0, h - 0.04, z));
+    for (const x of [-len / 2 + 0.02, len / 2 - 0.02]) run.add(box(0.04, h, fd, M.louvre, x, 0, z));
+    const blades = Math.max(2, Math.round(h / 0.1));
+    for (let i = 1; i < blades; i++) {
+      const b = box(len - 0.06, 0.012, fd * 0.9, M.louvre, 0, (h * i) / blades - 0.006, z);
+      b.rotation.x = -0.5;                       // tilted to shed rain
+      run.add(b);
+    }
   },
 
   /**
@@ -956,9 +1184,9 @@ const KINDS = {
    * The `rect` is the room at its **wall centrelines**, which is how the walls
    * themselves are written; `ROOM_INSET` takes it back to the plaster. Half a
    * wall is 0.125 m on an exterior and 0.075 m on an interior, so a single
-   * inset is 2–3 cm out at worst, which at 2.85 m above the floor nobody sees.
+   * inset is 2–3 cm out at worst, which at 2.6 m above the floor nobody sees.
    *
-   * `h` is the ceiling — 3.0 m, the underside of the slab above, and 6.4 m
+   * `h` is the ceiling — 2.72 m, the underside of the slab above, and 5.78 m
    * over a double-height room like GIRIS HOLU. The corner spots sit in from
    * the corner by the band's own width so the cone clears the return.
    */
@@ -995,6 +1223,371 @@ const KINDS = {
   },
 
   /**
+   * The havuz (pool) ceiling from the electrical project, OTURMA ODASI's
+   * sheet in `tools/electric-plan.py` (E-01): a wide dropped band round the
+   * walls with recessed spots on its centreline, and a cove of hidden LED at
+   * the edge of the raised middle, which is the slab soffit itself. The two
+   * are drawn from the same figures — keep them in step.
+   *
+   * Unlike `coffer`, the `rect` is the room's **inner wall faces** (the DWG's,
+   * converted), since the band and its spot ring are dimensioned off them.
+   *
+   * - `band` (0.6 m) wide, its underside at `level` (2.45 m); `h` is the slab
+   *   soffit (2.72 m). The edge carries a 12 cm ledge and lip with the LED
+   *   strip on it, washing the middle.
+   * - `pitch`: target spot spacing round the ring, clockwise from the NW
+   *   corner, as the drawing places them. `skip` drops the spots near a point
+   *   (sheet px) — the fireplace flue's corner.
+   * - `pockets`: slots left open to the slab in the band, `{ side, from, to,
+   *   off }` with `from`/`to` in sheet px along that wall and `off` in metres
+   *   from its face: the curtain cornices and the projector screen's cassette.
+   * - `ap`: the Cisco access point under the slab in the middle.
+   */
+  havuz(g, { w, d, mpp }, it) {
+    const ceiling = it.h ?? PLAN.storeyHeight;
+    const band = it.band ?? 0.6;
+    const under = it.level ?? 2.45;
+    const bh = ceiling - under;
+    const [x0, y0, x1, y1] = it.rect;
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    const lx = (px) => (px - cx) * mpp;
+    const lz = (py) => (py - cy) * mpp;
+
+    // Each side of the band, cut into strips around its pockets. N and S run
+    // the full width and take the corners; W and E run between them.
+    const sides = {
+      N: { along: [-w / 2, w / 2], put: (s, e, p, q) => [(s + e) / 2, -d / 2 + (p + q) / 2, e - s, q - p], conv: lx },
+      S: { along: [-w / 2, w / 2], put: (s, e, p, q) => [(s + e) / 2, d / 2 - (p + q) / 2, e - s, q - p], conv: lx },
+      W: { along: [-d / 2 + band, d / 2 - band], put: (s, e, p, q) => [-w / 2 + (p + q) / 2, (s + e) / 2, q - p, e - s], conv: lz },
+      E: { along: [-d / 2 + band, d / 2 - band], put: (s, e, p, q) => [w / 2 - (p + q) / 2, (s + e) / 2, q - p, e - s], conv: lz },
+    };
+    for (const [side, { along, put, conv }] of Object.entries(sides)) {
+      const pockets = (it.pockets ?? []).filter((p) => p.side === side)
+        .map((p) => ({ a: conv(p.from), b: conv(p.to), off: p.off }));
+      const cuts = [...new Set([...along, ...pockets.flatMap((p) => [p.a, p.b])])]
+        .filter((v) => v >= along[0] && v <= along[1]).sort((a, b) => a - b);
+      for (let i = 0; i < cuts.length - 1; i++) {
+        const s = cuts[i], e = cuts[i + 1], m = (s + e) / 2;
+        let spans = [[0, band]];
+        for (const p of pockets) {
+          if (m < p.a || m > p.b) continue;
+          spans = spans.flatMap(([u, v]) => [[u, Math.min(v, p.off[0])], [Math.max(u, p.off[1]), v]]);
+        }
+        for (const [p, q] of spans) {
+          if (q - p < 0.005) continue;
+          const [x, z, sw, sd] = put(s, e, p, q);
+          g.add(box(sw, bh, sd, M.ceilBand, x, under, z));
+        }
+      }
+    }
+
+    // The cove: a 12 cm ledge out from the band edge and a lip on it.
+    const pw = w / 2 - band, pd = d / 2 - band, ledge = 0.12;
+    for (const s of [-1, 1]) {
+      g.add(box(pw * 2, 0.02, ledge, M.ceilBand, 0, under + 0.12, s * (pd - ledge / 2)));
+      g.add(box(ledge, 0.02, pd * 2 - ledge * 2, M.ceilBand, s * (pw - ledge / 2), under + 0.12, 0));
+      g.add(box(pw * 2 - ledge * 2, 0.07, 0.02, M.ceilBand, 0, under + 0.12, s * (pd - ledge)));
+      g.add(box(0.02, 0.07, pd * 2 - ledge * 2, M.ceilBand, s * (pw - ledge), under + 0.12, 0));
+    }
+
+    // The LED strip on the ledge and the wash it throws over the middle.
+    if (it.cove !== false) {
+      const cove = lampGroup(g, it.coveCircuit);
+      const strip = glow(M.warm, it.coveCircuit);
+      for (const s of [-1, 1]) {
+        cove.add(box(pw * 2 - 0.1, 0.01, 0.03, strip, 0, under + 0.14, s * (pd - 0.05)));
+        cove.add(box(0.03, 0.01, pd * 2 - 0.1, strip, s * (pw - 0.05), under + 0.14, 0));
+      }
+      const wash = new THREE.Mesh(new THREE.PlaneGeometry(pw * 2, pd * 2), glow(M.coveWash, it.coveCircuit));
+      wash.rotation.x = Math.PI / 2;
+      wash.position.y = ceiling - 0.004;
+      wash.userData.noCollide = true;
+      cove.add(wash);
+    }
+
+    // Dropped flat over any `fill` rects (sheet px): the bits of an L-shaped
+    // room the band's rectangle does not reach, like MUTFAK's dining alcove.
+    for (const [fx0, fy0, fx1, fy1] of it.fill ?? []) {
+      g.add(box((fx1 - fx0) * mpp, bh, (fy1 - fy0) * mpp, M.ceilBand,
+        lx((fx0 + fx1) / 2), under, lz((fy0 + fy1) / 2)));
+    }
+
+    // Spots on the band centreline, on `circuit` — or, east of `split.x`
+    // (sheet px), on `split.circuit`: MUTFAK's kitchen and dining halves.
+    const spotLamp = {};
+    const spotOn = (x) => (it.split && x >= lx(it.split.x) ? it.split.circuit : it.circuit);
+    const lampFor = (c) => (spotLamp[c ?? ''] ??= lampGroup(g, c));
+    const sx = w / 2 - band / 2, sz = d / 2 - band / 2;
+    const corners = [[-sx, -sz], [sx, -sz], [sx, sz], [-sx, sz]];
+    const skip = (it.skip ?? []).map(([px, py]) => [lx(px), lz(py)]);
+    corners.forEach(([ax, az], i) => {
+      const [bx, bz] = corners[(i + 1) % 4];
+      const n = Math.max(1, Math.round(Math.hypot(bx - ax, bz - az) / (it.pitch ?? 1.1)));
+      for (let k = 0; k < n; k++) {
+        const x = ax + (bx - ax) * k / n, z = az + (bz - az) * k / n;
+        if (skip.some(([qx, qz]) => Math.hypot(x - qx, z - qz) < 0.3)) continue;
+        const c = spotOn(x);
+        const lamp = lampFor(c);
+        g.add(cyl(0.045, 0.008, M.metal, x, under - 0.008, z, 16));
+        lamp.add(cyl(0.034, 0.004, glow(M.warm, c), x, under - 0.011, z, 16));
+        emitter(lamp, {
+          at: [x, under - 0.01, z],
+          aim: [-Math.sign(x) * 0.15, -1, -Math.sign(z) * 0.15],
+          intensity: it.watts ?? 4, distance: 6, angle: 0.55, penumbra: 0.65,
+          interior: true, circuit: c,
+        });
+      }
+    });
+
+    if (it.ap) {                                    // Cisco AP, flush on the slab
+      g.add(cyl(0.11, 0.035, M.ceramic, 0, ceiling - 0.035, 0, 24));
+      g.add(cyl(0.012, 0.002, M.apLed, 0, ceiling - 0.037, 0.06, 8));
+    }
+  },
+
+  /**
+   * The home cinema in front of OTURMA ODASI's media wall, on the owner's
+   * instruction: the TV stays for every day, and a motorised screen drops out
+   * of a cassette pocket in the havuz band to cover it, lit by a ceiling-hung
+   * projector running Android TV. `P` lowers it and switches the projector on.
+   *
+   * The `rect` is the screen's line (the long side along the wall); `back`
+   * names that wall. `inches` is the image diagonal (16:9), `throw` how far
+   * back the lens hangs (a 1.3 throw ratio by default), `lensY` its height,
+   * `top` the cassette's underside, `blackDrop` the black border above the
+   * picture. Both models build one, and `P` drives every copy.
+   */
+  cinema(g, { w, d }, it) {
+    const { run } = backedRun(g, { w, d }, it.back);
+    const ceiling = it.h ?? PLAN.storeyHeight;
+    const iw = (it.inches ?? 120) * 0.0254 * 0.8716;          // image width
+    const ih = iw * 9 / 16;
+    const top = it.top ?? 2.5;
+    const black = it.blackDrop ?? 0.35;
+    const drop = black + ih + 0.06;                            // fabric when down
+    const throwM = it.throw ?? iw * 1.3;
+    const lensY = it.lensY ?? 2.3;
+
+    run.add(box(iw + 0.3, 0.11, 0.12, M.screenCase, 0, top, 0));    // cassette
+
+    const fabric = new THREE.Group();                          // pivots at the cassette
+    fabric.position.y = top;
+    fabric.scale.y = 0.001;
+    run.add(fabric);
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(iw + 0.08, drop), M.screen);
+    face.position.set(0, -drop / 2, 0.005);
+    const backing = new THREE.Mesh(new THREE.PlaneGeometry(iw + 0.08, drop), M.dark);
+    backing.position.set(0, -drop / 2, -0.001);
+    backing.rotation.y = Math.PI;
+    const border = new THREE.Mesh(new THREE.PlaneGeometry(iw + 0.08, black), M.screenBlack);
+    border.position.set(0, -black / 2, 0.007);
+    for (const m of [face, backing, border]) { m.castShadow = true; m.userData.noCollide = true; fabric.add(m); }
+    const bar = box(iw + 0.12, 0.035, 0.035, M.dark, 0, 0, 0.005);
+    bar.userData.noCollide = true;
+    run.add(bar);
+
+    const picture = new THREE.Mesh(new THREE.PlaneGeometry(iw, ih), new THREE.MeshBasicMaterial({
+      map: androidTvTexture(), transparent: true, opacity: 0, toneMapped: false,
+    }));
+    const picY = top - black - ih / 2;
+    picture.position.set(0, picY, 0.01);
+    picture.visible = false;
+    picture.userData.noCollide = true;
+    run.add(picture);
+
+    // The projector: a short drop from the slab, lens towards the screen.
+    run.add(cyl(0.02, ceiling - lensY - 0.1, M.dark, 0, lensY + 0.1, throwM + 0.12));
+    run.add(box(0.2, 0.012, 0.2, M.dark, 0, ceiling - 0.012, throwM + 0.12));
+    run.add(box(0.42, 0.15, 0.36, M.projector, 0, lensY - 0.075, throwM + 0.17));
+    const lens = cyl(0.045, 0.03, M.dark, 0.1, 0, 0);
+    lens.rotation.x = Math.PI / 2;
+    lens.position.set(0.1, lensY, throwM - 0.015);
+    run.add(lens);
+    const led = box(0.012, 0.008, 0.004, M.apLed, -0.15, lensY - 0.04, throwM - 0.012);
+    led.visible = false;
+    run.add(led);
+
+    // A faint beam from the lens to the picture's corners.
+    const L = [0.1, lensY, throwM - 0.03];
+    const C = [[-iw / 2, picY - ih / 2], [iw / 2, picY - ih / 2], [iw / 2, picY + ih / 2], [-iw / 2, picY + ih / 2]]
+      .map(([x, y]) => [x, y, 0.01]);
+    const tri = [];
+    for (let i = 0; i < 4; i++) tri.push(...L, ...C[i], ...C[(i + 1) % 4]);
+    const beamGeo = new THREE.BufferGeometry();
+    beamGeo.setAttribute('position', new THREE.Float32BufferAttribute(tri, 3));
+    const beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({
+      color: 0xd8e6ff, transparent: true, opacity: 0, depthWrite: false,
+      blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+    }));
+    beam.visible = false;
+    beam.userData.noCollide = true;
+    run.add(beam);
+
+    // Down, then the picture fades up; off, the picture goes first.
+    const DROP_S = 2.2, FADE_S = 0.8;
+    const state = { on: false, t: 0, show: 0 };
+    g.userData.cinema = {
+      get on() { return state.on; },
+      toggle(on = !state.on) { state.on = on; },
+      /** Advance by `dt` seconds; true if anything that casts moved. */
+      step(dt) {
+        let moved = false;
+        if (state.on && state.t < 1) { state.t = Math.min(1, state.t + dt / DROP_S); moved = true; }
+        else if (state.on && state.show < 1) state.show = Math.min(1, state.show + dt / FADE_S);
+        else if (!state.on && state.show > 0) state.show = Math.max(0, state.show - dt / FADE_S);
+        else if (!state.on && state.t > 0) { state.t = Math.max(0, state.t - dt / DROP_S); moved = true; }
+        else return false;
+        const ease = state.t * state.t * (3 - 2 * state.t);
+        fabric.scale.y = Math.max(0.001, ease);
+        bar.position.y = top - drop * ease - 0.035;
+        picture.material.opacity = state.show;
+        picture.visible = beam.visible = led.visible = state.show > 0;
+        beam.material.opacity = state.show * 0.025;
+        return moved;
+      },
+    };
+    g.userData.cinema.step(0);
+    bar.position.y = top - 0.035;
+  },
+
+  /**
+   * A wall switch from the electrical project: one plate, a rocker per gang,
+   * each gang on a circuit (`gangs: ['L3', 'L4']`). In walk mode, look at a
+   * rocker and press `E` (main.js finds it through `userData.switch`). `back`
+   * names the wall, the rect's thin side sits on its face, and the item's `z`
+   * is the mount height (1.10 m, as the drawing notes).
+   */
+  lightswitch(g, { w, d }, it) {
+    const { run, depth } = backedRun(g, { w, d }, it.back);
+    const faceZ = -depth / 2;
+    const gangs = it.gangs ?? [];
+    const plateW = 0.086 * Math.max(1, gangs.length / 2);
+    run.add(box(plateW, 0.086, 0.01, M.ceramic, 0, -0.043, faceZ + 0.005));
+    const rw = plateW / Math.max(1, gangs.length) - 0.012;
+    gangs.forEach((c, i) => {
+      const x = -plateW / 2 + (plateW / gangs.length) * (i + 0.5);
+      const rocker = box(rw, 0.06, 0.012, M.ceilBand, x, -0.03, faceZ + 0.016);
+      rocker.userData.switch = c;
+      run.add(rocker);
+    });
+  },
+
+  /**
+   * A Cisco router on the ceiling, on the owner's instruction (every router
+   * in the house is): a black box hung on a short bracket under the slab,
+   * status lights and ports on its underside, and beside it a ceiling socket
+   * and CAT6 outlet on one white plate — it takes mains as well as data.
+   * Every CAT6 run on its floor ends here. Placed at the rect's centre; `h`
+   * is the ceiling.
+   */
+  router(g, _size, it) {
+    const ceiling = it.h ?? PLAN.storeyHeight;
+    const bw = 0.32, bh = 0.045, bd = 0.2, drop = 0.05;
+    const y = ceiling - drop - bh;
+    g.add(box(bw + 0.04, 0.012, bd + 0.02, M.dark, 0, ceiling - 0.012, 0));     // ceiling plate
+    for (const s of [-1, 1]) g.add(box(0.012, drop, 0.012, M.dark, s * bw / 2, ceiling - drop, 0));
+    g.add(box(bw, bh, bd, M.routerBody, 0, y, 0));
+    for (let i = 0; i < 6; i++) {                                     // status lights
+      g.add(box(0.006, 0.002, 0.004, i < 2 ? M.apLed : M.portLed, -bw / 2 + 0.03 + i * 0.016, y - 0.002, bd / 2 - 0.02));
+    }
+    for (let i = 0; i < 8; i++) {                                     // ports
+      g.add(box(0.012, 0.002, 0.01, M.dark, 0.02 + i * 0.016, y - 0.002, bd / 2 - 0.02));
+    }
+    const plates = new THREE.Group();                                 // UK socket + CAT6, face down
+    plates.position.set(bw / 2 + 0.14, ceiling, 0);
+    plates.rotation.x = Math.PI / 2;
+    ukSocket(plates, 0, 0, 0);
+    plates.add(box(0.086, 0.086, 0.01, M.ceramic, 0.1, -0.043, 0.005));
+    plates.add(box(0.016, 0.014, 0.002, M.dark, 0.1, -0.007, 0.011));
+    g.add(plates);
+  },
+
+  /**
+   * The ADT (ana dağıtım tablosu), the house's main board, after the owner's
+   * photo: a white two-row surface enclosure (Hager Gamma type) on a
+   * single-phase supply. Two DIN rails of breakers — the main switch with its
+   * red handle, surge arrester and RCD on the lower row, RCBOs and MCBs above
+   * — behind a door on its right-hand hinge. In walk mode look at the board
+   * and press `E` to open or close the cover (`userData.opener`, stepped in
+   * main.js like the shutters); it starts closed and opens to 90°, which is
+   * all the niche's side wall leaves it. `back` names the wall; `z` is the
+   * bottom edge, `ht` the height.
+   */
+  panel(g, { w, d }, it) {
+    const { run, len, depth } = backedRun(g, { w, d }, it.back);
+    const faceZ = -depth / 2;
+    const ht = it.ht ?? 0.5, bd = 0.12, rimD = 0.045, rimT = 0.015;
+    const front = faceZ + bd - rimD;                       // the face the breakers stand on
+    const body = box(len, ht, bd - rimD, M.panelSteel, 0, 0, faceZ + (bd - rimD) / 2);
+    run.add(body);
+    // The rim the cover closes on, deep enough to clear the breaker handles.
+    for (const s of [-1, 1]) {
+      run.add(box(rimT, ht, rimD, M.panelSteel, s * (len - rimT) / 2, 0, front + rimD / 2));
+      run.add(box(len, rimT, rimD, M.panelSteel, 0, s > 0 ? ht - rimT : 0, front + rimD / 2));
+    }
+    const plate = box(len - 0.04, ht - 0.06, 0.004, M.ceramic, 0, 0.03, front + 0.001);   // cover plate
+    run.add(plate);
+    const mod = 0.0175, rows = [0.33, 0.68];                                           // DIN rows, fraction of ht
+    rows.forEach((f, r) => {
+      const y = ht * f;
+      const n = Math.floor((len - 0.08) / mod);
+      run.add(box(n * mod, 0.085, 0.006, M.ceramic, 0, y - 0.04, front + 0.004));      // the row's cut-out
+      const used = r === 0 ? 10 : 3;                                                   // as in the photo
+      for (let k = 0; k < used; k++) {
+        const x = -n * mod / 2 + mod * (k + 0.5);
+        run.add(box(mod - 0.002, 0.08, 0.02, M.ceramic, x, y - 0.04, front + 0.004));
+        const red = r === 0 && k < 2;                                                  // main switch
+        run.add(box(mod - 0.006, 0.018, 0.012, red ? M.redHandle : M.dark, x, y - 0.005, front + 0.024));
+      }
+      for (let k = used; k < n; k++) {                                                 // blanks
+        run.add(box(mod - 0.002, 0.07, 0.004, M.panelSteel, -n * mod / 2 + mod * (k + 0.5), y - 0.035, front + 0.008));
+      }
+    });
+    // The cover, on its right-hand edge.
+    const hinge = new THREE.Group();
+    hinge.position.set(len / 2, 0, front + rimD);
+    const leaf = box(len, ht, 0.015, M.panelSteel, -len / 2, 0, 0.008);
+    const handle = box(0.02, 0.12, 0.02, M.panelSteel, -len + 0.02, ht / 2 - 0.06, 0.025);
+    hinge.add(leaf, handle);
+    run.add(hinge);
+    const OPEN = -Math.PI / 2, RATE = 2.5;                      // radians a second
+    const state = { open: false };
+    const ctl = {
+      label: 'ADT cover',
+      get on() { return state.open; },
+      get status() { return state.open ? 'open' : 'closed'; },
+      toggle(open = !state.open) { state.open = open; },
+      /** Advance by `dt` seconds; true while it is moving. */
+      step(dt) {
+        const want = state.open ? OPEN : 0;
+        const at = hinge.rotation.y;
+        if (at === want) return false;
+        hinge.rotation.y = want < at ? Math.max(want, at - dt * RATE) : Math.min(want, at + dt * RATE);
+        return true;
+      },
+    };
+    g.userData.opener = ctl;
+    // Look anywhere at the board — the cover, or the breakers once it is open.
+    for (const m of [leaf, handle, plate, body]) { m.userData.switch = 'opener'; m.userData.opener = ctl; }
+  },
+
+  /**
+   * A wall socket (priz): a UK BS 1363 switched outlet, `double: true` for
+   * a twin — or, with `data: true`, a CAT6 outlet — on a white plate.
+   * `back` names the wall; the item's `z` is its height.
+   */
+  socket(g, { w, d }, it) {
+    const { run, depth } = backedRun(g, { w, d }, it.back);
+    const faceZ = -depth / 2;
+    if (it.data) {
+      run.add(box(0.086, 0.086, 0.01, M.ceramic, 0, -0.043, faceZ + 0.005));
+      run.add(box(0.016, 0.014, 0.002, M.dark, 0, -0.007, faceZ + 0.011));
+    } else {
+      ukSocket(run, 0, 0, faceZ, it.double ? 2 : 1);
+    }
+  },
+
+  /**
    * One flush ceiling light in the middle of the room — what the dressing
    * rooms get instead of a coffer, on the owner's instruction, because they
    * are small and walled with wardrobe.
@@ -1002,13 +1595,13 @@ const KINDS = {
   ceilinglight(g, _size, it) {
     const ceiling = it.h ?? PLAN.storeyHeight;
     g.add(cyl(0.16, 0.05, M.ceilBand, 0, ceiling - 0.025, 0, 20));
-    const lamp = nightGroup(g);
-    lamp.add(cyl(0.14, 0.012, M.warm, 0, ceiling - 0.052, 0, 20));
+    const lamp = lampGroup(g, it.circuit);                 // `circuit` puts it on a switch
+    lamp.add(cyl(0.14, 0.012, glow(M.warm, it.circuit), 0, ceiling - 0.052, 0, 20));
     emitter(lamp, {
       at: [0, ceiling - 0.06, 0],
       aim: [0, -1, 0],
       intensity: it.watts ?? 9, distance: 7, angle: 1.12, penumbra: 0.9,
-      interior: true,
+      interior: true, circuit: it.circuit,
     });
   },
 
@@ -1028,7 +1621,8 @@ const KINDS = {
     g.add(cyl(0.012, hang - 0.1, M.gold, 0, hub + (hang - 0.1) / 2, 0, 8));  // stem
     g.add(ball(0.07, M.gold, 0, hub, 0));                               // hub
 
-    const lamp = nightGroup(g);
+    const lamp = lampGroup(g, it.circuit);
+    const flameMat = glow(M.warm, it.circuit);
     const tiers = [
       { n: 8, r, y: hub + 0.06, len: 0.26 },
       { n: 5, r: r * 0.58, y: hub + 0.34, len: 0.2 },
@@ -1044,7 +1638,7 @@ const KINDS = {
         const z = Math.sin(a) * t.r;
         g.add(cyl(0.01, t.len, M.gold, x, t.y + t.len / 2, z, 6));       // candle arm
         g.add(cyl(0.022, 0.1, M.linen, x, t.y + t.len + 0.05, z, 8));    // candle
-        lamp.add(ball(0.03, M.warm, x, t.y + t.len + 0.12, z, 0));       // flame
+        lamp.add(ball(0.03, flameMat, x, t.y + t.len + 0.12, z, 0));     // flame
       }
       for (let i = 0; i < t.n * 3; i++) {                                // crystal drops
         const a = ((i + 0.5) / (t.n * 3)) * Math.PI * 2;
@@ -1057,7 +1651,7 @@ const KINDS = {
       at: [0, hub + 0.1, 0],
       aim: [0, -1, 0],
       intensity: it.watts ?? 11, distance: 8, angle: 1.2, penumbra: 0.95,
-      interior: true,
+      interior: true, circuit: it.circuit,
     });
   },
 
@@ -1116,17 +1710,22 @@ const KINDS = {
         g.add(box(w * 0.16 / 3, h - 0.05, d * 0.5, M.drape, x + (i - 1) * (w * 0.16 / 3), 0.02, (i % 2 ? 1 : -1) * d * 0.15));
       }
     }
-    g.add(box(w * 0.68, h - 0.05, 0.01, M.sheer, 0, 0.02, 0));
+    // The sheer between them is pushed aside, not walked round: no collision,
+    // or a curtain in front of a slider (MUTFAK's onto the back garden)
+    // shuts the door.
+    const sheer = box(w * 0.68, h - 0.05, 0.01, M.sheer, 0, 0.02, 0);
+    sheer.userData.noCollide = true;
+    g.add(sheer);
   },
 
   /**
    * Ceiling-hung fireplace, after the owner's reference: a black flue from a
    * round ceiling plate that flares into an open steel bowl with logs and
    * flame inside. The bowl's mouth faces `face` ('W' by default) or `faceDeg`; hung so the
-   * bowl bottom is 0.92 m off the floor and the plate meets the ceiling at 3.0 m.
+   * bowl bottom is 0.92 m off the floor and the plate meets the ceiling.
    */
   hangingfire(g, _size, it) {
-    const top = it.ceiling ?? 3.0;
+    const top = it.ceiling ?? PLAN.storeyHeight;
     const gap = 1.6;                                    // width of the bowl's open mouth, rad
     // Lathe profile (radius, height): flue, trumpet flare, then the dish.
     const profile = [
@@ -1206,10 +1805,12 @@ const KINDS = {
 
   /**
    * Kitchen appliance wardrobe: base drawers, a worktop, and a niche behind
-   * pocket doors (drawn slid back to the ends) that hides a full-automatic
-   * coffee machine, kettle, toaster and microwave, with closed cabinets above.
-   * `back` names the wall it stands against; the rect's long side is its width.
-   * `microwave: false` leaves the microwave out, for a ~1.1 m unit.
+   * pocket doors (drawn slid back to the ends) with closed cabinets above.
+   * On the owner's instruction it holds a full-automatic coffee machine, a
+   * Turkish coffee machine and a toaster, spaced along a ~1.4 m worktop, with
+   * two twin UK sockets (BS 1363) on the back panel above them — four
+   * outlets for three machines. `back` names the wall it stands against; the
+   * rect's long side is its width.
    */
   appliancenook(g, { w, d }, it) {
     const { run, len, depth } = backedRun(g, { w, d }, it.back);
@@ -1219,25 +1820,29 @@ const KINDS = {
     const inner = len - 0.1;
     const front = depth / 2;
 
-    // Base cabinet: three drawers under the worktop.
+    // Base cabinet: drawers under the worktop.
     run.add(box(len, counter, depth, M.cabinet));
-    for (let i = 0; i < 3; i++) {
-      run.add(box(len * 0.3, 0.015, 0.02, M.metal, (i - 1) * (len / 3), 0.68 - i * 0.02, front + 0.005));
+    const bays = Math.max(3, Math.round(len / 0.5));
+    for (let i = 0; i < bays; i++) {
+      const x = -len / 2 + (len / bays) * (i + 0.5);
+      run.add(box((len / bays) * 0.9, 0.015, 0.02, M.metal, x, 0.68 - (i % 3) * 0.02, front + 0.005));
     }
     run.add(box(len, 0.04, depth + 0.03, M.counter, 0, counter));
 
     // The niche: side cheeks, back panel, header, and a warm strip under it.
     const top = counter + 0.04 + nicheH;
+    const backZ = -depth / 2 + 0.04;
     for (const s of [-1, 1]) run.add(box(0.05, nicheH, depth, M.cabinet, s * (len / 2 - 0.025), counter + 0.04));
-    run.add(box(inner, nicheH, 0.02, M.cream, 0, counter + 0.04, -depth / 2 + 0.03));
+    run.add(box(inner, nicheH, 0.02, M.cream, 0, counter + 0.04, backZ - 0.01));
     run.add(box(len, 0.05, depth, M.cabinet, 0, top));
     run.add(box(inner, 0.015, 0.02, M.warm, 0, top - 0.015, front - 0.08));
 
     // Closed cabinets above, with door lines.
     const upperH = H - top - 0.05;
     run.add(box(len, upperH, depth * 0.9, M.cabinet, 0, top + 0.05, -depth * 0.05));
-    for (const s of [-1, 0, 1]) {
-      run.add(box(0.012, upperH - 0.1, 0.01, M.dark, s * (len / 6), top + 0.1, front - depth * 0.1 + 0.005));
+    const doors = Math.max(3, Math.round(len / 0.45));
+    for (let i = 1; i < doors; i++) {
+      run.add(box(0.012, upperH - 0.1, 0.01, M.dark, -len / 2 + (len / doors) * i, top + 0.1, front - depth * 0.1 + 0.005));
     }
 
     // Pocket doors slid back to the ends, on a metal track.
@@ -1246,34 +1851,34 @@ const KINDS = {
       run.add(box(0.11, nicheH - 0.04, 0.025, M.creamGloss, s * (len / 2 - 0.105), counter + 0.06, front - 0.03));
     }
 
-    // Appliances on the worktop, left to right: coffee machine, kettle, toaster, microwave.
+    // The three machines, spread over the worktop: x at fractions of it.
     const y0 = counter + 0.04;
     const zc = -depth / 2 + 0.3;                         // depth position of the appliances
-    const cx = -inner / 2 + 0.2;
+    const at = (f) => -inner / 2 + inner * f;
 
-    run.add(box(0.32, 0.44, 0.42, M.metal, cx, y0, zc));                              // coffee machine
+    const cx = at(0.18);                                                              // full-automatic
+    run.add(box(0.32, 0.44, 0.42, M.metal, cx, y0, zc));
     run.add(box(0.26, 0.2, 0.012, M.dark, cx, y0 + 0.2, zc + 0.216));
     run.add(box(0.14, 0.03, 0.012, M.warm, cx, y0 + 0.32, zc + 0.222));               // display
     run.add(box(0.12, 0.06, 0.16, M.dark, cx, y0 + 0.44, zc - 0.08));                 // bean hopper
     run.add(cyl(0.012, 0.07, M.dark, cx, y0 + 0.12, zc + 0.21));                      // spout
     run.add(box(0.28, 0.025, 0.2, M.dark, cx, y0, zc + 0.12));                        // drip tray
 
-    const kx = cx + 0.32;
-    run.add(cyl(0.09, 0.2, M.metal, kx, y0, zc + 0.02));                              // kettle
-    run.add(cyl(0.055, 0.025, M.dark, kx, y0 + 0.2, zc + 0.02));
-    run.add(box(0.025, 0.17, 0.03, M.dark, kx + 0.11, y0 + 0.02, zc + 0.02));
+    const tk = at(0.5);                                                               // Turkish coffee machine
+    run.add(box(0.22, 0.3, 0.28, M.dark, tk, y0, zc));
+    run.add(box(0.16, 0.03, 0.02, M.warm, tk, y0 + 0.25, zc + 0.14));                 // buttons
+    run.add(box(0.14, 0.12, 0.13, M.dark, tk, y0 + 0.02, zc + 0.07));                 // the cezve bay
+    run.add(cyl(0.035, 0.08, M.metal, tk, y0 + 0.03, zc + 0.1));                      // its pot
+    run.add(box(0.06, 0.012, 0.012, M.dark, tk + 0.06, y0 + 0.09, zc + 0.1));
 
-    const tx = kx + 0.28;
-    run.add(box(0.3, 0.18, 0.17, M.metal, tx, y0, zc));                               // toaster
+    const tx = at(0.8);                                                               // toaster
+    run.add(box(0.3, 0.18, 0.17, M.metal, tx, y0, zc));
     for (const z of [-0.035, 0.035]) run.add(box(0.22, 0.012, 0.03, M.dark, tx, y0 + 0.18, zc + z));
     run.add(box(0.03, 0.02, 0.03, M.dark, tx + 0.17, y0 + 0.1, zc));
 
-    if (it.microwave === false) return;
-    const mx = inner / 2 - 0.29;
-    run.add(box(0.46, 0.28, 0.34, M.metal, mx, y0, zc - 0.04));                       // microwave
-    run.add(box(0.31, 0.2, 0.012, M.dark, mx - 0.06, y0 + 0.04, zc + 0.136));
-    run.add(box(0.09, 0.2, 0.012, M.dark, mx + 0.17, y0 + 0.04, zc + 0.136));
-    run.add(box(0.015, 0.16, 0.02, M.metal, mx + 0.11, y0 + 0.06, zc + 0.15));
+    // Two UK twin sockets on the back panel, over the Turkish machine and the
+    // toaster — the coffee machine's lead reaches the first.
+    for (const x of [tk, tx]) ukSocket(run, x, y0 + 0.42, backZ, 2);
   },
 
   /** Free-standing dressing island with a glass display top. */
@@ -1707,6 +2312,9 @@ const KINDS = {
  * `wall: true` gives a handrail on brackets instead — no balusters and no
  * mid-rail — for a flight enclosed by walls on both sides, where a full
  * balustrade would stand inside the plaster.
+ *
+ * `glass: true` gives a frameless glass balustrade: one pane per leg under a
+ * slim black capping rail, no balusters (the P.16 balconies).
  */
 function buildRailing(item, offsetPx) {
   const group = new THREE.Group();
@@ -1737,6 +2345,15 @@ function buildRailing(item, offsetPx) {
       b.rotation.z = rake;
       return b;
     };
+    if (item.glass) {
+      const pane = box(len, h - 0.05, 0.012, M.glass, len / 2, 0, 0);
+      pane.castShadow = false;
+      seg.add(pane);
+      const cap = box(len, 0.04, 0.05, M.frame, len / 2, h - 0.05, 0);
+      seg.add(cap);
+      group.add(seg);
+      continue;
+    }
     seg.add(rail(h - 0.03, 0.06, 0.06));                       // handrail
     if (!item.wall) seg.add(rail(h * 0.5, 0.03, 0.04));        // mid rail
 
@@ -1799,9 +2416,13 @@ export function buildObjects(floor, place) {
   for (const item of floor.objects ?? []) {
     // `only: 'stacked'` items (the tile roofs) are left out of the other model.
     if (item.only && item.only !== place.mode) continue;
+    // Items stand on the storey's finished floor, `level` above its container,
+    // except the garden (`site: true`), which stays at grade.
+    const base = item.site ? 0 : floor.level ?? 0;
 
     if (item.kind === 'railing') {
       const rail = buildRailing(item, place.offsetPx);
+      rail.position.y += base;
       rail.userData.item = item;
       group.add(rail);
       continue;
@@ -1809,6 +2430,7 @@ export function buildObjects(floor, place) {
 
     if (item.kind === 'paving' || item.kind === 'land') {
       const slab = buildPaving(item, place.offsetPx, floor);
+      slab.position.y += base;
       slab.userData.item = item;
       group.add(slab);
       continue;
@@ -1825,7 +2447,7 @@ export function buildObjects(floor, place) {
     const [bx, bz] = toWorld([Math.max(x0, x1), Math.max(y0, y1)], place.offsetPx);
 
     const g = new THREE.Group();
-    g.position.set((ax + bx) / 2, item.z ?? 0, (az + bz) / 2);
+    g.position.set((ax + bx) / 2, base + (item.z ?? 0), (az + bz) / 2);
     g.rotation.y = -THREE.MathUtils.degToRad(item.rot ?? 0); // degrees clockwise on the page
     g.userData.item = item;
     g.userData.floor = floor;

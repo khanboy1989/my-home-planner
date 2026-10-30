@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { level } from './circuits.js';
 
 /**
  * A fixed pool of spot lights, shared between every fitting in the house.
@@ -59,6 +60,7 @@ export function emitter(parent, opts) {
     penumbra: opts.penumbra ?? 0.5,
     decay: opts.decay ?? 1.5,
     interior: opts.interior ?? false,
+    circuit: opts.circuit ?? null,     // a switched fitting (src/circuits.js)
   };
   parent.add(mark);
   return mark;
@@ -113,14 +115,15 @@ export class LightPool {
   }
 
   /** Give the slots to the emitters nearest the camera. */
-  update(camera, now) {
-    if (!this.on || now - this.last < REFRESH_MS) return;
+  update(camera, now, force = false) {
+    if (!this.on || (!force && now - this.last < REFRESH_MS)) return;
     this.last = now;
     camera.getWorldPosition(_pos);
 
     const near = [];
     for (const lamp of this.lamps) {
       if (lamp.owner && !lamp.owner.visible) continue;
+      if (lamp.e.circuit && level(lamp.e.circuit) === 0) continue;   // switched off
       const d = lamp.world.distanceTo(_pos);
       if (lamp.e.interior) {
         if (d > INTERIOR_RANGE) continue;
@@ -143,7 +146,7 @@ export class LightPool {
       const { lamp } = pick;
       const { e } = lamp;
       slot.color.set(e.color);
-      slot.intensity = e.intensity;
+      slot.intensity = e.intensity * (e.circuit ? level(e.circuit) : 1);
       slot.distance = e.distance;
       slot.angle = e.angle;
       slot.penumbra = e.penumbra;

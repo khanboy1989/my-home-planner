@@ -60,12 +60,13 @@ under pointer lock the owner's real mouse steers it.
 
 ## The rules that matter
 
-1. **`assets/VILLA KHAN 24092026.pdf` (P.14, the latest revision) is the
-   authoritative source for all geometry.** Always check that the file named
-   as `PLAN.pdf` in `src/floorplan.js` is the newest sheet in `assets/` before
-   you trust any geometry. It is a true vector drawing. Read it with
-   `node tools/plan-audit.mjs <x0> <y0> <x1> <y1>`, which dumps wall segments
-   and text in a region of the sheet.
+1. **`assets/28102026_FINAL DRAFT.dwg` (P.18, the architect's CAD file) is
+   the authoritative source for all geometry.** The model reads its export,
+   `PLAN.dwg` in `src/floorplan.js` (written by `tools/dwg-export.py`); check
+   that it is the newest drawing in `assets/` before you trust any geometry.
+   Read it with `node tools/plan-audit.mjs <x0> <y0> <x1> <y1>`, which dumps
+   wall segments and text in a region, in model pixels. The house stands
+   0.34 m above its garden on 3.06 m storeys; outdoor items carry `site: true`.
 
    Do **not** eyeball geometry off the JPEG. Pixel-tracing the raster put
    several doors in the wrong walls before the vector data corrected them.

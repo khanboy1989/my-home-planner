@@ -1,8 +1,11 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { PLAN, ORIGIN, FLOORS, placement, toWorld } from './floorplan.js';
+import { PLAN, ORIGIN, FLOORS, CIRCUITS, placement, toWorld, offsetOutline } from './floorplan.js';
 import { buildWalls } from './buildWalls.js';
 import { LightPool, emitter } from './lights.js';
+import {
+  defineCircuit, toggleCircuit, isOn, label as circuitLabel, setAllCircuits, stepCircuits, circuitIds,
+} from './circuits.js';
 import { buildObjects, poolBasinPx } from './objects.js';
 import { createWalkMode } from './walk.js';
 
@@ -10,6 +13,7 @@ const app = document.getElementById('app');
 const statusEl = document.getElementById('status');
 const timeEl = document.getElementById('time-of-day') ?? { textContent: '' };
 const layoutEl = document.getElementById('layout-mode');
+const toastEl = document.getElementById('time-toast');
 
 const MPP = PLAN.metersPerPixel;
 const PLANE_W = ORIGIN.w * MPP;
@@ -90,11 +94,11 @@ scene.add(hemi);
 
 /**
  * The sun sits over the real south-east, a late-morning sun. The sheet's "up"
- * is not compass north: on the ground the pool side (the model's -Z, up the
+ * is not compass north: on the ground the back garden (the model's -Z, up the
  * page) faces **east** and the entrance and parking side (+Z) faces **west**,
  * which makes the model's +X real south. So -Z + X is sunrise-ish, and the
- * light lands on the pool, the terrace and the İÇBAHÇE, throwing the house's
- * shadow back over the parking where it belongs rather than across the water.
+ * light lands on the back garden and İÇBAHÇE TERASI, throwing the house's
+ * shadow back over the parking where it belongs.
  */
 const sun = new THREE.DirectionalLight(0xfff3e0, 2.4);   // setTime() drives both
 sun.castShadow = true;
@@ -107,8 +111,8 @@ scene.add(sun);
 const ambient = new THREE.AmbientLight(0xffffff, 0.25);
 scene.add(ambient);
 
-// Ground the whole composition sits on. Each pool basin is sunk below it, so
-// the apron gets a hole over each or it would hide the water and pool floor.
+// Ground the whole composition sits on. A pool basin is sunk below it, so the
+// apron gets a hole over any pool (P.18 has none; the `pool` maker is kept).
 function apronGeometry() {
   const dxs = LAYOUTS.map(([, dx]) => dx);
   const [lo, hi] = [Math.min(...dxs), Math.max(...dxs)];
@@ -242,36 +246,6 @@ function floorLocal(floor) {
   ];
 }
 
-/**
- * Outward offset of a rectilinear polygon, in sheet px. Every edge in the floor
- * outlines is axis-aligned, so each offset edge meets its neighbour at a single
- * point: take x from the vertical edge and y from the horizontal one. The
- * shoelace sign gives the winding, and so which side is "out".
- */
-function offsetOutline(poly, d) {
-  if (!d) return poly;
-  const n = poly.length;
-  let area = 0;
-  for (let i = 0; i < n; i++) {
-    const [x0, y0] = poly[i];
-    const [x1, y1] = poly[(i + 1) % n];
-    area += x0 * y1 - x1 * y0;
-  }
-  const s = Math.sign(area) || 1;
-  const edges = poly.map((p, i) => {
-    const q = poly[(i + 1) % n];
-    const [dx, dy] = [q[0] - p[0], q[1] - p[1]];
-    const len = Math.hypot(dx, dy) || 1;
-    return { x: p[0] + (dy / len) * s * d, y: p[1] + (-dx / len) * s * d, vertical: dx === 0 };
-  });
-  // Vertex i is where the offset of edge i-1 meets the offset of edge i.
-  return poly.map((_, i) => {
-    const a = edges[(i - 1 + n) % n];
-    const b = edges[i];
-    return a.vertical ? [a.x, b.y] : [b.x, a.y];
-  });
-}
-
 function slabShape(floor, offsetPx = 0) {
   const w = floor.crop.w * MPP;
   const h = floor.crop.h * MPP;
@@ -321,18 +295,19 @@ function slabGeometry(floor) {
 
 /**
  * The structural floor under an upper storey: floor-to-floor minus the wall
- * height (0.4 m), so the walls below meet it with no gap. Its top is flush
- * with the textured plane; the same outline and voids apply.
+ * height (0.34 m), so the walls below meet it with no gap. Its top is flush
+ * with the textured plane at `top`; the same outline and voids apply. The
+ * ground floor's own slab, from the garden up to its +0.34 finished floor, is
+ * the same thing with `thickness` and `top` both set to its `level`.
  */
 const SLAB_BODY_MAT = new THREE.MeshStandardMaterial({ color: 0xd9d5cc, roughness: 0.95 });
-function slabBody(floor, proud = 0) {
-  const thickness = PLAN.floorToFloor - PLAN.storeyHeight;
+function slabBody(floor, proud = 0, thickness = PLAN.floorToFloor - PLAN.storeyHeight, top = 0) {
   const body = new THREE.Mesh(
     new THREE.ExtrudeGeometry(slabShape(floor, proud / MPP), { depth: thickness, bevelEnabled: false }),
     SLAB_BODY_MAT,
   );
   body.rotation.x = -Math.PI / 2;      // shape +Y is north; extrusion runs up
-  body.position.y = -thickness;
+  body.position.y = top - thickness;
   body.castShadow = true;
   body.receiveShadow = true;
   return body;
@@ -438,8 +413,9 @@ function buildModel(set, mode, dx, floors) {
     slab.rotation.x = -Math.PI / 2;
     slab.receiveShadow = true;
     // Stacked, an upper slab is a ceiling: lift it clear of the walls below.
-    slab.position.y = mode === 'stacked' && floor.storey > 0 ? 0.01 : 0;
+    slab.position.y = (floor.level ?? 0) + (mode === 'stacked' && floor.storey > 0 ? 0.01 : 0);
     container.add(slab);
+    if (floor.level && floor.outline) container.add(slabBody(floor, 0, floor.level, floor.level));
     // Stacked, the slab edge becomes the lit band between the two storeys; the
     // floors apart have no ground floor under them for it to belong to.
     const banded = mode === 'stacked' && floor.storey > 0 && floor.outline;
@@ -553,7 +529,7 @@ function setRoofsHidden(hidden) {
  * Times of day, cycled by `K`; `L` still jumps to night and back.
  *
  * `dir` is where the sun stands, in **model** axes, and the model is not
- * aligned to compass north: +X is real south, -Z real east (the pool side),
+ * aligned to compass north: +X is real south, -Z real east (the back garden),
  * +Z real west (the entrance and parking). So the sun rises out of -Z, crosses
  * over +X and sets into +Z, which is why every daytime `dir` here has a
  * positive X — in the northern hemisphere the sun never crosses the north.
@@ -564,18 +540,33 @@ function setRoofsHidden(hidden) {
  * can be seen of them anyway.
  */
 const TIMES = [
-  { name: 'Morning',   dir: [26, 26, -34], sun: 2.1, tint: 0xffe9cc, ambient: 0.22, hemi: 1.0, sky: 0x17202b, fogNear: 70, fogFar: 190, night: false },
-  { name: 'Midday',    dir: [14, 52,  -6], sun: 2.7, tint: 0xfff6ea, ambient: 0.30, hemi: 1.3, sky: 0x11151b, fogNear: 85, fogFar: 210, night: false },
-  { name: 'Afternoon', dir: [26, 28,  30], sun: 2.3, tint: 0xfff0dc, ambient: 0.25, hemi: 1.1, sky: 0x131a22, fogNear: 70, fogFar: 190, night: false },
-  { name: 'Sunset',    dir: [ 8, 10,  40], sun: 1.5, tint: 0xffa457, ambient: 0.18, hemi: 0.8, sky: 0x2b1d17, fogNear: 55, fogFar: 165, night: false },
-  { name: 'Night',     dir: [26, 34, -20], sun: 0.12, tint: 0xbcd0ff, ambient: 0.05, hemi: 0.25, sky: 0x070910, fogNear: 55, fogFar: 150, night: true },
+  { name: 'Morning',   clock: '08:00', dir: [26, 26, -34], sun: 2.1, tint: 0xffe9cc, ambient: 0.22, hemi: 1.0, sky: 0x17202b, fogNear: 70, fogFar: 190, night: false },
+  { name: 'Midday',    clock: '13:00', dir: [14, 52,  -6], sun: 2.7, tint: 0xfff6ea, ambient: 0.30, hemi: 1.3, sky: 0x11151b, fogNear: 85, fogFar: 210, night: false },
+  { name: 'Afternoon', clock: '16:00', dir: [26, 28,  30], sun: 2.3, tint: 0xfff0dc, ambient: 0.25, hemi: 1.1, sky: 0x131a22, fogNear: 70, fogFar: 190, night: false },
+  { name: 'Sunset',    clock: '19:15', dir: [ 8, 10,  40], sun: 1.5, tint: 0xffa457, ambient: 0.18, hemi: 0.8, sky: 0x2b1d17, fogNear: 55, fogFar: 165, night: false },
+  { name: 'Night',     clock: '22:30', dir: [26, 34, -20], sun: 0.12, tint: 0xbcd0ff, ambient: 0.05, hemi: 0.25, sky: 0x070910, fogNear: 55, fogFar: 150, night: true },
 ];
 const NIGHT_TIME = TIMES.findIndex((t) => t.night);
 
 let timeIndex = 0;
 let lastDaylight = 0;                       // where `L` comes back to
 let night = false;
-function setTime(index) {
+
+/**
+ * The hour, thrown up big in the middle of the screen for a moment. The HUD
+ * corner already names the hour, but in walk mode you are looking at the room,
+ * not the panel, so stepping the sun on needs to say so where you are looking.
+ */
+let toastTimer = 0;
+function announceTime(p) {
+  if (!toastEl) return;
+  toastEl.textContent = `${p.clock} · ${p.name}`;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 1600);
+}
+
+function setTime(index, announce = true) {
   timeIndex = (index + TIMES.length) % TIMES.length;
   const p = TIMES[timeIndex];
   night = p.night;
@@ -596,7 +587,10 @@ function setTime(index) {
     objects.traverse((o) => { if (o.userData.nightLight) o.visible = night; });
   }
   pool.setOn(night);
-  timeEl.textContent = p.name;
+  setAllCircuits(night);                      // the switched rooms follow the clock
+  showRockers();
+  timeEl.textContent = `${p.name} · ${p.clock}`;
+  if (announce) announceTime(p);
   invalidateShadows();                        // the sun moved
 }
 /** `L`: straight to night, or back to whichever daylight hour you left. */
@@ -682,13 +676,16 @@ window.addEventListener('keydown', (e) => {
   // Inside the house, WASD is movement and the view keys would fight it. The
   // lighting keys are the exception: night, the time of day and the roofs are
   // exactly what you want to change while you are standing in a room.
-  const WALK_KEYS = ['f', 'l', 'k', 'j', 'o', 'x'];
+  const WALK_KEYS = ['f', 'l', 'k', 'j', 'o', 'x', 'p', 'e', 'u'];
   if (walk.active && !WALK_KEYS.includes(e.key.toLowerCase())) return;
   switch (e.key.toLowerCase()) {
     case 'f': walk.toggle(); invalidateShadows(); break;   // walk hides the other models
     case 'g': grid.visible = !grid.visible; break;
     case 'x': setXray(!xray); break;
     case 'o': setRoofsHidden(!roofsHidden); break;
+    case 'p': toggleCinema(); break;
+    case 'e': flipSwitch(); break;             // the wall switch you are looking at
+    case 'u': toggleShutters(); break;         // every rolling shutter
     case 'l': setNight(!night); break;
     case 'k': setTime(timeIndex + 1); break;   // on through the day
     case 'j': setTime(timeIndex - 1); break;   // and back again
@@ -744,7 +741,90 @@ const pool = new LightPool(scene);
 
 document.getElementById('loading').remove();
 const lampCount = pool.collect(scene);       // after layout: nothing moves again
-setTime(0);            // morning, sun over the pool side
+
+// Every window's and outward slider's rolling shutter (buildWalls.js). `U`
+// rolls them all down, or all back up if any is already down.
+const shutters = [];
+scene.traverse((o) => { if (o.userData.shutter && !o.isMesh) shutters.push(o.userData.shutter); });
+function toggleShutters() {
+  const close = !shutters.some((s) => s.on);
+  for (const s of shutters) s.toggle(close);
+}
+
+// Covers that open with `E` — the ADT's door (`panel` in objects.js). Each
+// carries `userData.opener` and is stepped in the loop like a shutter.
+const openers = [];
+scene.traverse((o) => { if (o.userData.opener && !o.isMesh) openers.push(o.userData.opener); });
+
+// OTURMA ODASI's projector screen (`cinema` in objects.js), one per model that
+// has a ceiling. `P` lowers every copy and switches its projector on.
+const cinemas = [];
+scene.traverse((o) => { if (o.userData.cinema) cinemas.push(o.userData.cinema); });
+function toggleCinema() {
+  const on = !cinemas.some((c) => c.on);
+  for (const c of cinemas) c.toggle(on);
+}
+
+/**
+ * The wall switches (`lightswitch` in objects.js). In walk mode, look at a
+ * rocker and press `E` to flip its circuit; the hint under the crosshair
+ * names what you are looking at. Every rocker on a circuit tips with it.
+ */
+for (const [id, name] of Object.entries(CIRCUITS)) defineCircuit(id, name);
+const rockers = [];
+scene.traverse((o) => { if (o.userData.switch) rockers.push(o); });
+const switchRay = new THREE.Raycaster();
+switchRay.far = 2.2;
+const switchHint = document.createElement('div');
+switchHint.id = 'switch-hint';
+document.body.appendChild(switchHint);
+function aimedRocker() {
+  if (!walk.active) return null;
+  switchRay.setFromCamera({ x: 0, y: 0 }, camera);
+  const shown = rockers.filter((r) => r.parent && isShown(r));
+  const hit = switchRay.intersectObjects(shown, false)[0];
+  if (hit) return hit.object;
+  // Forgiving aim: the nearest rocker within ~6 cm of the line of sight.
+  let best = null, bestD = 0.06;
+  for (const r of shown) {
+    const p = r.getWorldPosition(new THREE.Vector3());
+    if (p.distanceTo(switchRay.ray.origin) > switchRay.far) continue;
+    const d = switchRay.ray.distanceToPoint(p);
+    if (d < bestD) { best = r; bestD = d; }
+  }
+  return best;
+}
+function isShown(o) {
+  for (let p = o; p; p = p.parent) if (!p.visible) return false;
+  return true;
+}
+function showRockers() {
+  for (const r of rockers) {
+    if (!r.userData.shutter && !r.userData.opener) r.rotation.x = isOn(r.userData.switch) ? -0.14 : 0.14;
+  }
+}
+function flipSwitch() {
+  const r = aimedRocker();
+  if (!r) return;
+  if (r.userData.shutter) {                                   // a window's shutter: ▲ / ▼
+    const { dir } = r.userData;
+    r.userData.shutter.toggle(dir ? dir === 'down' : undefined);
+  }
+  else if (r.userData.opener) r.userData.opener.toggle();    // the ADT's cover
+  else toggleCircuit(r.userData.switch);
+  showRockers();
+  updateSwitchHint(r);
+}
+function updateSwitchHint(r = aimedRocker()) {
+  const sh = r?.userData.shutter;
+  const op = r?.userData.opener;
+  switchHint.textContent = !r ? ''
+    : sh ? `E · Rolling shutter ${r.userData.dir === 'down' ? '▼ close' : '▲ open'} — now ${sh.on ? 'closed' : 'open'}`
+    : op ? `E · ${op.label} — ${op.status}`
+    : `E · ${circuitLabel(r.userData.switch)} — ${isOn(r.userData.switch) ? 'on' : 'off'}`;
+  switchHint.classList.toggle('shown', !!r);
+}
+setTime(0, false);     // morning, sun over the back garden
 frameAll();
 invalidateShadows();
 
@@ -755,7 +835,10 @@ if (window.VILLA_BOOT === 'walk') { walk.enter(); invalidateShadows(); }
 
 // A handle on the scene for the console and for the smoke test that drives the
 // desktop build. Read-only in spirit — nothing in the app reads it back.
-window.villa = { scene, camera, controls, walk, floorGroups, pool, lampCount };
+window.villa = {
+  scene, camera, renderer, controls, walk, floorGroups, pool, lampCount, cinemas, toggleCinema,
+  rockers, flipSwitch, toggleCircuit, circuitIds, shutters, toggleShutters, openers,
+};
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -778,9 +861,14 @@ let frameAvg = 16;
 let dprHold = 0;
 function adaptResolution(ms) {
   frameAvg += (Math.min(ms, 100) - frameAvg) * 0.1;   // ignore tab-switch spikes
-  const want = frameAvg > 22 ? -DPR_STEP : frameAvg < 13 ? DPR_STEP : 0;
+  // Far over budget (night on a weak GPU) steps down three times as fast and
+  // after a third of the wait, so it settles in a second or two, not the ~20 s
+  // a 0.1 step every half second took from 2× down to 1×. Coming back up
+  // stays slow, so it does not oscillate.
+  const far = frameAvg > 40;
+  const want = frameAvg > 22 ? -DPR_STEP * (far ? 3 : 1) : frameAvg < 13 ? DPR_STEP : 0;
   if (!want) { dprHold = 0; return; }
-  if (++dprHold < 30) return;                          // ~half a second of agreement
+  if (++dprHold < (far ? 10 : 30)) return;            // ~half a second of agreement
   dprHold = 0;
   const next = Math.min(MAX_DPR, Math.max(MIN_DPR, dpr + want));
   if (next === dpr) return;
@@ -790,6 +878,7 @@ function adaptResolution(ms) {
 }
 
 let last = performance.now();
+let hintAt = 0;
 renderer.setAnimationLoop(() => {
   const now = performance.now();
   const ms = now - last;
@@ -797,7 +886,14 @@ renderer.setAnimationLoop(() => {
   last = now;
   if (walk.active) walk.update(dt);
   else controls.update();
-  pool.update(camera, now);
+  const fading = stepCircuits(dt);
+  pool.update(camera, now, fading);
+  if (walk.active && now - hintAt > 150) { hintAt = now; updateSwitchHint(); }
+  let screenMoved = false;
+  for (const c of cinemas) screenMoved = c.step(dt) || screenMoved;
+  for (const s of shutters) screenMoved = s.step(dt) || screenMoved;
+  for (const o of openers) screenMoved = o.step(dt) || screenMoved;
+  if (screenMoved) invalidateShadows();      // the fabric casts
   renderer.render(scene, camera);
   adaptResolution(ms);
 });

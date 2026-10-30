@@ -23,7 +23,7 @@ import { PLAN, toWorld } from './floorplan.js';
  *    intended move; if any hits within the body radius the move is retried on
  *    each axis alone, which gives wall sliding for free;
  *  - vertically, one ray is dropped from STEP_UP above the feet. Whatever it
- *    lands on is the floor — slab, tread, terrace, lawn or pool surround — so
+ *    lands on is the floor — slab, tread, terrace, step or lawn — so
  *    stairs and the +0.34 steps need no special case. STEP_UP (0.45 m) is
  *    above a 0.17 m riser and below anything meant to stop you.
  *
@@ -57,7 +57,8 @@ const INDOOR = { ambient: 0.62, hemi: 1.9, exposure: 1.3 };
 // leaf), looking straight up it at the front door — so the walk starts with
 // the plot and the house in front of you rather than pressed against a wall.
 // Sheet pixels of the ground floor; heading in radians, 0 = north / -Z.
-const SPAWN = { px: [869, 2100], storey: 0, heading: 0 };
+// P.16 moved the front door to x 869..931, so the spawn sits on its centre.
+const SPAWN = { px: [900, 2100], storey: 0, heading: 0 };
 
 export function createWalkMode({
   renderer, camera, scene, orbit, floorGroups, labelGroup, statusEl,
@@ -184,7 +185,7 @@ export function createWalkMode({
     // `feetY` is an absolute height, for standing somewhere the storey's own
     // floor is not the surface underfoot — a stair landing, say. Without it you
     // land on the storey slab and the ray never sees what is above you.
-    pos.set(wx + at.x, feetY ?? at.y + 0.05, wz + at.z);
+    pos.set(wx + at.x, feetY ?? at.y + (home?.floor.level ?? 0) + 0.05, wz + at.z);
     vel.set(0, 0, 0);
     velY = 0;
     camera.position.set(pos.x, pos.y + EYE, pos.z);

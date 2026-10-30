@@ -59,6 +59,31 @@
     border-radius: 50%; background: rgba(255,255,255,.75);
     box-shadow: 0 0 0 1px rgba(0,0,0,.55); pointer-events: none;
   }
+  /* The hour, announced in the middle of the screen when K / J / L move the
+     sun. Big enough to read while walking, gone again in a second and a half. */
+  #time-toast {
+    position: fixed; z-index: 28; left: 50%; top: 13%;
+    transform: translate(-50%, -6px);
+    padding: 8px 18px; border-radius: 999px;
+    background: rgba(18, 23, 30, .72);
+    border: 1px solid rgba(255,255,255,.12);
+    backdrop-filter: blur(10px);
+    font-size: 15px; letter-spacing: .06em; color: #f1f5fa;
+    pointer-events: none; opacity: 0;
+    transition: opacity .25s, transform .25s;
+  }
+  #time-toast.show { opacity: 1; transform: translate(-50%, 0); }
+  /* What the wall switch under the crosshair works, in walk mode. */
+  #switch-hint {
+    position: fixed; z-index: 27; left: 50%; top: calc(50% + 22px);
+    transform: translateX(-50%);
+    padding: 4px 12px; border-radius: 999px;
+    background: rgba(18, 23, 30, .72);
+    border: 1px solid rgba(255,255,255,.12);
+    font-size: 13px; color: #f1f5fa; white-space: nowrap;
+    pointer-events: none; opacity: 0; transition: opacity .15s;
+  }
+  #switch-hint.shown { opacity: 1; }
   #loading {
     position: fixed; inset: 0; display: grid; place-content: center;
     z-index: 20; color: #8b97a8; background: #11151b;
