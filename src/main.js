@@ -756,9 +756,9 @@ function toggleShutters() {
 // carries `userData.opener` and is stepped in the loop like a shutter.
 const openers = [];
 scene.traverse((o) => { if (o.userData.opener && !o.isMesh) openers.push(o.userData.opener); });
-/** `Y`: every sliding door in the house open, or all shut if any is open. */
+/** `Y`: every sliding door and window in the house open, or all shut if any is open. */
 function toggleSliders() {
-  const sliders = openers.filter((o) => o.label === 'Sliding door');
+  const sliders = openers.filter((o) => o.label.startsWith('Sliding'));
   const open = !sliders.some((o) => o.on);
   for (const o of sliders) o.toggle(open);
 }

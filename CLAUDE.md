@@ -614,7 +614,9 @@ would not reproduce.
     - **Switched groups and circuits** (`src/circuits.js`, `CIRCUITS` in
       `floorplan.js`). **One lighting circuit (breaker) per area, not per
       fitting type** (owner): **L1** = OTURMA ODASI + ANA KORIDOR, **L2** =
-      MUTFAK + KILER. Each id is a switched group on its circuit, lettered:
+      MUTFAK + KILER. (ÇALIŞMA ODASI's coffer carries `pitch: 1.0`: spots
+      ~1 m apart all round its band, not just the corners — `coffer` takes
+      a `pitch` now.) Each id is a switched group on its circuit, lettered:
       L1a living spots, L1b hidden LED, L1c corridor ceiling light; L2a
       chandelier, L2b kitchen under-cabinet LED, L2c/L2d kitchen/dining
       spots, L2e KILER ceiling lamp, L2f KILER under-cabinet LED. The load
@@ -692,9 +694,11 @@ would not reproduce.
       with `circuit: 'L7'`; `ceilinglight` now takes a circuit), its switch
       inside on the latch side of the diagonal door (`back: 'NE'`). The
       coffer is gone.
-    - **Sliding doors open and close** (`buildWalls.js`, `kind: 'sliding'`):
-      look at the leaf and press `E`, or **`Y`** for every slider in the
-      house; they start closed and a closed leaf blocks you. The leaf is
+    - **Every window and sliding door opens and closes** (`buildWalls.js`):
+      look at the leaf and press `E`, or **`Y`** for all of them. Every
+      `kind: 'window'` is a two-panel sliding window on its sill (owner),
+      unless `fixed: true` (only the front door's sidelight); `kind:
+      'sliding'` is a door to the floor. They start closed; they start closed and a closed leaf blocks you. The leaf is
       `userData.dynamic`, which makes `walk.js` re-box it on every query
       (static meshes are boxed once on entering walk mode); the ADT cover is
       the same. `panels: 2` is a fixed pane plus a leaf sliding past it,

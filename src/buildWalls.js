@@ -186,17 +186,21 @@ function buildOpening(cut, depth) {
   }
 
   if (isWindow) {
-    // Window: sill, a centre mullion on wide openings, and glazing.
+    // Window: sill and bottom rail. Every window slides open (owner): a
+    // two-panel slider, below. Only `fixed: true` keeps a single fixed pane
+    // (the front door's sidelight), with a centre mullion if it is wide.
     g.add(slab(w + 0.1, 0.05, depth + 0.12, frameMat, cx, cut.sill + 0.02, 0));
     g.add(slab(w, jamb, d, frameMat, cx, cut.sill + jamb / 2, 0));
-    if (w > 1.6) g.add(slab(0.05, h, d * 0.6, frameMat, cx, cut.sill + h / 2, 0));
-    const pane = new THREE.Mesh(new THREE.PlaneGeometry(w - jamb * 2, h - jamb * 2), GLASS);
-    pane.position.set(cx, cut.sill + h / 2, 0);
-    g.add(pane);
-    return g;
+    if (cut.src?.fixed || cut.kind !== 'window') {
+      if (w > 1.6) g.add(slab(0.05, h, d * 0.6, frameMat, cx, cut.sill + h / 2, 0));
+      const pane = new THREE.Mesh(new THREE.PlaneGeometry(w - jamb * 2, h - jamb * 2), GLASS);
+      pane.position.set(cx, cut.sill + h / 2, 0);
+      g.add(pane);
+      return g;
+    }
   }
 
-  if (cut.kind === 'sliding') {
+  if (cut.kind === 'sliding' || isWindow) {
     // Glazed slider: a black framed leaf on a track on the wall face, which
     // opens and closes — look at it in walk mode and press E
     // (`userData.opener`, stepped in main.js; it starts closed). It travels
@@ -205,12 +209,13 @@ function buildOpening(cut, depth) {
     // say, with no wall to park on) is a fixed pane on the travel side with
     // the leaf sliding past it, both inside the frame's depth, which clears
     // half the width and keeps the wall face free for a neighbour's leaf.
-    const twoPanel0 = cut.src?.panels === 2;
-    const face = twoPanel0 ? 0.035 : depth / 2 + 0.035;
+    // A window is always two-panel, standing on its bottom rail.
+    const twoPanel = cut.src?.panels === 2 || isWindow;
+    const face = twoPanel ? 0.035 : depth / 2 + 0.035;
     const dir = cut.swing === -1 ? -1 : 1;
-    const twoPanel = cut.src?.panels === 2;
+    const base = isWindow ? cut.sill + jamb : 0;
     const lw = (twoPanel ? w / 2 : w) - 0.04;
-    const lh = h - 0.04;
+    const lh = (isWindow ? h - jamb : h) - 0.04;
     const closedX = twoPanel ? cx - dir * w / 4 : cx;
     const openX = closedX + dir * (twoPanel ? w / 2 : w);
     if (!twoPanel) {
@@ -220,7 +225,7 @@ function buildOpening(cut, depth) {
 
     const panel = (x, z) => {
       const p = new THREE.Group();
-      p.position.set(x, 0, z);
+      p.position.set(x, base, z);
       p.add(slab(lw, 0.05, 0.05, frameMat, 0, lh - 0.025, 0));
       p.add(slab(lw, 0.05, 0.05, frameMat, 0, 0.025, 0));
       p.add(slab(0.05, lh, 0.05, frameMat, -lw / 2 + 0.025, lh / 2, 0));
@@ -238,7 +243,7 @@ function buildOpening(cut, depth) {
     const RATE = 0.8;                                   // metres a second
     const state = { open: false };
     const ctl = {
-      label: 'Sliding door',
+      label: isWindow ? 'Sliding window' : 'Sliding door',
       get on() { return state.open; },
       get status() { return state.open ? 'open' : 'closed'; },
       toggle(open = !state.open) { state.open = open; },

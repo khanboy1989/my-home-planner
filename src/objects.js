@@ -1207,18 +1207,32 @@ const KINDS = {
 
     const lamp = nightGroup(g);
     const soffit = ceiling - drop;
-    for (const sx of [-1, 1]) {
-      for (const sz of [-1, 1]) {
-        const x = sx * (iw / 2 - band / 2);
-        const z = sz * (id / 2 - band / 2);
-        lamp.add(cyl(0.05, 0.01, M.warm, x, soffit + 0.004, z, 12));
-        emitter(lamp, {
-          at: [x, soffit, z],
-          aim: [-sx * 0.55, -1, -sz * 0.55],       // down and back into the room
-          intensity: it.watts ?? 5.5, distance: 7, angle: 0.72, penumbra: 0.6,
-          interior: true,
-        });
+    // A downlight in each corner; with `pitch` (metres), more round the band's
+    // centreline at about that spacing, corners included.
+    const hx = iw / 2 - band / 2, hz = id / 2 - band / 2;
+    const spots = [];
+    if (it.pitch) {
+      const nx = Math.max(1, Math.round((hx * 2) / it.pitch));
+      const nz = Math.max(1, Math.round((hz * 2) / it.pitch));
+      for (let k = 0; k < nx; k++) {
+        const x = -hx + (hx * 2 * k) / nx;
+        spots.push([x, -hz], [-x, hz]);
       }
+      for (let k = 0; k < nz; k++) {
+        const z = -hz + (hz * 2 * k) / nz;
+        spots.push([hx, z], [-hx, -z]);
+      }
+    } else {
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) spots.push([sx * hx, sz * hz]);
+    }
+    for (const [x, z] of spots) {
+      lamp.add(cyl(0.05, 0.01, M.warm, x, soffit + 0.004, z, 12));
+      emitter(lamp, {
+        at: [x, soffit, z],
+        aim: [-Math.sign(x) * 0.55, -1, -Math.sign(z) * 0.55],   // down and back into the room
+        intensity: it.watts ?? (it.pitch ? 4 : 5.5), distance: 7, angle: 0.72, penumbra: 0.6,
+        interior: true,
+      });
     }
   },
 

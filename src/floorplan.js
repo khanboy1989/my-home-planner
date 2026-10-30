@@ -213,7 +213,7 @@ const GROUND_WALLS = [
     stone: 1,
     a: [800, 1747], b: [1116, 1747],
     openings: [
-      { from: 28, to: 66, sill: 0.05, kind: 'window' },                     // sidelight (renders)
+      { from: 28, to: 66, sill: 0.05, kind: 'window', fixed: true },        // sidelight (renders), fixed glass
       { from: 69, to: 131, sill: 0, kind: 'door', swing: -1, hinge: 'to', leaf: 'walnut' }, // K1:100/230
       // 210/110; its shutter switch east of it, out from behind the front door.
       { from: 166, to: 290, sill: 1.1, head: PLAN.storeyHeight, kind: 'window', shutterSwitch: 'to' },
@@ -1114,11 +1114,13 @@ const GROUND_OBJECTS = [
     // KILER gets one ceiling lamp in the middle instead (owner, below), and
     // the passage left of ANA KORIDOR a flush light.
     ['Hall',             [799, 1416, 1116, 1504]],
-    ['ÇALIŞMA ODASI',    [412, 1416, 799, 1584]],
+    // ÇALIŞMA ODASI: spots all the way round its band, ~1 m apart, not just
+    // the corners (owner: more of them over the desk and the shelves).
+    ['ÇALIŞMA ODASI',    [412, 1416, 799, 1584], { pitch: 1.0 }],
     ['OYUN ODASI',       [412, 1584, 705, 1809]],
     ['W.C',              [705, 1659, 799, 1809]],
-  ].map(([name, rect]) => (
-    { kind: 'coffer', name: `${name} — ceiling`, rect, only: 'stacked' }
+  ].map(([name, rect, opts]) => (
+    { kind: 'coffer', name: `${name} — ceiling`, rect, only: 'stacked', ...opts }
   )),
   {
     // GIRIS HOLU is open to GALERI BOSLUGU above it, so its ceiling is the
