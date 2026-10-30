@@ -119,7 +119,12 @@ const GROUND_WALLS = [
     type: 'exterior',
     a: [474, 992], b: [938, 992],
     openings: [
-      { from: 54, to: 166, sill: 0.05, kind: 'window' },  // 180/230
+      // 180/230: a two-panel slider out to the back garden on the owner's
+      // instruction (the sheet draws a fixed full-height window), onto its
+      // own step. The east half is fixed and the west leaf slides over it —
+      // there is no wall west of it to park on, and east of it the dining
+      // slider's leaf parks on the same face.
+      { from: 54, to: 166, sill: 0, kind: 'sliding', panels: 2, swing: 1 },
       // Dining → back garden: a glazed slider out onto a step down to the
       // lawn, behind the dining table. The sheet draws a 250/230 window
       // here; the owner asked for a door, so it keeps the drawn opening
@@ -781,14 +786,20 @@ const GROUND_FOOTPRINT = [
  * (`tools/electric-plan.py`), named for the hint the walk-mode switches show.
  * Fittings take one as `circuit`; `src/circuits.js` fades them.
  */
+// Switched groups (anahtar uçları), named by the lighting circuit (linye,
+// one breaker in the ADT) they hang off and a letter: one circuit per area,
+// not one per fitting type (owner) — L1 the living room and ANA KORIDOR,
+// L2 the kitchen with KILER. Each id is one switch gang; the drawing prints the same names.
 export const CIRCUITS = {
-  L1: 'OTURMA ODASI spots',
-  L2: 'OTURMA ODASI hidden LED',
-  L3: 'MUTFAK chandelier',
-  L4: 'MUTFAK under-cabinet LED',
-  L5: 'MUTFAK spots (kitchen)',
-  L6: 'MUTFAK spots (dining)',
-  L7: 'Y.MUTFAK KILER ceiling lamp',
+  L1a: 'OTURMA ODASI spots',
+  L1b: 'OTURMA ODASI hidden LED',
+  L2a: 'MUTFAK chandelier',
+  L2b: 'MUTFAK under-cabinet LED',
+  L2c: 'MUTFAK spots (kitchen)',
+  L2d: 'MUTFAK spots (dining)',
+  L2e: 'Y.MUTFAK KILER ceiling lamp',
+  L2f: 'Y.MUTFAK KILER under-cabinet LED',
+  L1c: 'ANA KORIDOR ceiling light',
 };
 
 /** Underside of MUTFAK's spot band; the wall cabinets stop under it. */
@@ -840,6 +851,10 @@ const GROUND_OBJECTS = [
     path: [[750, 950], [915, 950], [915, 984], [750, 984]],
   },
   {
+    kind: 'paving', name: 'Step — kitchen slider (180/230)', h: 0.17, site: true,
+    path: [[523, 950], [645, 950], [645, 984], [523, 984]],
+  },
+  {
     kind: 'paving', name: 'Step — KILER door', h: 0.17, site: true,
     path: [[440, 1298], [466, 1298], [466, 1377], [440, 1377]],
   },
@@ -879,7 +894,7 @@ const GROUND_OBJECTS = [
   // either side of the 180/110 window, and the section over the fridge starts
   // above it rather than at 1.5 m.
   // They stop at the spot band's underside (2.45 m, below) and their strips
-  // are circuit L4, the tezgah altı LED on the kitchen's first double switch.
+  // are circuit L2b, the tezgah altı LED on the kitchen's first double switch.
   ...[
     ['Upper cabinets — MUTFAK west (north of window)', [482, 999, 503, 1062], 'W'],
     ['Upper cabinets — MUTFAK west (south of window)', [482, 1178, 503, 1250], 'W'],
@@ -887,7 +902,7 @@ const GROUND_OBJECTS = [
     ['Upper cabinet — over the MUTFAK fridge',         [658, 1229, 695, 1250], 'S', 2.15],
     ['Upper cabinets — MUTFAK south (east end)',       [695, 1229, 730, 1250], 'S'],
   ].map(([name, rect, back, y]) => (
-    { kind: 'wallcabinet', name, rect, back, y, top: KITCHEN_BAND, circuit: 'L4' }
+    { kind: 'wallcabinet', name, rect, back, y, top: KITCHEN_BAND, circuit: 'L2b' }
   )),
   { kind: 'stool', name: 'Bar stool', rect: [711, 1012, 737, 1038] },
   { kind: 'stool', name: 'Bar stool', rect: [711, 1052, 737, 1078] },
@@ -914,12 +929,12 @@ const GROUND_OBJECTS = [
   { kind: 'oven', name: 'Fırın — Y.MUTFAK',      rect: [573, 1259, 606, 1293], face: 'S' },
   // Upper cabinets to the ceiling on both long walls (owner's request). Over
   // the hob they start at 2.0 m to leave it clear, over the fridge above it.
-  { kind: 'wallcabinet', name: 'Upper cabinets — KILER north',          rect: [482, 1256, 573, 1277], back: 'N' },
-  { kind: 'wallcabinet', name: 'Upper cabinet — over the KILER hob',    rect: [573, 1256, 606, 1277], back: 'N', y: 2.0 },
-  { kind: 'wallcabinet', name: 'Upper cabinets — KILER north (middle)', rect: [606, 1256, 658, 1277], back: 'N' },
-  { kind: 'wallcabinet', name: 'Upper cabinet — over the KILER fridge', rect: [658, 1256, 695, 1277], back: 'N', y: 2.15 },
-  { kind: 'wallcabinet', name: 'Upper cabinets — KILER north (east)',   rect: [695, 1256, 730, 1277], back: 'N' },
-  { kind: 'wallcabinet', name: 'Upper cabinets — KILER south',          rect: [482, 1387, 763, 1408], back: 'S' },
+  { kind: 'wallcabinet', name: 'Upper cabinets — KILER north',          rect: [482, 1256, 573, 1277], back: 'N', circuit: 'L2f' },
+  { kind: 'wallcabinet', name: 'Upper cabinet — over the KILER hob',    rect: [573, 1256, 606, 1277], back: 'N', y: 2.0, circuit: 'L2f' },
+  { kind: 'wallcabinet', name: 'Upper cabinets — KILER north (middle)', rect: [606, 1256, 658, 1277], back: 'N', circuit: 'L2f' },
+  { kind: 'wallcabinet', name: 'Upper cabinet — over the KILER fridge', rect: [658, 1256, 695, 1277], back: 'N', y: 2.15, circuit: 'L2f' },
+  { kind: 'wallcabinet', name: 'Upper cabinets — KILER north (east)',   rect: [695, 1256, 730, 1277], back: 'N', circuit: 'L2f' },
+  { kind: 'wallcabinet', name: 'Upper cabinets — KILER south',          rect: [482, 1387, 763, 1408], back: 'S', circuit: 'L2f' },
 
   // ────────────────────────────────── ÇALIŞMA ODASI (P.16)
   // KÜTÜPHANE on the north wall, a corner desk with the monitors east of it,
@@ -994,7 +1009,7 @@ const GROUND_OBJECTS = [
   {
     kind: 'havuz', name: 'OTURMA ODASI — havuz ceiling', rect: [1125, 1422, 1416, 1800],
     band: 0.6, level: 2.45, pitch: 1.1, skip: [[1397, 1441]], ap: true, only: 'stacked',
-    circuit: 'L1', coveCircuit: 'L2',
+    circuit: 'L1a', coveCircuit: 'L1b',
     pockets: [
       { side: 'N', from: 1162, to: 1385, off: [0, 0.15] },     // curtains, 300/230 ± 30 cm
       { side: 'S', from: 1165, to: 1357, off: [0, 0.15] },     // curtains, 250/230 slider
@@ -1117,19 +1132,19 @@ const GROUND_OBJECTS = [
     // MUTFAK ceiling on the table's centre (the table is x 816..878, y
     // 1027..1176, so its centre is 847, 1102).
     kind: 'chandelier', name: 'Dining chandelier',
-    rect: [802, 1057, 892, 1147], only: 'stacked', circuit: 'L3',
+    rect: [802, 1057, 892, 1147], only: 'stacked', circuit: 'L2a',
   },
   {
     // MUTFAK's spots, on the owner's instruction, the same way as OTURMA
     // ODASI's but with no cove: so the kitchen lights three ways — spots,
-    // the chandelier (L3) and the under-cabinet LED (L4). The band is 0.8 m,
+    // the chandelier (L2a) and the under-cabinet LED (L2b). The band is 0.8 m,
     // not 0.6, so the spots land 5 cm in front of the 0.35 m wall cabinets
     // and light the worktop, not the cabinet tops. Spots over the kitchen are
-    // L5 and over the dining end (east of x 760) L6. The dining alcove by the
+    // L2c and over the dining end (east of x 760) L2d. The dining alcove by the
     // double door, outside the band's rectangle, is dropped flat to match.
     kind: 'havuz', name: 'MUTFAK — spot ceiling', rect: [482, 1000, 930, 1250],
     band: 0.8, level: KITCHEN_BAND, pitch: 1.2, cove: false,
-    circuit: 'L5', split: { x: 760, circuit: 'L6' }, fill: [[809, 1250, 933, 1369]], only: 'stacked',
+    circuit: 'L2c', split: { x: 760, circuit: 'L2d' }, fill: [[809, 1250, 933, 1369]], only: 'stacked',
     // Curtain pockets over the tall glazing, as the drawing has them: the
     // north 180/230 and dining slider, the east 300/230 (±30 cm, in the room).
     pockets: [
@@ -1143,31 +1158,31 @@ const GROUND_OBJECTS = [
   { kind: 'curtain', name: 'MUTFAK curtains (dining slider)', rect: [735, 1001, 928, 1010], only: 'stacked' },
   { kind: 'curtain', name: 'MUTFAK curtains (east window)', rect: [820, 1140, 1031, 1149], rot: 90, only: 'stacked' },
   // The wall switches from the electrical project. OTURMA ODASI: a double by
-  // its door from the hall (L1 spots, L2 hidden LED). MUTFAK: two doubles in
+  // its door from the hall (L1a spots, L1b hidden LED). MUTFAK: two doubles in
   // the kitchen by the diagonal KILER door, on the left as you come to it —
   // the kitchen face of the stub between its hinge jamb and the thin wall
   // (owner's instruction: to hand passing between the two rooms; it faces
   // north-east, `back: 'SW'`, and stands just beyond the tip of the double
   // door's open west leaf). Chandelier and under-cabinet LED on the first,
   // the two spot groups on the second. Look at one in walk mode and press E.
-  { kind: 'lightswitch', name: 'OTURMA ODASI — switch (L1, L2)', rect: [1124, 1494, 1126, 1500], back: 'W', z: 1.1, gangs: ['L1', 'L2'], only: 'stacked' },
+  { kind: 'lightswitch', name: 'OTURMA ODASI — switch (L1a, L1b)', rect: [1124, 1494, 1126, 1500], back: 'W', z: 1.1, gangs: ['L1a', 'L1b'], only: 'stacked' },
   // …and two-way (vaviyen, owner's request): the same pair on the north wall
   // by the 300/230 onto the back garden — EAST of its curtain. West of it the
   // hall door's leaf, hinged at the wall's north end and opening into the
   // room, lies flat along that wall when open, and a switch is never put
   // behind a door (owner's rule). Beside the window's shutter switch; the
   // hanging fireplace's bowl stays ~0.4 m clear.
-  { kind: 'lightswitch', name: 'OTURMA ODASI — garden switch (L1, L2)', rect: [1391, 1424, 1397, 1426], back: 'N', z: 1.1, gangs: ['L1', 'L2'], only: 'stacked' },
-  { kind: 'lightswitch', name: 'MUTFAK — KILER-door switch (L3, L4)', rect: [801.7, 1310.6, 803.7, 1312.6], back: 'SW', z: 1.1, gangs: ['L3', 'L4'], only: 'stacked' },
-  { kind: 'lightswitch', name: 'MUTFAK — KILER-door switch (L5, L6)', rect: [805.7, 1315, 807.7, 1317], back: 'SW', z: 1.1, gangs: ['L5', 'L6'], only: 'stacked' },
+  { kind: 'lightswitch', name: 'OTURMA ODASI — garden switch (L1a, L1b)', rect: [1391, 1424, 1397, 1426], back: 'N', z: 1.1, gangs: ['L1a', 'L1b'], only: 'stacked' },
+  { kind: 'lightswitch', name: 'MUTFAK — KILER-door switch (L2a, L2b)', rect: [801.7, 1310.6, 803.7, 1312.6], back: 'SW', z: 1.1, gangs: ['L2a', 'L2b'], only: 'stacked' },
+  { kind: 'lightswitch', name: 'MUTFAK — KILER-door switch (L2c, L2d)', rect: [805.7, 1315, 807.7, 1317], back: 'SW', z: 1.1, gangs: ['L2c', 'L2d'], only: 'stacked' },
   // Every kitchen light is two-way (vaviyen, owner's request): the same pair
   // again by the garden glazing, so leaving for the garden puts them all
   // out. The wall between the north 180/230 and the dining slider has a
   // concrete column in its middle (DWG x 688..719), which takes no switch box
   // (owner), so one double each side of it, against it and clear of both
-  // curtains: L3+L4 west, L5+L6 east. Over the island's end, so 1.2 m.
-  { kind: 'lightswitch', name: 'MUTFAK — garden-door switch (L3, L4)', rect: [674, 999, 680, 1001], back: 'N', z: 1.2, gangs: ['L3', 'L4'], only: 'stacked' },
-  { kind: 'lightswitch', name: 'MUTFAK — garden-door switch (L5, L6)', rect: [722, 999, 728, 1001], back: 'N', z: 1.2, gangs: ['L5', 'L6'], only: 'stacked' },
+  // curtains: L2a+L2b west, L2c+L2d east. Over the island's end, so 1.2 m.
+  { kind: 'lightswitch', name: 'MUTFAK — garden-door switch (L2a, L2b)', rect: [674, 999, 680, 1001], back: 'N', z: 1.2, gangs: ['L2a', 'L2b'], only: 'stacked' },
+  { kind: 'lightswitch', name: 'MUTFAK — garden-door switch (L2c, L2d)', rect: [722, 999, 728, 1001], back: 'N', z: 1.2, gangs: ['L2c', 'L2d'], only: 'stacked' },
 
   // The ADT (ana dağıtım tablosu, the main board every circuit is drawn back
   // to), where the owner marked it on the corridor's west side: since 30/10
@@ -1183,13 +1198,22 @@ const GROUND_OBJECTS = [
   // — the network gear is powered from the mains as well as linked by data.
   { kind: 'router', name: 'ANA KORIDOR — Cisco router (ceiling)', rect: [840, 1390, 860, 1402], only: 'stacked' },
   // Y.MUTFAK KILER: one ceiling lamp in the middle of the room (owner's
-  // instruction; it replaced the coffer), on its own circuit L7, with its
-  // switch inside by the diagonal door, on the latch side — the KILER face
-  // of the short diagonal wall north-west of the doorway (back 'NE').
-  { kind: 'ceilinglight', name: 'Y.MUTFAK KILER — ceiling lamp', rect: [608, 1316, 638, 1346], circuit: 'L7', only: 'stacked' },
-  { kind: 'lightswitch', name: 'Y.MUTFAK KILER — switch (L7)', rect: [743.3, 1264.2, 745.3, 1266.2], back: 'NE', z: 1.1, gangs: ['L7'], only: 'stacked' },
-  // The passage is too narrow for a coffer round the router, so one flush light.
-  { kind: 'ceilinglight', name: 'ANA KORIDOR — ceiling light', rect: [890, 1381, 920, 1411], only: 'stacked' },
+  // instruction; it replaced the coffer), on its own circuit L2e, and the LED
+  // under its wall cabinets on L2f; one double switch for both inside by the
+  // diagonal door, on the latch side — the KILER face of the short diagonal
+  // wall north-west of the doorway (back 'NE').
+  { kind: 'ceilinglight', name: 'Y.MUTFAK KILER — ceiling lamp', rect: [608, 1316, 638, 1346], circuit: 'L2e', only: 'stacked' },
+  { kind: 'lightswitch', name: 'Y.MUTFAK KILER — switch (L2e, L2f)', rect: [743.3, 1264.2, 745.3, 1266.2], back: 'NE', z: 1.1, gangs: ['L2e', 'L2f'], only: 'stacked' },
+  // The passage is too narrow for a coffer round the router, so one flush
+  // ceiling light, on the living room's lighting circuit L1 as group L1c
+  // (owner), switched two-way
+  // (vaviyen): by the main door — on the hall's west wall, on your left as
+  // you come in, between the W.C door (which opens into the wing) and the
+  // corner — and by the ADT, on the right as you face it: the niche's north
+  // side, at its mouth, past the tip of the board's open cover and under it.
+  { kind: 'ceilinglight', name: 'ANA KORIDOR — ceiling light', rect: [890, 1395, 920, 1425], circuit: 'L1c', only: 'stacked' },
+  { kind: 'lightswitch', name: 'GIRIS HOLU — main-door switch (L1c)', rect: [807, 1725, 809, 1731], back: 'W', z: 1.1, gangs: ['L1c'], only: 'stacked' },
+  { kind: 'lightswitch', name: 'ANA KORIDOR — switch by the ADT (L1c)', rect: [803.5, 1376, 808.5, 1378], back: 'N', z: 1.1, gangs: ['L1c'], only: 'stacked' },
 ];
 
 /**

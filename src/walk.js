@@ -121,7 +121,11 @@ export function createWalkMode({
         if (!o.isMesh || !o.visible) return;
         if (o.userData.noCollide) return;
         const box = new THREE.Box3().setFromObject(o);
-        if (!box.isEmpty()) colliders.push({ mesh: o, box });
+        // Parts that move (a slider's leaf, the ADT's cover) are re-boxed on
+        // every query; everything else is static and boxed once.
+        let dynamic = false;
+        for (let p = o; p && !dynamic; p = p.parent) dynamic = !!p.userData.dynamic;
+        if (!box.isEmpty()) colliders.push({ mesh: o, box, dynamic });
       });
     }
   }
@@ -130,7 +134,10 @@ export function createWalkMode({
     near.length = 0;
     queryBox.min.set(x - NEAR, y - 2.2, z - NEAR);
     queryBox.max.set(x + NEAR, y + 2.6, z + NEAR);
-    for (const c of colliders) if (c.box.intersectsBox(queryBox)) near.push(c.mesh);
+    for (const c of colliders) {
+      if (c.dynamic) c.box.setFromObject(c.mesh);
+      if (c.box.intersectsBox(queryBox)) near.push(c.mesh);
+    }
   }
 
   const ray = new THREE.Raycaster();

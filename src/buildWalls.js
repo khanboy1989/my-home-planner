@@ -197,25 +197,62 @@ function buildOpening(cut, depth) {
   }
 
   if (cut.kind === 'sliding') {
-    // Glazed slider: black framed leaf parked alongside the opening, on the
-    // face of the wall, with its track running the full travel above.
-    const face = depth / 2 + 0.035;
-    const travel = cut.swing === -1 ? -w : w;
-    g.add(slab(w * 2 + jamb, 0.05, 0.05, frameMat,
-      cx + travel / 2, cut.head + 0.04, face));
-
-    const leaf = new THREE.Group();
-    leaf.position.set(cx + travel, 0, face);
-    const lw = w - 0.04;
+    // Glazed slider: a black framed leaf on a track on the wall face, which
+    // opens and closes — look at it in walk mode and press E
+    // (`userData.opener`, stepped in main.js; it starts closed). It travels
+    // towards `swing` (+1 = +X along the wall). A plain slider parks
+    // alongside the opening, over solid wall; `panels: 2` (a 1.8 m opening,
+    // say, with no wall to park on) is a fixed pane on the travel side with
+    // the leaf sliding past it, both inside the frame's depth, which clears
+    // half the width and keeps the wall face free for a neighbour's leaf.
+    const twoPanel0 = cut.src?.panels === 2;
+    const face = twoPanel0 ? 0.035 : depth / 2 + 0.035;
+    const dir = cut.swing === -1 ? -1 : 1;
+    const twoPanel = cut.src?.panels === 2;
+    const lw = (twoPanel ? w / 2 : w) - 0.04;
     const lh = h - 0.04;
-    leaf.add(slab(lw, 0.05, 0.05, frameMat, 0, lh - 0.025, 0));
-    leaf.add(slab(lw, 0.05, 0.05, frameMat, 0, 0.025, 0));
-    leaf.add(slab(0.05, lh, 0.05, frameMat, -lw / 2 + 0.025, lh / 2, 0));
-    leaf.add(slab(0.05, lh, 0.05, frameMat, lw / 2 - 0.025, lh / 2, 0));
-    const pane = new THREE.Mesh(new THREE.PlaneGeometry(lw - 0.08, lh - 0.08), GLASS);
-    pane.position.set(0, lh / 2, 0);
-    leaf.add(pane);
-    g.add(leaf);
+    const closedX = twoPanel ? cx - dir * w / 4 : cx;
+    const openX = closedX + dir * (twoPanel ? w / 2 : w);
+    if (!twoPanel) {
+      g.add(slab(Math.abs(openX - closedX) + lw + 0.05, 0.05, 0.05, frameMat,
+        (closedX + openX) / 2, cut.head + 0.04, face));
+    }
+
+    const panel = (x, z) => {
+      const p = new THREE.Group();
+      p.position.set(x, 0, z);
+      p.add(slab(lw, 0.05, 0.05, frameMat, 0, lh - 0.025, 0));
+      p.add(slab(lw, 0.05, 0.05, frameMat, 0, 0.025, 0));
+      p.add(slab(0.05, lh, 0.05, frameMat, -lw / 2 + 0.025, lh / 2, 0));
+      p.add(slab(0.05, lh, 0.05, frameMat, lw / 2 - 0.025, lh / 2, 0));
+      const pane = new THREE.Mesh(new THREE.PlaneGeometry(lw - 0.08, lh - 0.08), GLASS);
+      pane.position.set(0, lh / 2, 0);
+      p.add(pane);
+      g.add(p);
+      return p;
+    };
+    if (twoPanel) panel(cx + dir * w / 4, -0.035);     // the fixed pane, in the reveal
+    const leaf = panel(closedX, face);
+    leaf.userData.dynamic = true;                       // walk.js re-boxes it as it moves
+
+    const RATE = 0.8;                                   // metres a second
+    const state = { open: false };
+    const ctl = {
+      label: 'Sliding door',
+      get on() { return state.open; },
+      get status() { return state.open ? 'open' : 'closed'; },
+      toggle(open = !state.open) { state.open = open; },
+      /** Advance by `dt` seconds; true while it is moving. */
+      step(dt) {
+        const want = state.open ? openX : closedX;
+        const at = leaf.position.x;
+        if (at === want) return false;
+        leaf.position.x = want > at ? Math.min(want, at + dt * RATE) : Math.max(want, at - dt * RATE);
+        return true;
+      },
+    };
+    g.userData.opener = ctl;
+    leaf.traverse((m) => { if (m.isMesh) { m.userData.switch = 'opener'; m.userData.opener = ctl; } });
     return g;
   }
 

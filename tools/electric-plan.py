@@ -79,14 +79,14 @@ ROOMS = [{
     'curtain_over': 30,         # past each side of the opening, for stacking
     'switch': (118753, -78800), # west wall, latch side of the K1:90/230
     'feed': (118690, -78800),   # out through the wall into GIRIS HOLU
-    'circuit': 'L1', 'cove_circuit': 'L2',
+    'circuit': 'L1a', 'cove_circuit': 'L1b',
     # One double switch by the door: spots and hidden LED (owner's request).
-    'switches': [((118753, -78800), ['L1', 'L2'])],
+    'switches': [((118753, -78800), ['L1a', 'L1b'])],
     # Two-way (vaviyen, owner's request): again by the north 300/230 onto
     # the back garden, EAST of its curtain pocket — west of it the hall door
     # opens flat against the wall, and no switch goes behind a door.
     # (position, gangs, rotation, label) — stems south, into the room.
-    'two_way': [((119175, -78690), ['L1', 'L2'], 180, (119190, -78726))],
+    'two_way': [((119175, -78690), ['L1a', 'L1b'], 180, (119190, -78726))],
     'feed_to': ((118690, -78800), '2x1,5+1,5mm²'),
     'ap': True,                 # Cisco access point in the middle, with its own power
     # Owner's instruction: the TV stays, and a motorised 120" screen drops in
@@ -106,10 +106,10 @@ ROOMS = [{
     # spots like OTURMA ODASI's (no cove), the chandelier over the dining
     # table and LED under the wall cabinets. The band is 80 cm so the spots
     # land just in front of the 35 cm wall cabinets, over the worktop. Spots
-    # west of x 118152 are L5 (kitchen), east of it L6 (dining). Two double
+    # west of x 118152 are L2c (kitchen), east of it L2d (dining). Two double
     # switches in the kitchen by the diagonal KILER door, on the kitchen face
     # of the stub left of it (owner: to hand passing between the two), facing
-    # north-east: L3+L4, L5+L6. Every kitchen
+    # north-east: L2a+L2b, L2c+L2d. Every kitchen
     # light is two-way (vaviyen, owner's request): the same pair again by the
     # dining slider, so leaving for the back garden puts them all out.
     'name': 'MUTFAK',
@@ -123,29 +123,29 @@ ROOMS = [{
     # Curtain pockets over the tall glazing: the north 180/230 and the dining
     # slider (250/230), and the east 300/230 onto İÇBAHÇE TERASI.
     'curtains': [('N', 117777, 117958), ('N', 118142, 118392), ('E', -78092, -78392)],
-    'circuit': 'L5', 'split': (118152, 'L6'),
+    'circuit': 'L2c', 'split': (118152, 'L2d'),
     'kitchen': {
-        'chandelier': (118292, -78163), 'chandelier_circuit': 'L3',
+        'chandelier': (118292, -78163), 'chandelier_circuit': 'L2a',
         'cabinet_leds': [                         # under the front edge of each run
             ((117732, -77997), (117732, -78099)),
             ((117732, -78286), (117732, -78402)),
             ((117915, -78373), (117987, -78373)),
             ((118047, -78373), (118103, -78373)),
         ],
-        'led_driver': (117930, -78335), 'led_circuit': 'L4',
+        'led_driver': (117930, -78335), 'led_circuit': 'L2b',
     },
     # (position, gangs, label position, rotation): the two sit 10 cm apart on
     # a 45° face, so their labels are stacked clear of them.
-    'switches': [((118221, -78502), ['L3', 'L4'], (118262, -78468), -45),
-                 ((118227, -78509), ['L5', 'L6'], (118262, -78482), -45)],
+    'switches': [((118221, -78502), ['L2a', 'L2b'], (118262, -78468), -45),
+                 ((118227, -78509), ['L2c', 'L2d'], (118262, -78482), -45)],
     'feed_to': ((118173, -78605), '2x1,5+1,5mm²'),      # to the ADT
     # On the north wall between the 180/230 and the dining slider,
     # h:120 over the island's end; paired with 'switches' in order, as
     # (position, gangs, rotation, label).
     # The wall's middle is a concrete column (x 118035..118085), no box in
     # it (owner): one double either side, against it.
-    'two_way': [((118018, -78010), ['L3', 'L4'], 180, (118018, -78046)),
-                ((118095, -78010), ['L5', 'L6'], 180, (118095, -78046))],
+    'two_way': [((118018, -78010), ['L2a', 'L2b'], 180, (118018, -78046)),
+                ((118095, -78010), ['L2c', 'L2d'], 180, (118095, -78046))],
 }]
 
 # The Cisco router in ANA KORIDOR, on the ceiling (owner: every router is):
@@ -166,10 +166,21 @@ APPLIANCES = {
 }
 COFFEE_W, TURKISH_W, TOASTER_W = 1450, 735, 900
 
-# Y.MUTFAK KILER: one ceiling lamp in the middle (owner), circuit L7, its
+# Y.MUTFAK KILER: one ceiling lamp in the middle (owner), circuit L2e, its
 # single switch inside by the diagonal door on the latch side, h:110.
+# The LED under its wall cabinets is L2f, on the same double switch.
 KILER_LIGHT = {'lamp': (117931, -78533), 'switch': (118127, -78427), 'rot': 135,
-               'circuit': 'L7', 'feed': (118173, -78605)}
+               'circuit': 'L2e', 'led_circuit': 'L2f', 'feed': (118173, -78605),
+               # under the front edge of each wall-cabinet run: north, south
+               'leds': [((117703, -78445), (118103, -78445)), ((117703, -78623), (118148, -78623))]}
+
+# ANA KORIDOR's ceiling light, group L1c on the living room's circuit (owner), two-way (vaviyen): one
+# switch by the main door on the hall's west wall, one by the ADT on the
+# niche's north side at its mouth (the right as you face the board).
+CORRIDOR_LIGHT = {'lamp': (118386, -78660), 'circuit': 'L1c',
+                  'switches': [((118229, -79174), 270, (118245, -79160)),
+                               ((118226, -78608), 180, (118238, -78586))],
+                  'feed': (118181, -78640)}
 
 # The ADT (ana dağıtım tablosu) where the owner marked it, on ANA KORIDOR's
 # west side: since 30/10 the cupboard niche there, on its back wall. Single
@@ -315,6 +326,14 @@ def import_symbols(doc, src):
     ud.add_circle((0, 0), 6)
     ud.add_lwpolyline([(-3, 2), (0, 5), (3, 2)])
     ud.add_lwpolyline([(-3, -2), (0, -5), (3, -2)])
+
+    vv = doc.blocks.new('VK_vav')          # tekli vaviyen: one stem with the two-way hook
+    vv.add_circle((0, 0), 4, dxfattribs={'color': 256})
+    h = vv.add_hatch()
+    h.paths.add_edge_path().add_arc((0, 0), 4, 0, 360)
+    vv.add_line((0, 0), (0, 20))
+    vv.add_line((0, 20), (6, 17))
+    vv.add_line((0, 20), (-6, 23))
 
     cl = doc.blocks.new('VK_ceiling')      # ceiling lamp: the usual circle and cross
     cl.add_circle((0, 0), 12)
@@ -620,16 +639,44 @@ def appliances(msp, a):
 
 
 def kiler_light(msp, k):
-    """KILER's ceiling lamp, its switch and the run back to the ADT."""
+    """KILER's ceiling lamp and under-cabinet LED, their double switch and
+    the run back to the ADT. Returns the LED's length in metres."""
     hat = {'layer': 'VK_AYDINLATMA_HATTI'}
     msp.add_blockref('VK_ceiling', k['lamp'], dxfattribs={'layer': 'VK_SPOT', 'color': 1})
     text(msp, f"{k['circuit']}: TAVAN LAMBASI", (k['lamp'][0] + 75, k['lamp'][1] + 4), h=7, color=1)
+    led_m = 0
+    for a, b in k['leds']:
+        msp.add_line(a, b, dxfattribs={'layer': 'VK_LED', 'linetype': 'VK_LED', 'lineweight': 50})
+        led_m += ((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2) ** .5 / 100
+    (a0, _), (a1, _) = k['leds']
+    msp.add_line(a0, a1, dxfattribs={'layer': 'VK_LED'})            # the runs linked at the west end
+    text(msp, f"{k['led_circuit']}: DOLAP ALTI LED ~{led_m:.1f} m".replace('.', ','),
+         (a0[0] + 120, a0[1] - 14), h=7, color=5)
     sw = k['switch']
-    msp.add_blockref('VK_switch', sw, dxfattribs={'layer': 'VK_ANAHTAR', 'rotation': k['rot']})
-    text(msp, k['circuit'], (sw[0] - 22, sw[1] - 10), h=8)
+    msp.add_blockref('VK_double', sw, dxfattribs={'layer': 'VK_ANAHTAR', 'rotation': k['rot']})
+    text(msp, f"{k['circuit']}/{k['led_circuit']}", (sw[0] - 22, sw[1] - 10), h=8, align='MIDDLE_RIGHT')
     msp.add_line(sw, k['lamp'], dxfattribs=hat)
+    msp.add_line(sw, k['leds'][0][1], dxfattribs=hat)
     msp.add_lwpolyline([sw, (sw[0], k['feed'][1] + 30), (k['feed'][0], k['feed'][1] + 30), k['feed']],
                        dxfattribs=hat)
+    return led_m
+
+
+def corridor_light(msp, c):
+    """ANA KORIDOR's ceiling light on its two vaviyen switches."""
+    hat = {'layer': 'VK_AYDINLATMA_HATTI'}
+    msp.add_blockref('VK_ceiling', c['lamp'], dxfattribs={'layer': 'VK_SPOT', 'color': 1})
+    text(msp, f"{c['circuit']}: TAVAN LAMBASI", (c['lamp'][0] + 18, c['lamp'][1] - 4), h=7, color=1)
+    (door, rd, ld), (adt_sw, ra, la) = c['switches']
+    for p, r, lab in ((door, rd, ld), (adt_sw, ra, la)):
+        msp.add_blockref('VK_vav', p, dxfattribs={'layer': 'VK_ANAHTAR', 'rotation': r})
+        text(msp, c['circuit'], lab, h=8)
+    # Travellers switch to switch (up the hall), the lamp off the ADT one.
+    msp.add_lwpolyline([door, (door[0] + 30, door[1]), (door[0] + 30, adt_sw[1] - 40), (adt_sw[0], adt_sw[1] - 40), adt_sw],
+                       dxfattribs=hat)
+    text(msp, 'VAVİYEN 3x1,5mm²', (door[0] + 36, door[1] + 120), h=6, rot=90)
+    msp.add_lwpolyline([adt_sw, (c['lamp'][0], adt_sw[1] - 40), c['lamp']], dxfattribs=hat)
+    msp.add_line(adt_sw, c['feed'], dxfattribs=hat)
 
 
 def adt(msp, a):
@@ -811,6 +858,7 @@ def legend(msp, origin):
         ('band', 'Asma Tavan Bandı'),
         ('double', 'Komütatör (Çift) Anahtar'),
         ('dvav', 'Komütatör Vaviyen Anahtar (iki yerden kumanda)'),
+        ('vav', 'Vaviyen Anahtar (tekli, iki yerden kumanda)'),
         ('chandelier', 'Avize'),
         ('ceiling', 'Tavan Lambası'),
         ('switch', 'Tekli Anahtar'),
@@ -834,7 +882,7 @@ def legend(msp, origin):
     for i, (key, label) in enumerate(rows):
         y = oy - i * 38
         p = (ox + 30, y)
-        if key in ('spot', 'double', 'dvav', 'chandelier', 'ceiling', 'switch', 'ap', 'router', 'dataout',
+        if key in ('spot', 'double', 'dvav', 'vav', 'chandelier', 'ceiling', 'switch', 'ap', 'router', 'dataout',
                    'projector', 'socket',
                    'device', 'tv', 'motor', 'updown'):
             layer = {'ap': 'VK_DATA', 'router': 'VK_DATA', 'dataout': 'VK_DATA', 'spot': 'VK_SPOT',
@@ -1001,16 +1049,18 @@ def sheet(doc, living, kitchen, kitchen_led_m, n_shutters, detail_origin, legend
              fontsize=9, weight='bold')
 
     lr, kr = ROOMS
-    s1, s5, s6 = living['spots']['L1'], kitchen['spots']['L5'], kitchen['spots']['L6']
+    s1, s5, s6 = living['spots']['L1a'], kitchen['spots']['L2c'], kitchen['spots']['L2d']
     notes = [
         'NOTLAR',
-        '1. Tesisat MONOFAZE (tek faz, 230V). Anahtarlar h:110 cm, kapının kilit tarafında.',
+        '1. Tesisat MONOFAZE (tek faz, 230V). Anahtarlar h:110 cm, kapının kilit tarafında,',
+        '   asla kapı arkasında değil. Aydınlatma linyeleri: L1 oturma + ana koridor, L2 mutfak',
+        '   + kiler; harfler anahtar uçlarıdır (L2a avize, L2b LED ...), ayrı sigorta değil.',
         'OTURMA ODASI',
         f"2. Havuz asma tavan: {lr['band']} cm bant, bant altı +{lr['band_level']:.2f}, havuz +{lr['pool_level']:.2f}".replace('.', ',')
         + ' (döşeme altı).',
-        f"3. L1: {s1} gömme spot bant ekseninde, ~{lr['spot_pitch'] / 100:.2f} m aralık; KD köşede şömine".replace('.', ','),
-        '   bacası nedeniyle spot yok. L2: havuz kenarında gizli LED, sürücü (LS) bantta.',
-        '4. Kapı yanında ÇİFT anahtar: L1 spotlar + L2 gizli LED; VAVİYEN, bahçeye bakan',
+        f"3. L1a: {s1} gömme spot bant ekseninde, ~{lr['spot_pitch'] / 100:.2f} m aralık; KD köşede şömine".replace('.', ','),
+        '   bacası nedeniyle spot yok. L1b: havuz kenarında gizli LED, sürücü (LS) bantta.',
+        '4. Kapı yanında ÇİFT anahtar: L1a spotlar + L1b gizli LED; VAVİYEN, bahçeye bakan',
         '   kuzey 300/230\'un doğusunda da aynı anahtar. Anahtar asla kapı arkasına konmaz.',
         f"5. Pencere ve sürgü önünde perde korniş boşluğu {lr['curtain_depth']} cm, açıklıktan {lr['curtain_over']} cm taşar.",
         f"6. TV korunur; önüne {lr['cinema']['inches']}\" motorlu perde iner (kaset doğu bandında, duvardan",
@@ -1019,20 +1069,23 @@ def sheet(doc, living, kitchen, kitchen_led_m, n_shutters, detail_origin, legend
         '7. Cisco AP havuz ortasında: CAT6 + AYRI ENERJİ (P1). Boruları beton öncesi döşemeye.',
         'MUTFAK',
         f"8. Spot bantlı asma tavan: {kr['band']} cm bant (spotlar üst dolapların önünde), bant altı",
-        f"   +{kr['band_level']:.2f}, gizli LED yok. L5: {s5} spot mutfak, L6: {s6} spot yemek tarafı.".replace('.', ',', 1),
-        '9. L3: yemek masası üzerinde avize; buatı beton öncesi döşemeye. Kuzey 180/230,',
+        f"   +{kr['band_level']:.2f}, gizli LED yok. L2c: {s5} spot mutfak, L2d: {s6} spot yemek tarafı.".replace('.', ',', 1),
+        '9. L2a: yemek masası üzerinde avize; buatı beton öncesi döşemeye. Kuzey 180/230,',
         '   sürme kapı ve doğu 300/230 önünde bantta 15 cm perde korniş boşluğu.',
-        f"10. L4: üst dolapların altında LED şerit ~{kitchen_led_m:.1f} m, sürücü (LS) dolap içinde.".replace('.', ','),
-        '11. Mutfakta köşedeki kiler kapısının solunda iki ÇİFT anahtar: L3 avize + L4 LED,',
-        '    L5 + L6 spotlar (kilere geçerken elin altında). Tümü VAVİYEN: aynı ikisi kuzeyde',
+        f"10. L2b: mutfak üst dolaplarının altında LED şerit, sürücü (LS) dolap içinde.",
+        '11. Mutfakta köşedeki kiler kapısının solunda iki ÇİFT anahtar: L2a avize + L2b LED,',
+        '    L2c + L2d spotlar (kilere geçerken elin altında). Tümü VAVİYEN: aynı ikisi kuzeyde',
         '    iki cam açıklık arasındaki kolonun iki yanında (kolona buat konmaz; h:120, ada',
-        '    üstü): L3/L4 batıda, L5/L6 doğuda. Bahçeye çıkarken',
+        '    üstü): L2a/L2b batıda, L2c/L2d doğuda. Bahçeye çıkarken',
         '    bütün ışıklar oradan söner.',
-        '11a. Kilerde tavan ortasında tavan lambası (L7), anahtarı içeride köşe kapının',
+        '11a. Kilerde tavan ortasında tavan lambası (L2e) ve üst dolap altı LED (L2f); ÇİFT',
+        '    anahtarı içeride köşe kapının',
         '    kilit tarafında h:110.',
         '12a. Güney tezgahın batı ucunda 1,50 m cihaz dolabı (sürgülü kapaklı): tam otomatik',
         '    kahve mak., Türk kahvesi mak., tost mak.; arka panelde 2 ikili priz h:136, P4.',
         'ANA KORİDOR',
+        '11b. ANA KORİDOR tavan lambası L1c, VAVİYEN: ana kapı girişinde solda (hol batı',
+        '    duvarı) ve ADT nişinin ağzında sağ yanda, h:110.',
         '12. ADT koridorun batısındaki dolap nişinde, arka duvarda, alt kenarı h:120 (üst 170):',
         '    monofaze, 2 sıra sıva üstü tablo (Hager Gamma tipi ~40x50x12 cm): ana şalter,',
         '    parafudr, kaçak akım (RCD/RCBO), sigortalar. Nişin üstünden 1. kata 40x50 TESİSAT',
@@ -1053,13 +1106,11 @@ def sheet(doc, living, kitchen, kitchen_led_m, n_shutters, detail_origin, legend
     media_kw = (PROJECTOR_W + SCREEN_W + MEDIA_W + AP_W) / 1000
     spot = SPOT_W / 1000
     load_table(fig, (x, 168, 340, 70), (W, H), [
-        ('L1', '10A', '1,5', 'Oturma od. spotlar', s1, spot, s1 * spot, .4),
-        ('L2', '10A', '1,5', 'Oturma od. gizli LED', 1, led_kw, led_kw, .4),
-        ('L3', '10A', '1,5', 'Mutfak avize', 1, CHANDELIER_W / 1000, CHANDELIER_W / 1000, .5),
-        ('L4', '10A', '1,5', 'Mutfak tezgah altı LED', 1, kled_kw, kled_kw, .5),
-        ('L5', '10A', '1,5', 'Mutfak spotlar (mutfak)', s5, spot, s5 * spot, .5),
-        ('L6', '10A', '1,5', 'Mutfak spotlar (yemek)', s6, spot, s6 * spot, .5),
-        ('L7', '10A', '1,5', 'Kiler tavan lambası', 1, .015, .015, .5),
+        # One lighting circuit per area (owner), its switched groups lettered.
+        ('L1', '10A', '1,5', 'Oturma od. + ana koridor aydınlatma (L1a-L1c)', s1 + 2, '-',
+         round(s1 * spot + led_kw + .015, 3), .4),
+        ('L2', '10A', '1,5', 'Mutfak + kiler aydınlatma (L2a-L2f)', 1 + s5 + s6 + 1 + 2, '-',
+         round(CHANDELIER_W / 1000 + kled_kw + (s5 + s6) * spot + .015, 3), .5),
         ('P1', '16A', '2,5', 'Oturma od. TV ün., projektör, perde, AP', living['cinema_sockets'] + 1,
          '-', media_kw, .5),
         ('P2', '16A', '2,5', 'Ana koridor router prizi', 1, ROUTER_W / 1000, ROUTER_W / 1000, 1.0),
@@ -1130,7 +1181,8 @@ def main():
     switches(msp, ROOMS[1], {**kitchen['targets'], **fittings})
     network(msp, NETWORK)
     appliances(msp, APPLIANCES)
-    kiler_light(msp, KILER_LIGHT)
+    kiler_led_m = kiler_light(msp, KILER_LIGHT)
+    corridor_light(msp, CORRIDOR_LIGHT)
     adt(msp, ADT)
     ka, za = shaft(msp, SHAFT)
     first_network(msp, FIRST_NET, ka, za)
@@ -1142,7 +1194,7 @@ def main():
     legend(msp, legend_origin)
 
     doc.saveas(os.path.join(OUT, 'VILLA KHAN ELEKTRIK.dxf'))
-    fig = sheet(doc, living, kitchen, kitchen_led_m, n_shutters, detail_origin, legend_origin)
+    fig = sheet(doc, living, kitchen, kitchen_led_m + kiler_led_m, n_shutters, detail_origin, legend_origin)
     fig2 = sheet_first(doc, n_first, legend_origin)
     with PdfPages(os.path.join(OUT, 'VILLA KHAN ELEKTRIK.pdf')) as pdf:
         pdf.savefig(fig)

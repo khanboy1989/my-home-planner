@@ -489,7 +489,7 @@ $SKPOLY
   9
 $TDCREATE
  40
-2461344.715324074
+2461344.799560185
   9
 $TDUCREATE
  40
@@ -497,7 +497,7 @@ $TDUCREATE
   9
 $TDUPDATE
  40
-2461344.715451389
+2461344.7996875
   9
 $TDUUPDATE
  40
@@ -549,7 +549,7 @@ $SPLINESEGS
   9
 $HANDSEED
   5
-23C0
+23DD
   9
 $SURFTAB1
  70
@@ -925,7 +925,7 @@ $FINGERPRINTGUID
   9
 $VERSIONGUID
   2
-{DBE73469-4473-4A3B-B68B-714D62DD9B0F}
+{9292911B-202A-4FC5-AAC3-2A3AB18C887F}
   9
 $EXTNAMES
 290
@@ -3875,15 +3875,15 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-E_lamba
+E-TV
  70
 0
  62
-5
+4
   6
 Continuous
 370
-40
+30
 390
 F
 347
@@ -3927,15 +3927,15 @@ AcDbSymbolTableRecord
 100
 AcDbLayerTableRecord
   2
-E-TV
+E_lamba
  70
 0
  62
-4
+5
   6
 Continuous
 370
-30
+40
 390
 F
 347
@@ -4511,7 +4511,7 @@ ACAD_EXEMPT_FROM_CAD_STANDARDS
   0
 APPID
   5
-23BC
+23D9
 330
 2B
 100
@@ -4525,7 +4525,7 @@ HATCHBACKGROUNDCOLOR
   0
 APPID
   5
-23BD
+23DA
 330
 2B
 100
@@ -5697,7 +5697,7 @@ BLOCK_RECORD
 100
 AcDbSymbolTable
  70
-89
+90
   0
 BLOCK_RECORD
   5
@@ -7503,6 +7503,26 @@ AcDbSymbolTableRecord
 100
 AcDbBlockTableRecord
   2
+VK_vav
+340
+0
+ 70
+0
+280
+1
+281
+0
+  0
+BLOCK_RECORD
+  5
+21A1
+330
+1
+100
+AcDbSymbolTableRecord
+100
+AcDbBlockTableRecord
+  2
 VK_ceiling
 340
 0
@@ -7515,7 +7535,7 @@ VK_ceiling
   0
 BLOCK_RECORD
   5
-219F
+21A7
 330
 1
 100
@@ -7535,7 +7555,7 @@ VK_router
   0
 BLOCK_RECORD
   5
-21A9
+21B1
 330
 1
 100
@@ -104703,7 +104723,7 @@ AcDbEntity
 100
 AcDbBlockBegin
   2
-VK_ceiling
+VK_vav
  70
 0
  10
@@ -104713,7 +104733,7 @@ VK_ceiling
  30
 0.0
   3
-VK_ceiling
+VK_vav
   1
 
   0
@@ -104735,9 +104755,9 @@ AcDbCircle
  30
 0.0
  40
-12.0
+4.0
   0
-LINE
+HATCH
   5
 219D
 330
@@ -104746,20 +104766,56 @@ LINE
 AcDbEntity
   8
 0
+ 62
+7
 100
-AcDbLine
+AcDbHatch
  10
--8.5
+0.0
  20
--8.5
+0.0
  30
 0.0
- 11
-8.5
- 21
-8.5
- 31
+210
 0.0
+220
+0.0
+230
+1.0
+  2
+SOLID
+ 70
+1
+ 71
+0
+ 91
+1
+ 92
+1
+ 93
+1
+ 72
+2
+ 10
+0.0
+ 20
+0.0
+ 40
+4
+ 50
+0
+ 51
+360
+ 73
+1
+ 97
+0
+ 75
+0
+ 76
+1
+ 98
+0
   0
 LINE
   5
@@ -104773,15 +104829,63 @@ AcDbEntity
 100
 AcDbLine
  10
--8.5
+0.0
  20
-8.5
+0.0
  30
 0.0
  11
-8.5
+0.0
  21
--8.5
+20.0
+ 31
+0.0
+  0
+LINE
+  5
+219F
+330
+2199
+100
+AcDbEntity
+  8
+0
+100
+AcDbLine
+ 10
+0.0
+ 20
+20.0
+ 30
+0.0
+ 11
+6.0
+ 21
+17.0
+ 31
+0.0
+  0
+LINE
+  5
+21A0
+330
+2199
+100
+AcDbEntity
+  8
+0
+100
+AcDbLine
+ 10
+0.0
+ 20
+20.0
+ 30
+0.0
+ 11
+-6.0
+ 21
+23.0
  31
 0.0
   0
@@ -104799,9 +104903,115 @@ AcDbBlockEnd
   0
 BLOCK
   5
-21A0
+21A2
 330
-219F
+21A1
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockBegin
+  2
+VK_ceiling
+ 70
+0
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+  3
+VK_ceiling
+  1
+
+  0
+CIRCLE
+  5
+21A4
+330
+21A1
+100
+AcDbEntity
+  8
+0
+100
+AcDbCircle
+ 10
+0.0
+ 20
+0.0
+ 30
+0.0
+ 40
+12.0
+  0
+LINE
+  5
+21A5
+330
+21A1
+100
+AcDbEntity
+  8
+0
+100
+AcDbLine
+ 10
+-8.5
+ 20
+-8.5
+ 30
+0.0
+ 11
+8.5
+ 21
+8.5
+ 31
+0.0
+  0
+LINE
+  5
+21A6
+330
+21A1
+100
+AcDbEntity
+  8
+0
+100
+AcDbLine
+ 10
+-8.5
+ 20
+8.5
+ 30
+0.0
+ 11
+8.5
+ 21
+-8.5
+ 31
+0.0
+  0
+ENDBLK
+  5
+21A3
+330
+21A1
+100
+AcDbEntity
+  8
+0
+100
+AcDbBlockEnd
+  0
+BLOCK
+  5
+21A8
+330
+21A7
 100
 AcDbEntity
   8
@@ -104825,9 +105035,9 @@ VK_router
   0
 LWPOLYLINE
   5
-21A2
+21AA
 330
-219F
+21A7
 100
 AcDbEntity
   8
@@ -104857,9 +105067,9 @@ AcDbPolyline
   0
 CIRCLE
   5
-21A3
+21AB
 330
-219F
+21A7
 100
 AcDbEntity
   8
@@ -104877,9 +105087,9 @@ AcDbCircle
   0
 CIRCLE
   5
-21A4
+21AC
 330
-219F
+21A7
 100
 AcDbEntity
   8
@@ -104897,9 +105107,9 @@ AcDbCircle
   0
 CIRCLE
   5
-21A5
+21AD
 330
-219F
+21A7
 100
 AcDbEntity
   8
@@ -104917,9 +105127,9 @@ AcDbCircle
   0
 CIRCLE
   5
-21A6
+21AE
 330
-219F
+21A7
 100
 AcDbEntity
   8
@@ -104937,9 +105147,9 @@ AcDbCircle
   0
 CIRCLE
   5
-21A7
+21AF
 330
-219F
+21A7
 100
 AcDbEntity
   8
@@ -104957,9 +105167,9 @@ AcDbCircle
   0
 LINE
   5
-21A8
+21B0
 330
-219F
+21A7
 100
 AcDbEntity
   8
@@ -104981,9 +105191,9 @@ AcDbLine
   0
 ENDBLK
   5
-21A1
+21A9
 330
-219F
+21A7
 100
 AcDbEntity
   8
@@ -104993,9 +105203,9 @@ AcDbBlockEnd
   0
 BLOCK
   5
-21AA
+21B2
 330
-21A9
+21B1
 100
 AcDbEntity
   8
@@ -105019,9 +105229,9 @@ VK_projector
   0
 LWPOLYLINE
   5
-21AC
+21B4
 330
-21A9
+21B1
 100
 AcDbEntity
   8
@@ -105051,9 +105261,9 @@ AcDbPolyline
   0
 CIRCLE
   5
-21AD
+21B5
 330
-21A9
+21B1
 100
 AcDbEntity
   8
@@ -105071,9 +105281,9 @@ AcDbCircle
   0
 LWPOLYLINE
   5
-21AE
+21B6
 330
-21A9
+21B1
 100
 AcDbEntity
   8
@@ -105103,9 +105313,9 @@ AcDbPolyline
   0
 ENDBLK
   5
-21AB
+21B3
 330
-21A9
+21B1
 100
 AcDbEntity
   8
@@ -149257,7 +149467,7 @@ AcDbPolyline
   0
 HATCH
   5
-21AF
+21B7
 330
 2
 100
@@ -149369,7 +149579,7 @@ ANSI31
   0
 LWPOLYLINE
   5
-21B0
+21B8
 330
 2
 100
@@ -149401,7 +149611,7 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-21B1
+21B9
 330
 2
 100
@@ -149433,7 +149643,7 @@ AcDbPolyline
   0
 TEXT
   5
-21B2
+21BA
 330
 2
 100
@@ -149471,7 +149681,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-21B3
+21BB
 330
 2
 100
@@ -149503,7 +149713,7 @@ AcDbPolyline
   0
 TEXT
   5
-21B4
+21BC
 330
 2
 100
@@ -149541,7 +149751,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-21B5
+21BD
 330
 2
 100
@@ -149575,7 +149785,7 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-21B6
+21BE
 330
 2
 100
@@ -149607,7 +149817,7 @@ AcDbPolyline
   0
 TEXT
   5
-21B7
+21BF
 330
 2
 100
@@ -149643,7 +149853,7 @@ AcDbText
   0
 LINE
   5
-21B8
+21C0
 330
 2
 100
@@ -149667,7 +149877,7 @@ AcDbLine
   0
 INSERT
   5
-21B9
+21C1
 330
 2
 100
@@ -149687,7 +149897,7 @@ VK_spot
   0
 INSERT
   5
-21BB
+21C3
 330
 2
 100
@@ -149707,7 +149917,7 @@ VK_spot
   0
 INSERT
   5
-21BD
+21C5
 330
 2
 100
@@ -149727,7 +149937,7 @@ VK_spot
   0
 INSERT
   5
-21BF
+21C7
 330
 2
 100
@@ -149742,86 +149952,6 @@ VK_spot
 119078.5
  20
 -78710.0
- 30
-0.0
-  0
-INSERT
-  5
-21C1
-330
-2
-100
-AcDbEntity
-  8
-VK_SPOT
-100
-AcDbBlockReference
-  2
-VK_spot
- 10
-119181.0
- 20
--78820.0
- 30
-0.0
-  0
-INSERT
-  5
-21C3
-330
-2
-100
-AcDbEntity
-  8
-VK_SPOT
-100
-AcDbBlockReference
-  2
-VK_spot
- 10
-119181.0
- 20
--78930.0
- 30
-0.0
-  0
-INSERT
-  5
-21C5
-330
-2
-100
-AcDbEntity
-  8
-VK_SPOT
-100
-AcDbBlockReference
-  2
-VK_spot
- 10
-119181.0
- 20
--79040.0
- 30
-0.0
-  0
-INSERT
-  5
-21C7
-330
-2
-100
-AcDbEntity
-  8
-VK_SPOT
-100
-AcDbBlockReference
-  2
-VK_spot
- 10
-119181.0
- 20
--79150.0
  30
 0.0
   0
@@ -149841,7 +149971,7 @@ VK_spot
  10
 119181.0
  20
--79260.0
+-78820.0
  30
 0.0
   0
@@ -149859,9 +149989,9 @@ AcDbBlockReference
   2
 VK_spot
  10
-119078.5
+119181.0
  20
--79260.0
+-78930.0
  30
 0.0
   0
@@ -149879,9 +150009,9 @@ AcDbBlockReference
   2
 VK_spot
  10
-118976.0
+119181.0
  20
--79260.0
+-79040.0
  30
 0.0
   0
@@ -149899,9 +150029,9 @@ AcDbBlockReference
   2
 VK_spot
  10
-118873.5
+119181.0
  20
--79260.0
+-79150.0
  30
 0.0
   0
@@ -149919,7 +150049,7 @@ AcDbBlockReference
   2
 VK_spot
  10
-118771.0
+119181.0
  20
 -79260.0
  30
@@ -149939,9 +150069,9 @@ AcDbBlockReference
   2
 VK_spot
  10
-118771.0
+119078.5
  20
--79150.0
+-79260.0
  30
 0.0
   0
@@ -149959,9 +150089,9 @@ AcDbBlockReference
   2
 VK_spot
  10
-118771.0
+118976.0
  20
--79040.0
+-79260.0
  30
 0.0
   0
@@ -149979,9 +150109,9 @@ AcDbBlockReference
   2
 VK_spot
  10
-118771.0
+118873.5
  20
--78930.0
+-79260.0
  30
 0.0
   0
@@ -150001,13 +150131,93 @@ VK_spot
  10
 118771.0
  20
+-79260.0
+ 30
+0.0
+  0
+INSERT
+  5
+21DB
+330
+2
+100
+AcDbEntity
+  8
+VK_SPOT
+100
+AcDbBlockReference
+  2
+VK_spot
+ 10
+118771.0
+ 20
+-79150.0
+ 30
+0.0
+  0
+INSERT
+  5
+21DD
+330
+2
+100
+AcDbEntity
+  8
+VK_SPOT
+100
+AcDbBlockReference
+  2
+VK_spot
+ 10
+118771.0
+ 20
+-79040.0
+ 30
+0.0
+  0
+INSERT
+  5
+21DF
+330
+2
+100
+AcDbEntity
+  8
+VK_SPOT
+100
+AcDbBlockReference
+  2
+VK_spot
+ 10
+118771.0
+ 20
+-78930.0
+ 30
+0.0
+  0
+INSERT
+  5
+21E1
+330
+2
+100
+AcDbEntity
+  8
+VK_SPOT
+100
+AcDbBlockReference
+  2
+VK_spot
+ 10
+118771.0
+ 20
 -78820.0
  30
 0.0
   0
 LWPOLYLINE
   5
-21DB
+21E3
 330
 2
 100
@@ -150091,7 +150301,7 @@ AcDbPolyline
   0
 LINE
   5
-21DC
+21E4
 330
 2
 100
@@ -150115,7 +150325,7 @@ AcDbLine
   0
 LINE
   5
-21DD
+21E5
 330
 2
 100
@@ -150139,7 +150349,7 @@ AcDbLine
   0
 TEXT
   5
-21DE
+21E6
 330
 2
 100
@@ -150175,7 +150385,7 @@ AcDbText
   0
 TEXT
   5
-21DF
+21E7
 330
 2
 100
@@ -150213,7 +150423,7 @@ AcDbText
   0
 TEXT
   5
-21E0
+21E8
 330
 2
 100
@@ -150251,7 +150461,7 @@ AcDbText
   0
 TEXT
   5
-21E1
+21E9
 330
 2
 100
@@ -150271,7 +150481,7 @@ AcDbText
  40
 7.0
   1
-L1: 17 x 7W LED SPOT
+L1a: 17 x 7W LED SPOT
   7
 VK
  72
@@ -150289,7 +150499,7 @@ AcDbText
   0
 TEXT
   5
-21E2
+21EA
 330
 2
 100
@@ -150309,7 +150519,7 @@ AcDbText
  40
 7.0
   1
-L2: GİZLİ LED ŞERİT ~18 m
+L1b: GİZLİ LED ŞERİT ~18 m
   7
 VK
  72
@@ -150327,7 +150537,7 @@ AcDbText
   0
 INSERT
   5
-21E3
+21EB
 330
 2
 100
@@ -150347,7 +150557,7 @@ VK_ap
   0
 TEXT
   5
-21E5
+21ED
 330
 2
 100
@@ -150385,7 +150595,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-21E6
+21EE
 330
 2
 100
@@ -150419,7 +150629,7 @@ AcDbPolyline
   0
 TEXT
   5
-21E7
+21EF
 330
 2
 100
@@ -150457,7 +150667,7 @@ AcDbText
   0
 TEXT
   5
-21E8
+21F0
 330
 2
 100
@@ -150495,7 +150705,7 @@ AcDbText
   0
 INSERT
   5
-21E9
+21F1
 330
 2
 100
@@ -150515,7 +150725,7 @@ VK_device
   0
 TEXT
   5
-21EB
+21F3
 330
 2
 100
@@ -150551,7 +150761,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-21EC
+21F4
 330
 2
 100
@@ -150583,7 +150793,7 @@ AcDbPolyline
   0
 LINE
   5
-21ED
+21F5
 330
 2
 100
@@ -150611,7 +150821,7 @@ AcDbLine
   0
 TEXT
   5
-21EE
+21F6
 330
 2
 100
@@ -150651,7 +150861,7 @@ AcDbText
   0
 TEXT
   5
-21EF
+21F7
 330
 2
 100
@@ -150691,7 +150901,7 @@ AcDbText
   0
 INSERT
   5
-21F0
+21F8
 330
 2
 100
@@ -150711,7 +150921,7 @@ VK_projector
   0
 LINE
   5
-21F2
+21FA
 330
 2
 100
@@ -150739,7 +150949,7 @@ AcDbLine
   0
 TEXT
   5
-21F3
+21FB
 330
 2
 100
@@ -150777,7 +150987,7 @@ AcDbText
   0
 TEXT
   5
-21F4
+21FC
 330
 2
 100
@@ -150815,7 +151025,7 @@ AcDbText
   0
 TEXT
   5
-21F5
+21FD
 330
 2
 100
@@ -150853,7 +151063,7 @@ AcDbText
   0
 INSERT
   5
-21F6
+21FE
 330
 2
 100
@@ -150873,7 +151083,7 @@ VK_socket
   0
 INSERT
   5
-21F8
+2200
 330
 2
 100
@@ -150893,7 +151103,7 @@ VK_device
   0
 INSERT
   5
-21FA
+2202
 330
 2
 100
@@ -150913,7 +151123,7 @@ VK_socket
   0
 INSERT
   5
-21FC
+2204
 330
 2
 100
@@ -150933,7 +151143,7 @@ VK_socket
   0
 INSERT
   5
-21FE
+2206
 330
 2
 100
@@ -150953,7 +151163,7 @@ VK_tv
   0
 TEXT
   5
-2200
+2208
 330
 2
 100
@@ -150991,7 +151201,7 @@ AcDbText
   0
 TEXT
   5
-2201
+2209
 330
 2
 100
@@ -151031,7 +151241,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-2202
+220A
 330
 2
 100
@@ -151083,7 +151293,7 @@ AcDbPolyline
   0
 TEXT
   5
-2203
+220B
 330
 2
 100
@@ -151121,7 +151331,7 @@ AcDbText
   0
 TEXT
   5
-2204
+220C
 330
 2
 100
@@ -151159,7 +151369,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-2205
+220D
 330
 2
 100
@@ -151187,7 +151397,7 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-2206
+220E
 330
 2
 100
@@ -151221,7 +151431,7 @@ AcDbPolyline
   0
 TEXT
   5
-2207
+220F
 330
 2
 100
@@ -151259,7 +151469,7 @@ AcDbText
   0
 INSERT
   5
-2208
+2210
 330
 2
 100
@@ -151279,7 +151489,7 @@ VK_dvav
   0
 TEXT
   5
-220A
+2212
 330
 2
 100
@@ -151297,7 +151507,7 @@ AcDbText
  40
 8.0
   1
-L1/L2
+L1a/L1b
   7
 VK
  11
@@ -151313,7 +151523,7 @@ AcDbText
   0
 LINE
   5
-220B
+2213
 330
 2
 100
@@ -151337,7 +151547,7 @@ AcDbLine
   0
 LINE
   5
-220C
+2214
 330
 2
 100
@@ -151361,7 +151571,7 @@ AcDbLine
   0
 LINE
   5
-220D
+2215
 330
 2
 100
@@ -151385,7 +151595,7 @@ AcDbLine
   0
 INSERT
   5
-220E
+2216
 330
 2
 100
@@ -151407,7 +151617,7 @@ VK_dvav
   0
 TEXT
   5
-2210
+2218
 330
 2
 100
@@ -151425,7 +151635,7 @@ AcDbText
  40
 8.0
   1
-L1/L2
+L1a/L1b
   7
 VK
  72
@@ -151443,7 +151653,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-2211
+2219
 330
 2
 100
@@ -151471,7 +151681,7 @@ AcDbPolyline
   0
 TEXT
   5
-2212
+221A
 330
 2
 100
@@ -151505,7 +151715,7 @@ AcDbText
   0
 TEXT
   5
-2213
+221B
 330
 2
 100
@@ -151523,7 +151733,7 @@ AcDbText
  40
 8.0
   1
-L1, L2 ADT'ye
+L1a, L1b ADT'ye
   7
 VK
  72
@@ -151541,7 +151751,7 @@ AcDbText
   0
 TEXT
   5
-2214
+221C
 330
 2
 100
@@ -151577,7 +151787,7 @@ AcDbText
   0
 HATCH
   5
-2215
+221D
 330
 2
 100
@@ -151689,7 +151899,7 @@ ANSI31
   0
 HATCH
   5
-2216
+221E
 330
 2
 100
@@ -151775,7 +151985,7 @@ ANSI31
   0
 LWPOLYLINE
   5
-2217
+221F
 330
 2
 100
@@ -151807,7 +152017,7 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-2218
+2220
 330
 2
 100
@@ -151839,7 +152049,7 @@ AcDbPolyline
   0
 TEXT
   5
-2219
+2221
 330
 2
 100
@@ -151877,7 +152087,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-221A
+2222
 330
 2
 100
@@ -151909,7 +152119,7 @@ AcDbPolyline
   0
 TEXT
   5
-221B
+2223
 330
 2
 100
@@ -151947,7 +152157,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-221C
+2224
 330
 2
 100
@@ -151979,7 +152189,7 @@ AcDbPolyline
   0
 TEXT
   5
-221D
+2225
 330
 2
 100
@@ -152019,7 +152229,7 @@ AcDbText
   0
 INSERT
   5
-221E
+2226
 330
 2
 100
@@ -152039,7 +152249,7 @@ VK_spot
   0
 INSERT
   5
-2220
+2228
 330
 2
 100
@@ -152059,7 +152269,7 @@ VK_spot
   0
 INSERT
   5
-2222
+222A
 330
 2
 100
@@ -152079,7 +152289,7 @@ VK_spot
   0
 INSERT
   5
-2224
+222C
 330
 2
 100
@@ -152099,7 +152309,7 @@ VK_spot
   0
 INSERT
   5
-2226
+222E
 330
 2
 100
@@ -152119,7 +152329,7 @@ VK_spot
   0
 INSERT
   5
-2228
+2230
 330
 2
 100
@@ -152139,7 +152349,7 @@ VK_spot
   0
 INSERT
   5
-222A
+2232
 330
 2
 100
@@ -152159,7 +152369,7 @@ VK_spot
   0
 INSERT
   5
-222C
+2234
 330
 2
 100
@@ -152179,7 +152389,7 @@ VK_spot
   0
 INSERT
   5
-222E
+2236
 330
 2
 100
@@ -152199,7 +152409,7 @@ VK_spot
   0
 INSERT
   5
-2230
+2238
 330
 2
 100
@@ -152219,7 +152429,7 @@ VK_spot
   0
 LWPOLYLINE
   5
-2232
+223A
 330
 2
 100
@@ -152275,7 +152485,7 @@ AcDbPolyline
   0
 INSERT
   5
-2233
+223B
 330
 2
 100
@@ -152295,7 +152505,7 @@ VK_spot
   0
 INSERT
   5
-2235
+223D
 330
 2
 100
@@ -152315,7 +152525,7 @@ VK_spot
   0
 INSERT
   5
-2237
+223F
 330
 2
 100
@@ -152335,7 +152545,7 @@ VK_spot
   0
 INSERT
   5
-2239
+2241
 330
 2
 100
@@ -152355,7 +152565,7 @@ VK_spot
   0
 INSERT
   5
-223B
+2243
 330
 2
 100
@@ -152375,7 +152585,7 @@ VK_spot
   0
 INSERT
   5
-223D
+2245
 330
 2
 100
@@ -152395,7 +152605,7 @@ VK_spot
   0
 LWPOLYLINE
   5
-223F
+2247
 330
 2
 100
@@ -152435,7 +152645,7 @@ AcDbPolyline
   0
 TEXT
   5
-2240
+2248
 330
 2
 100
@@ -152473,7 +152683,7 @@ AcDbText
   0
 TEXT
   5
-2241
+2249
 330
 2
 100
@@ -152511,7 +152721,7 @@ AcDbText
   0
 TEXT
   5
-2242
+224A
 330
 2
 100
@@ -152531,7 +152741,7 @@ AcDbText
  40
 7.0
   1
-L5: 10 x 7W LED SPOT
+L2c: 10 x 7W LED SPOT
   7
 VK
  72
@@ -152549,7 +152759,7 @@ AcDbText
   0
 TEXT
   5
-2243
+224B
 330
 2
 100
@@ -152569,7 +152779,7 @@ AcDbText
  40
 7.0
   1
-L6: 6 x 7W LED SPOT
+L2d: 6 x 7W LED SPOT
   7
 VK
  72
@@ -152587,7 +152797,7 @@ AcDbText
   0
 INSERT
   5
-2244
+224C
 330
 2
 100
@@ -152607,7 +152817,7 @@ VK_chandelier
   0
 TEXT
   5
-2246
+224E
 330
 2
 100
@@ -152645,7 +152855,7 @@ AcDbText
   0
 LINE
   5
-2247
+224F
 330
 2
 100
@@ -152673,7 +152883,7 @@ AcDbLine
   0
 LINE
   5
-2248
+2250
 330
 2
 100
@@ -152701,7 +152911,7 @@ AcDbLine
   0
 LINE
   5
-2249
+2251
 330
 2
 100
@@ -152729,7 +152939,7 @@ AcDbLine
   0
 LINE
   5
-224A
+2252
 330
 2
 100
@@ -152757,7 +152967,7 @@ AcDbLine
   0
 LWPOLYLINE
   5
-224B
+2253
 330
 2
 100
@@ -152785,7 +152995,7 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-224C
+2254
 330
 2
 100
@@ -152813,7 +153023,7 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-224D
+2255
 330
 2
 100
@@ -152841,7 +153051,7 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-224E
+2256
 330
 2
 100
@@ -152873,7 +153083,7 @@ AcDbPolyline
   0
 TEXT
   5
-224F
+2257
 330
 2
 100
@@ -152909,7 +153119,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-2250
+2258
 330
 2
 100
@@ -152937,7 +153147,7 @@ AcDbPolyline
   0
 TEXT
   5
-2251
+2259
 330
 2
 100
@@ -152957,7 +153167,7 @@ AcDbText
  40
 7.0
   1
-L4: TEZGAH ALTI LED ~3,5 m
+L2b: TEZGAH ALTI LED ~3,5 m
   7
 VK
  11
@@ -152973,7 +153183,7 @@ AcDbText
   0
 INSERT
   5
-2252
+225A
 330
 2
 100
@@ -152995,7 +153205,7 @@ VK_dvav
   0
 TEXT
   5
-2254
+225C
 330
 2
 100
@@ -153013,7 +153223,7 @@ AcDbText
  40
 8.0
   1
-L3/L4
+L2a/L2b
   7
 VK
  11
@@ -153029,7 +153239,7 @@ AcDbText
   0
 LINE
   5
-2255
+225D
 330
 2
 100
@@ -153053,7 +153263,7 @@ AcDbLine
   0
 LINE
   5
-2256
+225E
 330
 2
 100
@@ -153077,7 +153287,7 @@ AcDbLine
   0
 INSERT
   5
-2257
+225F
 330
 2
 100
@@ -153099,7 +153309,7 @@ VK_dvav
   0
 TEXT
   5
-2259
+2261
 330
 2
 100
@@ -153117,7 +153327,7 @@ AcDbText
  40
 8.0
   1
-L5/L6
+L2c/L2d
   7
 VK
  11
@@ -153133,7 +153343,7 @@ AcDbText
   0
 LINE
   5
-225A
+2262
 330
 2
 100
@@ -153157,7 +153367,7 @@ AcDbLine
   0
 LINE
   5
-225B
+2263
 330
 2
 100
@@ -153181,7 +153391,7 @@ AcDbLine
   0
 LINE
   5
-225C
+2264
 330
 2
 100
@@ -153205,7 +153415,7 @@ AcDbLine
   0
 LINE
   5
-225D
+2265
 330
 2
 100
@@ -153229,7 +153439,7 @@ AcDbLine
   0
 INSERT
   5
-225E
+2266
 330
 2
 100
@@ -153251,7 +153461,7 @@ VK_dvav
   0
 TEXT
   5
-2260
+2268
 330
 2
 100
@@ -153269,7 +153479,7 @@ AcDbText
  40
 8.0
   1
-L3/L4
+L2a/L2b
   7
 VK
  72
@@ -153287,7 +153497,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-2261
+2269
 330
 2
 100
@@ -153315,7 +153525,7 @@ AcDbPolyline
   0
 INSERT
   5
-2262
+226A
 330
 2
 100
@@ -153337,7 +153547,7 @@ VK_dvav
   0
 TEXT
   5
-2264
+226C
 330
 2
 100
@@ -153355,7 +153565,7 @@ AcDbText
  40
 8.0
   1
-L5/L6
+L2c/L2d
   7
 VK
  72
@@ -153373,7 +153583,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-2265
+226D
 330
 2
 100
@@ -153401,7 +153611,7 @@ AcDbPolyline
   0
 TEXT
   5
-2266
+226E
 330
 2
 100
@@ -153435,7 +153645,7 @@ AcDbText
   0
 TEXT
   5
-2267
+226F
 330
 2
 100
@@ -153453,7 +153663,7 @@ AcDbText
  40
 8.0
   1
-L3, L4, L5, L6 ADT'ye
+L2a, L2b, L2c, L2d ADT'ye
   7
 VK
  72
@@ -153471,7 +153681,7 @@ AcDbText
   0
 TEXT
   5
-2268
+2270
 330
 2
 100
@@ -153507,7 +153717,7 @@ AcDbText
   0
 INSERT
   5
-2269
+2271
 330
 2
 100
@@ -153527,7 +153737,7 @@ VK_router
   0
 TEXT
   5
-226B
+2273
 330
 2
 100
@@ -153565,7 +153775,7 @@ AcDbText
   0
 TEXT
   5
-226C
+2274
 330
 2
 100
@@ -153603,7 +153813,7 @@ AcDbText
   0
 INSERT
   5
-226D
+2275
 330
 2
 100
@@ -153623,7 +153833,7 @@ VK_socket
   0
 INSERT
   5
-226F
+2277
 330
 2
 100
@@ -153643,7 +153853,7 @@ VK_data
   0
 LWPOLYLINE
   5
-2271
+2279
 330
 2
 100
@@ -153671,7 +153881,7 @@ AcDbPolyline
   0
 TEXT
   5
-2272
+227A
 330
 2
 100
@@ -153707,7 +153917,7 @@ AcDbText
   0
 INSERT
   5
-2273
+227B
 330
 2
 100
@@ -153727,7 +153937,7 @@ VK_socket
   0
 INSERT
   5
-2275
+227D
 330
 2
 100
@@ -153747,7 +153957,7 @@ VK_socket
   0
 LWPOLYLINE
   5
-2277
+227F
 330
 2
 100
@@ -153771,7 +153981,7 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-2278
+2280
 330
 2
 100
@@ -153799,7 +154009,7 @@ AcDbPolyline
   0
 TEXT
   5
-2279
+2281
 330
 2
 100
@@ -153835,7 +154045,7 @@ AcDbText
   0
 TEXT
   5
-227A
+2282
 330
 2
 100
@@ -153871,7 +154081,7 @@ AcDbText
   0
 TEXT
   5
-227B
+2283
 330
 2
 100
@@ -153909,7 +154119,7 @@ AcDbText
   0
 INSERT
   5
-227C
+2284
 330
 2
 100
@@ -153931,7 +154141,7 @@ VK_ceiling
   0
 TEXT
   5
-227E
+2286
 330
 2
 100
@@ -153951,7 +154161,7 @@ AcDbText
  40
 7.0
   1
-L7: TAVAN LAMBASI
+L2e: TAVAN LAMBASI
   7
 VK
  11
@@ -153965,9 +154175,125 @@ AcDbText
  73
 2
   0
+LINE
+  5
+2287
+330
+2
+100
+AcDbEntity
+  8
+VK_LED
+  6
+VK_LED
+370
+50
+100
+AcDbLine
+ 10
+117703.0
+ 20
+-78445.0
+ 30
+0.0
+ 11
+118103.0
+ 21
+-78445.0
+ 31
+0.0
+  0
+LINE
+  5
+2288
+330
+2
+100
+AcDbEntity
+  8
+VK_LED
+  6
+VK_LED
+370
+50
+100
+AcDbLine
+ 10
+117703.0
+ 20
+-78623.0
+ 30
+0.0
+ 11
+118148.0
+ 21
+-78623.0
+ 31
+0.0
+  0
+LINE
+  5
+2289
+330
+2
+100
+AcDbEntity
+  8
+VK_LED
+100
+AcDbLine
+ 10
+117703.0
+ 20
+-78445.0
+ 30
+0.0
+ 11
+117703.0
+ 21
+-78623.0
+ 31
+0.0
+  0
+TEXT
+  5
+228A
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+ 62
+5
+100
+AcDbText
+ 10
+117823.0
+ 20
+-78459.0
+ 30
+0.0
+ 40
+7.0
+  1
+L2f: DOLAP ALTI LED ~8,4 m
+  7
+VK
+ 11
+117823.0
+ 21
+-78459.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
 INSERT
   5
-227F
+228B
 330
 2
 100
@@ -153977,7 +154303,7 @@ VK_ANAHTAR
 100
 AcDbBlockReference
   2
-VK_switch
+VK_double
  10
 118127.0
  20
@@ -153989,7 +154315,7 @@ VK_switch
   0
 TEXT
   5
-2281
+228D
 330
 2
 100
@@ -154007,9 +154333,11 @@ AcDbText
  40
 8.0
   1
-L7
+L2e/L2f
   7
 VK
+ 72
+2
  11
 118105.0
  21
@@ -154023,7 +154351,7 @@ AcDbText
   0
 LINE
   5
-2282
+228E
 330
 2
 100
@@ -154045,9 +154373,33 @@ AcDbLine
  31
 0.0
   0
+LINE
+  5
+228F
+330
+2
+100
+AcDbEntity
+  8
+VK_AYDINLATMA_HATTI
+100
+AcDbLine
+ 10
+118127.0
+ 20
+-78427.0
+ 30
+0.0
+ 11
+118103.0
+ 21
+-78445.0
+ 31
+0.0
+  0
 LWPOLYLINE
   5
-2283
+2290
 330
 2
 100
@@ -154077,9 +154429,303 @@ AcDbPolyline
  20
 -78605.0
   0
+INSERT
+  5
+2291
+330
+2
+100
+AcDbEntity
+  8
+VK_SPOT
+ 62
+1
+100
+AcDbBlockReference
+  2
+VK_ceiling
+ 10
+118386.0
+ 20
+-78660.0
+ 30
+0.0
+  0
+TEXT
+  5
+2293
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+ 62
+1
+100
+AcDbText
+ 10
+118404.0
+ 20
+-78664.0
+ 30
+0.0
+ 40
+7.0
+  1
+L1c: TAVAN LAMBASI
+  7
+VK
+ 11
+118404.0
+ 21
+-78664.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+INSERT
+  5
+2294
+330
+2
+100
+AcDbEntity
+  8
+VK_ANAHTAR
+100
+AcDbBlockReference
+  2
+VK_vav
+ 10
+118229.0
+ 20
+-79174.0
+ 30
+0.0
+ 50
+270.0
+  0
+TEXT
+  5
+2296
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+118245.0
+ 20
+-79160.0
+ 30
+0.0
+ 40
+8.0
+  1
+L1c
+  7
+VK
+ 11
+118245.0
+ 21
+-79160.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+INSERT
+  5
+2297
+330
+2
+100
+AcDbEntity
+  8
+VK_ANAHTAR
+100
+AcDbBlockReference
+  2
+VK_vav
+ 10
+118226.0
+ 20
+-78608.0
+ 30
+0.0
+ 50
+180.0
+  0
+TEXT
+  5
+2299
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+118238.0
+ 20
+-78586.0
+ 30
+0.0
+ 40
+8.0
+  1
+L1c
+  7
+VK
+ 11
+118238.0
+ 21
+-78586.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
 LWPOLYLINE
   5
-2284
+229A
+330
+2
+100
+AcDbEntity
+  8
+VK_AYDINLATMA_HATTI
+100
+AcDbPolyline
+ 90
+5
+ 70
+0
+ 10
+118229.0
+ 20
+-79174.0
+ 10
+118259.0
+ 20
+-79174.0
+ 10
+118259.0
+ 20
+-78648.0
+ 10
+118226.0
+ 20
+-78648.0
+ 10
+118226.0
+ 20
+-78608.0
+  0
+TEXT
+  5
+229B
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+118265.0
+ 20
+-79054.0
+ 30
+0.0
+ 40
+6.0
+  1
+VAVİYEN 3x1,5mm²
+ 50
+90.0
+  7
+VK
+ 11
+118265.0
+ 21
+-79054.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+LWPOLYLINE
+  5
+229C
+330
+2
+100
+AcDbEntity
+  8
+VK_AYDINLATMA_HATTI
+100
+AcDbPolyline
+ 90
+3
+ 70
+0
+ 10
+118226.0
+ 20
+-78608.0
+ 10
+118386.0
+ 20
+-78648.0
+ 10
+118386.0
+ 20
+-78660.0
+  0
+LINE
+  5
+229D
+330
+2
+100
+AcDbEntity
+  8
+VK_AYDINLATMA_HATTI
+100
+AcDbLine
+ 10
+118226.0
+ 20
+-78608.0
+ 30
+0.0
+ 11
+118181.0
+ 21
+-78640.0
+ 31
+0.0
+  0
+LWPOLYLINE
+  5
+229E
 330
 2
 100
@@ -154111,7 +154757,7 @@ AcDbPolyline
   0
 HATCH
   5
-2285
+229F
 330
 2
 100
@@ -154173,7 +154819,7 @@ SOLID
   0
 TEXT
   5
-2286
+22A0
 330
 2
 100
@@ -154211,7 +154857,7 @@ AcDbText
   0
 TEXT
   5
-2287
+22A1
 330
 2
 100
@@ -154249,7 +154895,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-2288
+22A2
 330
 2
 100
@@ -154283,7 +154929,7 @@ AcDbPolyline
   0
 LINE
   5
-2289
+22A3
 330
 2
 100
@@ -154307,7 +154953,7 @@ AcDbLine
   0
 TEXT
   5
-228A
+22A4
 330
 2
 100
@@ -154343,7 +154989,7 @@ AcDbText
   0
 TEXT
   5
-228B
+22A5
 330
 2
 100
@@ -154379,7 +155025,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-228C
+22A6
 330
 2
 100
@@ -154413,7 +155059,7 @@ AcDbPolyline
   0
 LINE
   5
-228D
+22A7
 330
 2
 100
@@ -154437,7 +155083,7 @@ AcDbLine
   0
 LINE
   5
-228E
+22A8
 330
 2
 100
@@ -154461,7 +155107,7 @@ AcDbLine
   0
 CIRCLE
   5
-228F
+22A9
 330
 2
 100
@@ -154483,7 +155129,7 @@ AcDbCircle
   0
 TEXT
   5
-2290
+22AA
 330
 2
 100
@@ -154521,7 +155167,7 @@ AcDbText
   0
 CIRCLE
   5
-2291
+22AB
 330
 2
 100
@@ -154543,7 +155189,7 @@ AcDbCircle
   0
 TEXT
   5
-2292
+22AC
 330
 2
 100
@@ -154581,7 +155227,7 @@ AcDbText
   0
 TEXT
   5
-2293
+22AD
 330
 2
 100
@@ -154617,7 +155263,7 @@ AcDbText
   0
 TEXT
   5
-2294
+22AE
 330
 2
 100
@@ -154653,7 +155299,7 @@ AcDbText
   0
 TEXT
   5
-2295
+22AF
 330
 2
 100
@@ -154689,7 +155335,7 @@ AcDbText
   0
 INSERT
   5
-2296
+22B0
 330
 2
 100
@@ -154709,7 +155355,7 @@ VK_router
   0
 INSERT
   5
-2298
+22B2
 330
 2
 100
@@ -154729,7 +155375,7 @@ VK_socket
   0
 INSERT
   5
-229A
+22B4
 330
 2
 100
@@ -154749,7 +155395,7 @@ VK_data
   0
 TEXT
   5
-229C
+22B6
 330
 2
 100
@@ -154787,7 +155433,7 @@ AcDbText
   0
 TEXT
   5
-229D
+22B7
 330
 2
 100
@@ -154825,7 +155471,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-229E
+22B8
 330
 2
 100
@@ -154855,7 +155501,7 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-229F
+22B9
 330
 2
 100
@@ -154883,7 +155529,7 @@ AcDbPolyline
   0
 TEXT
   5
-22A0
+22BA
 330
 2
 100
@@ -154919,7 +155565,7 @@ AcDbText
   0
 TEXT
   5
-22A1
+22BB
 330
 2
 100
@@ -154955,7 +155601,7 @@ AcDbText
   0
 LINE
   5
-22A2
+22BC
 330
 2
 100
@@ -154981,7 +155627,7 @@ AcDbLine
   0
 INSERT
   5
-22A3
+22BD
 330
 2
 100
@@ -155001,7 +155647,7 @@ VK_motor
   0
 INSERT
   5
-22A5
+22BF
 330
 2
 100
@@ -155021,7 +155667,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22A7
+22C1
 330
 2
 100
@@ -155049,7 +155695,7 @@ AcDbPolyline
   0
 LINE
   5
-22A8
+22C2
 330
 2
 100
@@ -155075,7 +155721,7 @@ AcDbLine
   0
 INSERT
   5
-22A9
+22C3
 330
 2
 100
@@ -155095,7 +155741,7 @@ VK_motor
   0
 INSERT
   5
-22AB
+22C5
 330
 2
 100
@@ -155115,7 +155761,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22AD
+22C7
 330
 2
 100
@@ -155143,7 +155789,7 @@ AcDbPolyline
   0
 LINE
   5
-22AE
+22C8
 330
 2
 100
@@ -155169,7 +155815,7 @@ AcDbLine
   0
 INSERT
   5
-22AF
+22C9
 330
 2
 100
@@ -155189,7 +155835,7 @@ VK_motor
   0
 INSERT
   5
-22B1
+22CB
 330
 2
 100
@@ -155209,7 +155855,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22B3
+22CD
 330
 2
 100
@@ -155237,7 +155883,7 @@ AcDbPolyline
   0
 LINE
   5
-22B4
+22CE
 330
 2
 100
@@ -155263,7 +155909,7 @@ AcDbLine
   0
 INSERT
   5
-22B5
+22CF
 330
 2
 100
@@ -155283,7 +155929,7 @@ VK_motor
   0
 INSERT
   5
-22B7
+22D1
 330
 2
 100
@@ -155303,7 +155949,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22B9
+22D3
 330
 2
 100
@@ -155331,7 +155977,7 @@ AcDbPolyline
   0
 LINE
   5
-22BA
+22D4
 330
 2
 100
@@ -155357,7 +156003,7 @@ AcDbLine
   0
 INSERT
   5
-22BB
+22D5
 330
 2
 100
@@ -155377,7 +156023,7 @@ VK_motor
   0
 INSERT
   5
-22BD
+22D7
 330
 2
 100
@@ -155397,7 +156043,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22BF
+22D9
 330
 2
 100
@@ -155425,7 +156071,7 @@ AcDbPolyline
   0
 LINE
   5
-22C0
+22DA
 330
 2
 100
@@ -155451,7 +156097,7 @@ AcDbLine
   0
 INSERT
   5
-22C1
+22DB
 330
 2
 100
@@ -155471,7 +156117,7 @@ VK_motor
   0
 INSERT
   5
-22C3
+22DD
 330
 2
 100
@@ -155491,7 +156137,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22C5
+22DF
 330
 2
 100
@@ -155519,7 +156165,7 @@ AcDbPolyline
   0
 LINE
   5
-22C6
+22E0
 330
 2
 100
@@ -155545,7 +156191,7 @@ AcDbLine
   0
 INSERT
   5
-22C7
+22E1
 330
 2
 100
@@ -155565,7 +156211,7 @@ VK_motor
   0
 INSERT
   5
-22C9
+22E3
 330
 2
 100
@@ -155585,7 +156231,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22CB
+22E5
 330
 2
 100
@@ -155613,7 +156259,7 @@ AcDbPolyline
   0
 LINE
   5
-22CC
+22E6
 330
 2
 100
@@ -155639,7 +156285,7 @@ AcDbLine
   0
 INSERT
   5
-22CD
+22E7
 330
 2
 100
@@ -155659,7 +156305,7 @@ VK_motor
   0
 INSERT
   5
-22CF
+22E9
 330
 2
 100
@@ -155679,7 +156325,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22D1
+22EB
 330
 2
 100
@@ -155707,7 +156353,7 @@ AcDbPolyline
   0
 LINE
   5
-22D2
+22EC
 330
 2
 100
@@ -155733,7 +156379,7 @@ AcDbLine
   0
 INSERT
   5
-22D3
+22ED
 330
 2
 100
@@ -155753,7 +156399,7 @@ VK_motor
   0
 INSERT
   5
-22D5
+22EF
 330
 2
 100
@@ -155773,7 +156419,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22D7
+22F1
 330
 2
 100
@@ -155801,7 +156447,7 @@ AcDbPolyline
   0
 LINE
   5
-22D8
+22F2
 330
 2
 100
@@ -155827,7 +156473,7 @@ AcDbLine
   0
 INSERT
   5
-22D9
+22F3
 330
 2
 100
@@ -155847,7 +156493,7 @@ VK_motor
   0
 INSERT
   5
-22DB
+22F5
 330
 2
 100
@@ -155867,7 +156513,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22DD
+22F7
 330
 2
 100
@@ -155895,7 +156541,7 @@ AcDbPolyline
   0
 LINE
   5
-22DE
+22F8
 330
 2
 100
@@ -155921,7 +156567,7 @@ AcDbLine
   0
 INSERT
   5
-22DF
+22F9
 330
 2
 100
@@ -155941,7 +156587,7 @@ VK_motor
   0
 INSERT
   5
-22E1
+22FB
 330
 2
 100
@@ -155961,7 +156607,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22E3
+22FD
 330
 2
 100
@@ -155989,7 +156635,7 @@ AcDbPolyline
   0
 LINE
   5
-22E4
+22FE
 330
 2
 100
@@ -156015,7 +156661,7 @@ AcDbLine
   0
 INSERT
   5
-22E5
+22FF
 330
 2
 100
@@ -156035,7 +156681,7 @@ VK_motor
   0
 INSERT
   5
-22E7
+2301
 330
 2
 100
@@ -156055,7 +156701,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22E9
+2303
 330
 2
 100
@@ -156083,7 +156729,7 @@ AcDbPolyline
   0
 LINE
   5
-22EA
+2304
 330
 2
 100
@@ -156109,7 +156755,7 @@ AcDbLine
   0
 INSERT
   5
-22EB
+2305
 330
 2
 100
@@ -156129,7 +156775,7 @@ VK_motor
   0
 INSERT
   5
-22ED
+2307
 330
 2
 100
@@ -156149,7 +156795,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22EF
+2309
 330
 2
 100
@@ -156177,7 +156823,7 @@ AcDbPolyline
   0
 LINE
   5
-22F0
+230A
 330
 2
 100
@@ -156203,7 +156849,7 @@ AcDbLine
   0
 INSERT
   5
-22F1
+230B
 330
 2
 100
@@ -156223,7 +156869,7 @@ VK_motor
   0
 INSERT
   5
-22F3
+230D
 330
 2
 100
@@ -156243,7 +156889,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22F5
+230F
 330
 2
 100
@@ -156271,7 +156917,7 @@ AcDbPolyline
   0
 LINE
   5
-22F6
+2310
 330
 2
 100
@@ -156297,7 +156943,7 @@ AcDbLine
   0
 INSERT
   5
-22F7
+2311
 330
 2
 100
@@ -156317,7 +156963,7 @@ VK_motor
   0
 INSERT
   5
-22F9
+2313
 330
 2
 100
@@ -156337,7 +156983,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-22FB
+2315
 330
 2
 100
@@ -156365,7 +157011,7 @@ AcDbPolyline
   0
 LINE
   5
-22FC
+2316
 330
 2
 100
@@ -156391,7 +157037,7 @@ AcDbLine
   0
 INSERT
   5
-22FD
+2317
 330
 2
 100
@@ -156411,7 +157057,7 @@ VK_motor
   0
 INSERT
   5
-22FF
+2319
 330
 2
 100
@@ -156431,7 +157077,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-2301
+231B
 330
 2
 100
@@ -156459,7 +157105,7 @@ AcDbPolyline
   0
 LINE
   5
-2302
+231C
 330
 2
 100
@@ -156485,7 +157131,7 @@ AcDbLine
   0
 INSERT
   5
-2303
+231D
 330
 2
 100
@@ -156505,7 +157151,7 @@ VK_motor
   0
 INSERT
   5
-2305
+231F
 330
 2
 100
@@ -156525,7 +157171,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-2307
+2321
 330
 2
 100
@@ -156553,7 +157199,7 @@ AcDbPolyline
   0
 LINE
   5
-2308
+2322
 330
 2
 100
@@ -156579,7 +157225,7 @@ AcDbLine
   0
 INSERT
   5
-2309
+2323
 330
 2
 100
@@ -156599,7 +157245,7 @@ VK_motor
   0
 INSERT
   5
-230B
+2325
 330
 2
 100
@@ -156619,7 +157265,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-230D
+2327
 330
 2
 100
@@ -156647,7 +157293,7 @@ AcDbPolyline
   0
 LINE
   5
-230E
+2328
 330
 2
 100
@@ -156673,7 +157319,7 @@ AcDbLine
   0
 INSERT
   5
-230F
+2329
 330
 2
 100
@@ -156693,7 +157339,7 @@ VK_motor
   0
 INSERT
   5
-2311
+232B
 330
 2
 100
@@ -156713,7 +157359,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-2313
+232D
 330
 2
 100
@@ -156741,7 +157387,7 @@ AcDbPolyline
   0
 LINE
   5
-2314
+232E
 330
 2
 100
@@ -156767,7 +157413,7 @@ AcDbLine
   0
 INSERT
   5
-2315
+232F
 330
 2
 100
@@ -156787,7 +157433,7 @@ VK_motor
   0
 INSERT
   5
-2317
+2331
 330
 2
 100
@@ -156807,7 +157453,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-2319
+2333
 330
 2
 100
@@ -156835,7 +157481,7 @@ AcDbPolyline
   0
 LINE
   5
-231A
+2334
 330
 2
 100
@@ -156861,7 +157507,7 @@ AcDbLine
   0
 INSERT
   5
-231B
+2335
 330
 2
 100
@@ -156881,7 +157527,7 @@ VK_motor
   0
 INSERT
   5
-231D
+2337
 330
 2
 100
@@ -156901,7 +157547,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-231F
+2339
 330
 2
 100
@@ -156929,7 +157575,7 @@ AcDbPolyline
   0
 LINE
   5
-2320
+233A
 330
 2
 100
@@ -156955,7 +157601,7 @@ AcDbLine
   0
 INSERT
   5
-2321
+233B
 330
 2
 100
@@ -156975,7 +157621,7 @@ VK_motor
   0
 INSERT
   5
-2323
+233D
 330
 2
 100
@@ -156995,7 +157641,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-2325
+233F
 330
 2
 100
@@ -157023,7 +157669,7 @@ AcDbPolyline
   0
 LINE
   5
-2326
+2340
 330
 2
 100
@@ -157049,7 +157695,7 @@ AcDbLine
   0
 INSERT
   5
-2327
+2341
 330
 2
 100
@@ -157069,7 +157715,7 @@ VK_motor
   0
 INSERT
   5
-2329
+2343
 330
 2
 100
@@ -157089,7 +157735,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-232B
+2345
 330
 2
 100
@@ -157117,7 +157763,7 @@ AcDbPolyline
   0
 LINE
   5
-232C
+2346
 330
 2
 100
@@ -157143,7 +157789,7 @@ AcDbLine
   0
 INSERT
   5
-232D
+2347
 330
 2
 100
@@ -157163,7 +157809,7 @@ VK_motor
   0
 INSERT
   5
-232F
+2349
 330
 2
 100
@@ -157183,7 +157829,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-2331
+234B
 330
 2
 100
@@ -157211,7 +157857,7 @@ AcDbPolyline
   0
 LINE
   5
-2332
+234C
 330
 2
 100
@@ -157237,7 +157883,7 @@ AcDbLine
   0
 INSERT
   5
-2333
+234D
 330
 2
 100
@@ -157257,7 +157903,7 @@ VK_motor
   0
 INSERT
   5
-2335
+234F
 330
 2
 100
@@ -157277,7 +157923,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-2337
+2351
 330
 2
 100
@@ -157305,7 +157951,7 @@ AcDbPolyline
   0
 LINE
   5
-2338
+2352
 330
 2
 100
@@ -157331,7 +157977,7 @@ AcDbLine
   0
 INSERT
   5
-2339
+2353
 330
 2
 100
@@ -157351,7 +157997,7 @@ VK_motor
   0
 INSERT
   5
-233B
+2355
 330
 2
 100
@@ -157371,7 +158017,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-233D
+2357
 330
 2
 100
@@ -157399,7 +158045,7 @@ AcDbPolyline
   0
 LINE
   5
-233E
+2358
 330
 2
 100
@@ -157425,7 +158071,7 @@ AcDbLine
   0
 INSERT
   5
-233F
+2359
 330
 2
 100
@@ -157445,7 +158091,7 @@ VK_motor
   0
 INSERT
   5
-2341
+235B
 330
 2
 100
@@ -157465,7 +158111,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-2343
+235D
 330
 2
 100
@@ -157493,7 +158139,7 @@ AcDbPolyline
   0
 LINE
   5
-2344
+235E
 330
 2
 100
@@ -157519,7 +158165,7 @@ AcDbLine
   0
 INSERT
   5
-2345
+235F
 330
 2
 100
@@ -157539,7 +158185,7 @@ VK_motor
   0
 INSERT
   5
-2347
+2361
 330
 2
 100
@@ -157559,7 +158205,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-2349
+2363
 330
 2
 100
@@ -157587,7 +158233,7 @@ AcDbPolyline
   0
 LINE
   5
-234A
+2364
 330
 2
 100
@@ -157613,7 +158259,7 @@ AcDbLine
   0
 INSERT
   5
-234B
+2365
 330
 2
 100
@@ -157633,7 +158279,7 @@ VK_motor
   0
 INSERT
   5
-234D
+2367
 330
 2
 100
@@ -157653,7 +158299,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-234F
+2369
 330
 2
 100
@@ -157681,7 +158327,7 @@ AcDbPolyline
   0
 LINE
   5
-2350
+236A
 330
 2
 100
@@ -157707,7 +158353,7 @@ AcDbLine
   0
 INSERT
   5
-2351
+236B
 330
 2
 100
@@ -157727,7 +158373,7 @@ VK_motor
   0
 INSERT
   5
-2353
+236D
 330
 2
 100
@@ -157747,7 +158393,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-2355
+236F
 330
 2
 100
@@ -157775,7 +158421,7 @@ AcDbPolyline
   0
 LINE
   5
-2356
+2370
 330
 2
 100
@@ -157801,7 +158447,7 @@ AcDbLine
   0
 INSERT
   5
-2357
+2371
 330
 2
 100
@@ -157821,7 +158467,7 @@ VK_motor
   0
 INSERT
   5
-2359
+2373
 330
 2
 100
@@ -157841,7 +158487,7 @@ VK_updown
   0
 LWPOLYLINE
   5
-235B
+2375
 330
 2
 100
@@ -157869,7 +158515,7 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-235C
+2376
 330
 2
 100
@@ -157901,7 +158547,7 @@ AcDbPolyline
   0
 HATCH
   5
-235D
+2377
 330
 2
 100
@@ -157987,7 +158633,7 @@ ANSI31
   0
 LWPOLYLINE
   5
-235E
+2378
 330
 2
 100
@@ -158011,7 +158657,7 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-235F
+2379
 330
 2
 100
@@ -158035,7 +158681,7 @@ AcDbPolyline
   0
 LWPOLYLINE
   5
-2360
+237A
 330
 2
 100
@@ -158075,7 +158721,7 @@ AcDbPolyline
   0
 LINE
   5
-2361
+237B
 330
 2
 100
@@ -158103,7 +158749,7 @@ AcDbLine
   0
 LINE
   5
-2362
+237C
 330
 2
 100
@@ -158131,7 +158777,7 @@ AcDbLine
   0
 LWPOLYLINE
   5
-2363
+237D
 330
 2
 100
@@ -158167,7 +158813,7 @@ AcDbPolyline
   0
 LINE
   5
-2364
+237E
 330
 2
 100
@@ -158195,7 +158841,7 @@ AcDbLine
   0
 LINE
   5
-2365
+237F
 330
 2
 100
@@ -158223,7 +158869,7 @@ AcDbLine
   0
 LWPOLYLINE
   5
-2366
+2380
 330
 2
 100
@@ -158259,7 +158905,7 @@ AcDbPolyline
   0
 LINE
   5
-2367
+2381
 330
 2
 100
@@ -158287,7 +158933,7 @@ AcDbLine
   0
 LINE
   5
-2368
+2382
 330
 2
 100
@@ -158315,7 +158961,7 @@ AcDbLine
   0
 LWPOLYLINE
   5
-2369
+2383
 330
 2
 100
@@ -158351,7 +158997,7 @@ AcDbPolyline
   0
 LINE
   5
-236A
+2384
 330
 2
 100
@@ -158379,7 +159025,7 @@ AcDbLine
   0
 TEXT
   5
-236B
+2385
 330
 2
 100
@@ -158413,7 +159059,7 @@ AcDbText
   0
 TEXT
   5
-236C
+2386
 330
 2
 100
@@ -158447,7 +159093,7 @@ AcDbText
   0
 TEXT
   5
-236D
+2387
 330
 2
 100
@@ -158481,7 +159127,7 @@ AcDbText
   0
 TEXT
   5
-236E
+2388
 330
 2
 100
@@ -158517,7 +159163,7 @@ AcDbText
   0
 LINE
   5
-236F
+2389
 330
 2
 100
@@ -158541,7 +159187,7 @@ AcDbLine
   0
 TEXT
   5
-2370
+238A
 330
 2
 100
@@ -158577,7 +159223,7 @@ AcDbText
   0
 TEXT
   5
-2371
+238B
 330
 2
 100
@@ -158613,7 +159259,7 @@ AcDbText
   0
 TEXT
   5
-2372
+238C
 330
 2
 100
@@ -158651,7 +159297,7 @@ AcDbText
   0
 TEXT
   5
-2373
+238D
 330
 2
 100
@@ -158687,7 +159333,7 @@ AcDbText
   0
 TEXT
   5
-2374
+238E
 330
 2
 100
@@ -158723,7 +159369,7 @@ AcDbText
   0
 TEXT
   5
-2375
+238F
 330
 2
 100
@@ -158757,7 +159403,7 @@ AcDbText
   0
 TEXT
   5
-2376
+2390
 330
 2
 100
@@ -158791,7 +159437,7 @@ AcDbText
   0
 INSERT
   5
-2377
+2391
 330
 2
 100
@@ -158811,7 +159457,7 @@ VK_spot
   0
 TEXT
   5
-2379
+2393
 330
 2
 100
@@ -158845,7 +159491,7 @@ AcDbText
   0
 LINE
   5
-237A
+2394
 330
 2
 100
@@ -158871,7 +159517,7 @@ AcDbLine
   0
 TEXT
   5
-237B
+2395
 330
 2
 100
@@ -158905,7 +159551,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-237C
+2396
 330
 2
 100
@@ -158937,7 +159583,7 @@ AcDbPolyline
   0
 TEXT
   5
-237D
+2397
 330
 2
 100
@@ -158973,7 +159619,7 @@ AcDbText
   0
 TEXT
   5
-237E
+2398
 330
 2
 100
@@ -159007,7 +159653,7 @@ AcDbText
   0
 LINE
   5
-237F
+2399
 330
 2
 100
@@ -159031,7 +159677,7 @@ AcDbLine
   0
 TEXT
   5
-2380
+239A
 330
 2
 100
@@ -159065,7 +159711,7 @@ AcDbText
   0
 LWPOLYLINE
   5
-2381
+239B
 330
 2
 100
@@ -159097,7 +159743,7 @@ AcDbPolyline
   0
 TEXT
   5
-2382
+239C
 330
 2
 100
@@ -159131,7 +159777,7 @@ AcDbText
   0
 HATCH
   5
-2383
+239D
 330
 2
 100
@@ -159217,7 +159863,7 @@ ANSI31
   0
 LWPOLYLINE
   5
-2384
+239E
 330
 2
 100
@@ -159249,7 +159895,7 @@ AcDbPolyline
   0
 TEXT
   5
-2385
+239F
 330
 2
 100
@@ -159283,7 +159929,7 @@ AcDbText
   0
 INSERT
   5
-2386
+23A0
 330
 2
 100
@@ -159303,7 +159949,7 @@ VK_double
   0
 TEXT
   5
-2388
+23A2
 330
 2
 100
@@ -159337,7 +159983,7 @@ AcDbText
   0
 INSERT
   5
-2389
+23A3
 330
 2
 100
@@ -159357,7 +160003,7 @@ VK_dvav
   0
 TEXT
   5
-238B
+23A5
 330
 2
 100
@@ -159391,7 +160037,61 @@ AcDbText
   0
 INSERT
   5
-238C
+23A6
+330
+2
+100
+AcDbEntity
+  8
+VK_ANAHTAR
+100
+AcDbBlockReference
+  2
+VK_vav
+ 10
+108030.0
+ 20
+-79304.0
+ 30
+0.0
+  0
+TEXT
+  5
+23A8
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+108080.0
+ 20
+-79304.0
+ 30
+0.0
+ 40
+9.0
+  1
+Vaviyen Anahtar (tekli, iki yerden kumanda)
+  7
+VK
+ 11
+108080.0
+ 21
+-79304.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+INSERT
+  5
+23A9
 330
 2
 100
@@ -159405,7 +160105,7 @@ VK_chandelier
  10
 108030.0
  20
--79304.0
+-79342.0
  30
 0.0
  41
@@ -159415,7 +160115,7 @@ VK_chandelier
   0
 TEXT
   5
-238E
+23AB
 330
 2
 100
@@ -159427,7 +160127,7 @@ AcDbText
  10
 108080.0
  20
--79304.0
+-79342.0
  30
 0.0
  40
@@ -159439,7 +160139,7 @@ VK
  11
 108080.0
  21
--79304.0
+-79342.0
  31
 0.0
 100
@@ -159449,7 +160149,7 @@ AcDbText
   0
 INSERT
   5
-238F
+23AC
 330
 2
 100
@@ -159463,13 +160163,13 @@ VK_ceiling
  10
 108030.0
  20
--79342.0
+-79380.0
  30
 0.0
   0
 TEXT
   5
-2391
+23AE
 330
 2
 100
@@ -159481,7 +160181,7 @@ AcDbText
  10
 108080.0
  20
--79342.0
+-79380.0
  30
 0.0
  40
@@ -159493,7 +160193,7 @@ VK
  11
 108080.0
  21
--79342.0
+-79380.0
  31
 0.0
 100
@@ -159503,7 +160203,7 @@ AcDbText
   0
 INSERT
   5
-2392
+23AF
 330
 2
 100
@@ -159517,13 +160217,13 @@ VK_switch
  10
 108030.0
  20
--79380.0
+-79418.0
  30
 0.0
   0
 TEXT
   5
-2394
+23B1
 330
 2
 100
@@ -159535,7 +160235,7 @@ AcDbText
  10
 108080.0
  20
--79380.0
+-79418.0
  30
 0.0
  40
@@ -159547,7 +160247,7 @@ VK
  11
 108080.0
  21
--79380.0
+-79418.0
  31
 0.0
 100
@@ -159557,7 +160257,7 @@ AcDbText
   0
 INSERT
   5
-2395
+23B2
 330
 2
 100
@@ -159571,596 +160271,8 @@ VK_ap
  10
 108030.0
  20
--79418.0
- 30
-0.0
-  0
-TEXT
-  5
-2397
-330
-2
-100
-AcDbEntity
-  8
-VK_YAZI
-100
-AcDbText
- 10
-108080.0
- 20
--79418.0
- 30
-0.0
- 40
-9.0
-  1
-Tavan Tipi Kablosuz Erişim Noktası (Cisco) - data + enerji
-  7
-VK
- 11
-108080.0
- 21
--79418.0
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-INSERT
-  5
-2398
-330
-2
-100
-AcDbEntity
-  8
-VK_DATA
-100
-AcDbBlockReference
-  2
-VK_router
- 10
-108030.0
- 20
 -79456.0
  30
-0.0
-  0
-TEXT
-  5
-239A
-330
-2
-100
-AcDbEntity
-  8
-VK_YAZI
-100
-AcDbText
- 10
-108080.0
- 20
--79456.0
- 30
-0.0
- 40
-9.0
-  1
-Cisco Router, tavanda (data noktası, ayrı prizli)
-  7
-VK
- 11
-108080.0
- 21
--79456.0
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-INSERT
-  5
-239B
-330
-2
-100
-AcDbEntity
-  8
-VK_PANJUR
-100
-AcDbBlockReference
-  2
-VK_motor
- 10
-108030.0
- 20
--79494.0
- 30
-0.0
-  0
-TEXT
-  5
-239D
-330
-2
-100
-AcDbEntity
-  8
-VK_YAZI
-100
-AcDbText
- 10
-108080.0
- 20
--79494.0
- 30
-0.0
- 40
-9.0
-  1
-Motorlu Panjur (dış kutulu) - motor noktası
-  7
-VK
- 11
-108080.0
- 21
--79494.0
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-INSERT
-  5
-239E
-330
-2
-100
-AcDbEntity
-  8
-VK_PANJUR
-100
-AcDbBlockReference
-  2
-VK_updown
- 10
-108030.0
- 20
--79532.0
- 30
-0.0
-  0
-TEXT
-  5
-23A0
-330
-2
-100
-AcDbEntity
-  8
-VK_YAZI
-100
-AcDbText
- 10
-108080.0
- 20
--79532.0
- 30
-0.0
- 40
-9.0
-  1
-Panjur Aşağı / Yukarı Anahtarı
-  7
-VK
- 11
-108080.0
- 21
--79532.0
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-INSERT
-  5
-23A1
-330
-2
-100
-AcDbEntity
-  8
-VK_DATA
-100
-AcDbBlockReference
-  2
-VK_data
- 10
-108030.0
- 20
--79570.0
- 30
-0.0
-  0
-TEXT
-  5
-23A3
-330
-2
-100
-AcDbEntity
-  8
-VK_YAZI
-100
-AcDbText
- 10
-108080.0
- 20
--79570.0
- 30
-0.0
- 40
-9.0
-  1
-Data Prizi (CAT6)
-  7
-VK
- 11
-108080.0
- 21
--79570.0
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-INSERT
-  5
-23A4
-330
-2
-100
-AcDbEntity
-  8
-VK_PROJEKSIYON
-100
-AcDbBlockReference
-  2
-VK_projector
- 10
-108030.0
- 20
--79608.0
- 30
-0.0
- 41
-0.7
- 42
-0.7
-  0
-TEXT
-  5
-23A6
-330
-2
-100
-AcDbEntity
-  8
-VK_YAZI
-100
-AcDbText
- 10
-108080.0
- 20
--79608.0
- 30
-0.0
- 40
-9.0
-  1
-Video Projeksiyon Cihazı (tavana askılı, Android TV)
-  7
-VK
- 11
-108080.0
- 21
--79608.0
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-LWPOLYLINE
-  5
-23A7
-330
-2
-100
-AcDbEntity
-  8
-VK_PROJEKSIYON
-100
-AcDbPolyline
- 90
-4
- 70
-1
- 10
-108024.0
- 20
--79658.0
- 10
-108036.0
- 20
--79658.0
- 10
-108036.0
- 20
--79634.0
- 10
-108024.0
- 20
--79634.0
-  0
-LINE
-  5
-23A8
-330
-2
-100
-AcDbEntity
-  8
-VK_PROJEKSIYON
-  6
-VK_DATA
-370
-50
-100
-AcDbLine
- 10
-108018.0
- 20
--79658.0
- 30
-0.0
- 11
-108018.0
- 21
--79634.0
- 31
-0.0
-  0
-TEXT
-  5
-23A9
-330
-2
-100
-AcDbEntity
-  8
-VK_YAZI
-100
-AcDbText
- 10
-108080.0
- 20
--79646.0
- 30
-0.0
- 40
-9.0
-  1
-Motorlu Projeksiyon Perdesi ve Kaset Cebi
-  7
-VK
- 11
-108080.0
- 21
--79646.0
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-INSERT
-  5
-23AA
-330
-2
-100
-AcDbEntity
-  8
-VK_PRIZ
-100
-AcDbBlockReference
-  2
-VK_socket
- 10
-108030.0
- 20
--79684.0
- 30
-0.0
-  0
-TEXT
-  5
-23AC
-330
-2
-100
-AcDbEntity
-  8
-VK_YAZI
-100
-AcDbText
- 10
-108080.0
- 20
--79684.0
- 30
-0.0
- 40
-9.0
-  1
-Priz, BS 1363 (UK, G tipi, 13A, anahtarlı)
-  7
-VK
- 11
-108080.0
- 21
--79684.0
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-INSERT
-  5
-23AD
-330
-2
-100
-AcDbEntity
-  8
-VK_PRIZ
-100
-AcDbBlockReference
-  2
-VK_device
- 10
-108030.0
- 20
--79722.0
- 30
-0.0
-  0
-TEXT
-  5
-23AF
-330
-2
-100
-AcDbEntity
-  8
-VK_YAZI
-100
-AcDbText
- 10
-108080.0
- 20
--79722.0
- 30
-0.0
- 40
-9.0
-  1
-Sabit Cihaz Bağlantı Noktası (perde motoru)
-  7
-VK
- 11
-108080.0
- 21
--79722.0
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-INSERT
-  5
-23B0
-330
-2
-100
-AcDbEntity
-  8
-VK_PRIZ
-100
-AcDbBlockReference
-  2
-VK_tv
- 10
-108030.0
- 20
--79760.0
- 30
-0.0
-  0
-TEXT
-  5
-23B2
-330
-2
-100
-AcDbEntity
-  8
-VK_YAZI
-100
-AcDbText
- 10
-108080.0
- 20
--79760.0
- 30
-0.0
- 40
-9.0
-  1
-TV Prizi
-  7
-VK
- 11
-108080.0
- 21
--79760.0
- 31
-0.0
-100
-AcDbText
- 73
-2
-  0
-LINE
-  5
-23B3
-330
-2
-100
-AcDbEntity
-  8
-VK_PRIZ_HATTI
-100
-AcDbLine
- 10
-108000.0
- 20
--79798.0
- 30
-0.0
- 11
-108060.0
- 21
--79798.0
- 31
 0.0
   0
 TEXT
@@ -160177,13 +160289,543 @@ AcDbText
  10
 108080.0
  20
+-79456.0
+ 30
+0.0
+ 40
+9.0
+  1
+Tavan Tipi Kablosuz Erişim Noktası (Cisco) - data + enerji
+  7
+VK
+ 11
+108080.0
+ 21
+-79456.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+INSERT
+  5
+23B5
+330
+2
+100
+AcDbEntity
+  8
+VK_DATA
+100
+AcDbBlockReference
+  2
+VK_router
+ 10
+108030.0
+ 20
+-79494.0
+ 30
+0.0
+  0
+TEXT
+  5
+23B7
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+108080.0
+ 20
+-79494.0
+ 30
+0.0
+ 40
+9.0
+  1
+Cisco Router, tavanda (data noktası, ayrı prizli)
+  7
+VK
+ 11
+108080.0
+ 21
+-79494.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+INSERT
+  5
+23B8
+330
+2
+100
+AcDbEntity
+  8
+VK_PANJUR
+100
+AcDbBlockReference
+  2
+VK_motor
+ 10
+108030.0
+ 20
+-79532.0
+ 30
+0.0
+  0
+TEXT
+  5
+23BA
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+108080.0
+ 20
+-79532.0
+ 30
+0.0
+ 40
+9.0
+  1
+Motorlu Panjur (dış kutulu) - motor noktası
+  7
+VK
+ 11
+108080.0
+ 21
+-79532.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+INSERT
+  5
+23BB
+330
+2
+100
+AcDbEntity
+  8
+VK_PANJUR
+100
+AcDbBlockReference
+  2
+VK_updown
+ 10
+108030.0
+ 20
+-79570.0
+ 30
+0.0
+  0
+TEXT
+  5
+23BD
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+108080.0
+ 20
+-79570.0
+ 30
+0.0
+ 40
+9.0
+  1
+Panjur Aşağı / Yukarı Anahtarı
+  7
+VK
+ 11
+108080.0
+ 21
+-79570.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+INSERT
+  5
+23BE
+330
+2
+100
+AcDbEntity
+  8
+VK_DATA
+100
+AcDbBlockReference
+  2
+VK_data
+ 10
+108030.0
+ 20
+-79608.0
+ 30
+0.0
+  0
+TEXT
+  5
+23C0
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+108080.0
+ 20
+-79608.0
+ 30
+0.0
+ 40
+9.0
+  1
+Data Prizi (CAT6)
+  7
+VK
+ 11
+108080.0
+ 21
+-79608.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+INSERT
+  5
+23C1
+330
+2
+100
+AcDbEntity
+  8
+VK_PROJEKSIYON
+100
+AcDbBlockReference
+  2
+VK_projector
+ 10
+108030.0
+ 20
+-79646.0
+ 30
+0.0
+ 41
+0.7
+ 42
+0.7
+  0
+TEXT
+  5
+23C3
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+108080.0
+ 20
+-79646.0
+ 30
+0.0
+ 40
+9.0
+  1
+Video Projeksiyon Cihazı (tavana askılı, Android TV)
+  7
+VK
+ 11
+108080.0
+ 21
+-79646.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+LWPOLYLINE
+  5
+23C4
+330
+2
+100
+AcDbEntity
+  8
+VK_PROJEKSIYON
+100
+AcDbPolyline
+ 90
+4
+ 70
+1
+ 10
+108024.0
+ 20
+-79696.0
+ 10
+108036.0
+ 20
+-79696.0
+ 10
+108036.0
+ 20
+-79672.0
+ 10
+108024.0
+ 20
+-79672.0
+  0
+LINE
+  5
+23C5
+330
+2
+100
+AcDbEntity
+  8
+VK_PROJEKSIYON
+  6
+VK_DATA
+370
+50
+100
+AcDbLine
+ 10
+108018.0
+ 20
+-79696.0
+ 30
+0.0
+ 11
+108018.0
+ 21
+-79672.0
+ 31
+0.0
+  0
+TEXT
+  5
+23C6
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+108080.0
+ 20
+-79684.0
+ 30
+0.0
+ 40
+9.0
+  1
+Motorlu Projeksiyon Perdesi ve Kaset Cebi
+  7
+VK
+ 11
+108080.0
+ 21
+-79684.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+INSERT
+  5
+23C7
+330
+2
+100
+AcDbEntity
+  8
+VK_PRIZ
+100
+AcDbBlockReference
+  2
+VK_socket
+ 10
+108030.0
+ 20
+-79722.0
+ 30
+0.0
+  0
+TEXT
+  5
+23C9
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+108080.0
+ 20
+-79722.0
+ 30
+0.0
+ 40
+9.0
+  1
+Priz, BS 1363 (UK, G tipi, 13A, anahtarlı)
+  7
+VK
+ 11
+108080.0
+ 21
+-79722.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+INSERT
+  5
+23CA
+330
+2
+100
+AcDbEntity
+  8
+VK_PRIZ
+100
+AcDbBlockReference
+  2
+VK_device
+ 10
+108030.0
+ 20
+-79760.0
+ 30
+0.0
+  0
+TEXT
+  5
+23CC
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+108080.0
+ 20
+-79760.0
+ 30
+0.0
+ 40
+9.0
+  1
+Sabit Cihaz Bağlantı Noktası (perde motoru)
+  7
+VK
+ 11
+108080.0
+ 21
+-79760.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+INSERT
+  5
+23CD
+330
+2
+100
+AcDbEntity
+  8
+VK_PRIZ
+100
+AcDbBlockReference
+  2
+VK_tv
+ 10
+108030.0
+ 20
+-79798.0
+ 30
+0.0
+  0
+TEXT
+  5
+23CF
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+108080.0
+ 20
 -79798.0
  30
 0.0
  40
 9.0
   1
-Priz Hattı 3x2,5mm² Cu PVC, 5/8'' PVC boru
+TV Prizi
   7
 VK
  11
@@ -160199,13 +160841,13 @@ AcDbText
   0
 LINE
   5
-23B5
+23D0
 330
 2
 100
 AcDbEntity
   8
-VK_AYDINLATMA_HATTI
+VK_PRIZ_HATTI
 100
 AcDbLine
  10
@@ -160223,7 +160865,7 @@ AcDbLine
   0
 TEXT
   5
-23B6
+23D1
 330
 2
 100
@@ -160241,7 +160883,7 @@ AcDbText
  40
 9.0
   1
-Aydınlatma Hattı 2x1,5+1,5mm² Cu PVC, 5/8'' PVC boru
+Priz Hattı 3x2,5mm² Cu PVC, 5/8'' PVC boru
   7
 VK
  11
@@ -160257,7 +160899,65 @@ AcDbText
   0
 LINE
   5
-23B7
+23D2
+330
+2
+100
+AcDbEntity
+  8
+VK_AYDINLATMA_HATTI
+100
+AcDbLine
+ 10
+108000.0
+ 20
+-79874.0
+ 30
+0.0
+ 11
+108060.0
+ 21
+-79874.0
+ 31
+0.0
+  0
+TEXT
+  5
+23D3
+330
+2
+100
+AcDbEntity
+  8
+VK_YAZI
+100
+AcDbText
+ 10
+108080.0
+ 20
+-79874.0
+ 30
+0.0
+ 40
+9.0
+  1
+Aydınlatma Hattı 2x1,5+1,5mm² Cu PVC, 5/8'' PVC boru
+  7
+VK
+ 11
+108080.0
+ 21
+-79874.0
+ 31
+0.0
+100
+AcDbText
+ 73
+2
+  0
+LINE
+  5
+23D4
 330
 2
 100
@@ -160271,19 +160971,19 @@ AcDbLine
  10
 108000.0
  20
--79874.0
+-79912.0
  30
 0.0
  11
 108060.0
  21
--79874.0
+-79912.0
  31
 0.0
   0
 TEXT
   5
-23B8
+23D5
 330
 2
 100
@@ -160295,7 +160995,7 @@ AcDbText
  10
 108080.0
  20
--79874.0
+-79912.0
  30
 0.0
  40
@@ -160307,7 +161007,7 @@ VK
  11
 108080.0
  21
--79874.0
+-79912.0
  31
 0.0
 100
@@ -160317,7 +161017,7 @@ AcDbText
   0
 LINE
   5
-23B9
+23D6
 330
 2
 100
@@ -160329,19 +161029,19 @@ AcDbLine
  10
 108018.0
  20
--79924.0
+-79962.0
  30
 0.0
  11
 108042.0
  21
--79900.0
+-79938.0
  31
 0.0
   0
 LINE
   5
-23BA
+23D7
 330
 2
 100
@@ -160353,19 +161053,19 @@ AcDbLine
  10
 108018.0
  20
--79900.0
+-79938.0
  30
 0.0
  11
 108042.0
  21
--79924.0
+-79962.0
  31
 0.0
   0
 TEXT
   5
-23BB
+23D8
 330
 2
 100
@@ -160377,7 +161077,7 @@ AcDbText
  10
 108080.0
  20
--79912.0
+-79950.0
  30
 0.0
  40
@@ -160389,7 +161089,7 @@ VK
  11
 108080.0
  21
--79912.0
+-79950.0
  31
 0.0
 100
@@ -160465,7 +161165,7 @@ ACAD_VISUALSTYLE
   3
 EZDXF_META
 360
-23BE
+23DB
   0
 ACDBPLACEHOLDER
   5
@@ -188121,7 +188821,7 @@ Standard
   0
 DICTIONARY
   5
-23BE
+23DB
 330
 3
 100
@@ -188133,19 +188833,19 @@ AcDbDictionary
   3
 WRITTEN_BY_EZDXF
 350
-23BF
+23DC
   0
 DICTIONARYVAR
   5
-23BF
+23DC
 330
-23BE
+23DB
 100
 DictionaryVariables
 280
 0
   1
-1.4.2 @ 2026-10-30T15:10:15.233610+00:00
+1.4.2 @ 2026-10-30T17:11:33.580715+00:00
   0
 ENDSEC
   0

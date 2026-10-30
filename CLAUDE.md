@@ -611,9 +611,14 @@ would not reproduce.
       not 60, so the spots land in front of the 35 cm wall cabinets, which now
       stop at its 2.45 m underside), the chandelier and the under-cabinet LED.
       Its `coffer` is gone.
-    - **Switched circuits** (`src/circuits.js`, `CIRCUITS` in `floorplan.js`):
-      L1/L2 living spots/LED, L3 chandelier, L4 under-cabinet LED, L5/L6
-      kitchen/dining spots. Fittings take `circuit` and fade with it; the pool
+    - **Switched groups and circuits** (`src/circuits.js`, `CIRCUITS` in
+      `floorplan.js`). **One lighting circuit (breaker) per area, not per
+      fitting type** (owner): **L1** = OTURMA ODASI + ANA KORIDOR, **L2** =
+      MUTFAK + KILER. Each id is a switched group on its circuit, lettered:
+      L1a living spots, L1b hidden LED, L1c corridor ceiling light; L2a
+      chandelier, L2b kitchen under-cabinet LED, L2c/L2d kitchen/dining
+      spots, L2e KILER ceiling lamp, L2f KILER under-cabinet LED. The load
+      table has one row per circuit. Fittings take `circuit` and fade with it; the pool
       skips a switched-off emitter. In walk mode look at a `lightswitch`
       rocker within 2.2 m and press **`E`**. Night puts every circuit on, day
       off. Double switches: living by its hall door (L1+L2); kitchen, two
@@ -672,6 +677,10 @@ would not reproduce.
     - **UK sockets** (owner: the house follows British standards): every
       socket is BS 1363 type G, 13 A switched (`ukSocket()` in `objects.js`,
       `double: true` for a twin), BS 7671 wiring.
+    - **ANA KORIDOR's ceiling light (L1c)** is two-way: one switch by the
+      main door (hall west wall, left as you come in, between the W.C door
+      and the corner), one at the ADT niche's mouth on its north side (the
+      right as you face the board), past the open cover's tip and under it.
     - **A switch is never placed behind a door** (owner's rule). On the
       hinge side of a door that opens towards the switch, the open leaf
       covers it. The OTURMA garden pair and its 300/230's shutter switch
@@ -683,6 +692,15 @@ would not reproduce.
       with `circuit: 'L7'`; `ceilinglight` now takes a circuit), its switch
       inside on the latch side of the diagonal door (`back: 'NE'`). The
       coffer is gone.
+    - **Sliding doors open and close** (`buildWalls.js`, `kind: 'sliding'`):
+      look at the leaf and press `E`, or **`Y`** for every slider in the
+      house; they start closed and a closed leaf blocks you. The leaf is
+      `userData.dynamic`, which makes `walk.js` re-box it on every query
+      (static meshes are boxed once on entering walk mode); the ADT cover is
+      the same. `panels: 2` is a fixed pane plus a leaf sliding past it,
+      both inside the frame — MUTFAK's north 180/230, a slider on the
+      owner's instruction (the sheet draws a fixed window), has no wall to
+      park a full leaf on. It has its own step down to the lawn.
     - **Curtains in front of a slider:** the `curtain` maker's sheer is
       `noCollide` (you push through it); the side drapes stay solid. Before,
       MUTFAK's dining-slider curtain shut the only door to the back garden.
@@ -858,7 +876,8 @@ main.js drops you inside the house. The desktop app opens `walk.html`.
 `N` hide the model name plates · `G` grid. Hovering a
 wall shows its floor and name in the bottom-left readout.
 
-`F`, `K`, `J`, `L`, `O`, `X`, `P`, `E` and `U` are the only keys that still work **inside**
+`Y` every sliding door open / shut ·
+`F`, `K`, `J`, `L`, `O`, `X`, `P`, `E`, `U` and `Y` are the only keys that still work **inside**
 walk mode — the rest would fight WASD, but changing the hour or the lights is
 exactly what you want while standing in a room. (`walk.html` had long listed
 `O` and `X`; before this they were swallowed by the guard.)

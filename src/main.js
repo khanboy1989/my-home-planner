@@ -676,7 +676,7 @@ window.addEventListener('keydown', (e) => {
   // Inside the house, WASD is movement and the view keys would fight it. The
   // lighting keys are the exception: night, the time of day and the roofs are
   // exactly what you want to change while you are standing in a room.
-  const WALK_KEYS = ['f', 'l', 'k', 'j', 'o', 'x', 'p', 'e', 'u'];
+  const WALK_KEYS = ['f', 'l', 'k', 'j', 'o', 'x', 'p', 'e', 'u', 'y'];
   if (walk.active && !WALK_KEYS.includes(e.key.toLowerCase())) return;
   switch (e.key.toLowerCase()) {
     case 'f': walk.toggle(); invalidateShadows(); break;   // walk hides the other models
@@ -686,6 +686,7 @@ window.addEventListener('keydown', (e) => {
     case 'p': toggleCinema(); break;
     case 'e': flipSwitch(); break;             // the wall switch you are looking at
     case 'u': toggleShutters(); break;         // every rolling shutter
+    case 'y': toggleSliders(); break;          // every sliding door
     case 'l': setNight(!night); break;
     case 'k': setTime(timeIndex + 1); break;   // on through the day
     case 'j': setTime(timeIndex - 1); break;   // and back again
@@ -755,6 +756,12 @@ function toggleShutters() {
 // carries `userData.opener` and is stepped in the loop like a shutter.
 const openers = [];
 scene.traverse((o) => { if (o.userData.opener && !o.isMesh) openers.push(o.userData.opener); });
+/** `Y`: every sliding door in the house open, or all shut if any is open. */
+function toggleSliders() {
+  const sliders = openers.filter((o) => o.label === 'Sliding door');
+  const open = !sliders.some((o) => o.on);
+  for (const o of sliders) o.toggle(open);
+}
 
 // OTURMA ODASI's projector screen (`cinema` in objects.js), one per model that
 // has a ceiling. `P` lowers every copy and switches its projector on.
@@ -837,7 +844,7 @@ if (window.VILLA_BOOT === 'walk') { walk.enter(); invalidateShadows(); }
 // desktop build. Read-only in spirit — nothing in the app reads it back.
 window.villa = {
   scene, camera, renderer, controls, walk, floorGroups, pool, lampCount, cinemas, toggleCinema,
-  rockers, flipSwitch, toggleCircuit, circuitIds, shutters, toggleShutters, openers,
+  rockers, flipSwitch, toggleCircuit, circuitIds, shutters, toggleShutters, openers, toggleSliders,
 };
 
 window.addEventListener('resize', () => {

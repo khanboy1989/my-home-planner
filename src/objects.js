@@ -1452,7 +1452,7 @@ const KINDS = {
 
   /**
    * A wall switch from the electrical project: one plate, a rocker per gang,
-   * each gang on a circuit (`gangs: ['L3', 'L4']`). In walk mode, look at a
+   * each gang on a circuit (`gangs: ['L2a', 'L2b']`). In walk mode, look at a
    * rocker and press `E` (main.js finds it through `userData.switch`). `back`
    * names the wall, the rect's thin side sits on its face, and the item's `z`
    * is the mount height (1.10 m, as the drawing notes).
@@ -1549,6 +1549,7 @@ const KINDS = {
     const leaf = box(len, ht, 0.015, M.panelSteel, -len / 2, 0, 0.008);
     const handle = box(0.02, 0.12, 0.02, M.panelSteel, -len + 0.02, ht / 2 - 0.06, 0.025);
     hinge.add(leaf, handle);
+    hinge.userData.dynamic = true;                         // walk.js re-boxes it
     run.add(hinge);
     const OPEN = -Math.PI / 2, RATE = 2.5;                      // radians a second
     const state = { open: false };
