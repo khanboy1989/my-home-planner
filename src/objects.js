@@ -1205,7 +1205,7 @@ const KINDS = {
     g.add(box(band, drop, id - band * 2, M.ceilBand, -iw / 2 + band / 2, y, 0));
     g.add(box(band, drop, id - band * 2, M.ceilBand, iw / 2 - band / 2, y, 0));
 
-    const lamp = nightGroup(g);
+    const lamp = lampGroup(g, it.circuit);                 // `circuit` puts it on a switch
     const soffit = ceiling - drop;
     // A downlight in each corner; with `pitch` (metres), more round the band's
     // centreline at about that spacing, corners included.
@@ -1226,12 +1226,12 @@ const KINDS = {
       for (const sx of [-1, 1]) for (const sz of [-1, 1]) spots.push([sx * hx, sz * hz]);
     }
     for (const [x, z] of spots) {
-      lamp.add(cyl(0.05, 0.01, M.warm, x, soffit + 0.004, z, 12));
+      lamp.add(cyl(0.05, 0.01, glow(M.warm, it.circuit), x, soffit + 0.004, z, 12));
       emitter(lamp, {
         at: [x, soffit, z],
         aim: [-Math.sign(x) * 0.55, -1, -Math.sign(z) * 0.55],   // down and back into the room
         intensity: it.watts ?? (it.pitch ? 4 : 5.5), distance: 7, angle: 0.72, penumbra: 0.6,
-        interior: true,
+        interior: true, circuit: it.circuit,
       });
     }
   },

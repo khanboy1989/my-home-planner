@@ -789,7 +789,7 @@ const GROUND_FOOTPRINT = [
 // Switched groups (anahtar uçları), named by the lighting circuit (linye,
 // one breaker in the ADT) they hang off and a letter: one circuit per area,
 // not one per fitting type (owner) — L1 the living room and ANA KORIDOR,
-// L2 the kitchen with KILER. Each id is one switch gang; the drawing prints the same names.
+// L2 the kitchen with KILER, L3 ÇALIŞMA ODASI. Each id is one switch gang; the drawing prints the same names.
 export const CIRCUITS = {
   L1a: 'OTURMA ODASI spots',
   L1b: 'OTURMA ODASI hidden LED',
@@ -800,6 +800,7 @@ export const CIRCUITS = {
   L2e: 'Y.MUTFAK KILER ceiling lamp',
   L2f: 'Y.MUTFAK KILER under-cabinet LED',
   L1c: 'ANA KORIDOR ceiling light',
+  L3a: 'ÇALIŞMA ODASI spots',
 };
 
 /** Underside of MUTFAK's spot band; the wall cabinets stop under it. */
@@ -1116,7 +1117,8 @@ const GROUND_OBJECTS = [
     ['Hall',             [799, 1416, 1116, 1504]],
     // ÇALIŞMA ODASI: spots all the way round its band, ~1 m apart, not just
     // the corners (owner: more of them over the desk and the shelves).
-    ['ÇALIŞMA ODASI',    [412, 1416, 799, 1584], { pitch: 1.0 }],
+    // On its own circuit L3, switched by the door (below).
+    ['ÇALIŞMA ODASI',    [412, 1416, 799, 1584], { pitch: 1.0, circuit: 'L3a' }],
     ['OYUN ODASI',       [412, 1584, 705, 1809]],
     ['W.C',              [705, 1659, 799, 1809]],
   ].map(([name, rect, opts]) => (
@@ -1206,6 +1208,10 @@ const GROUND_OBJECTS = [
   // wall north-west of the doorway (back 'NE').
   { kind: 'ceilinglight', name: 'Y.MUTFAK KILER — ceiling lamp', rect: [608, 1316, 638, 1346], circuit: 'L2e', only: 'stacked' },
   { kind: 'lightswitch', name: 'Y.MUTFAK KILER — switch (L2e, L2f)', rect: [743.3, 1264.2, 745.3, 1266.2], back: 'NE', z: 1.1, gangs: ['L2e', 'L2f'], only: 'stacked' },
+  // ÇALIŞMA ODASI's spots (L3a): the switch inside, by its door from the
+  // hall on the latch (north) side — the door is hinged at its south end and
+  // opens into the room — clear of the desk run along the north wall.
+  { kind: 'lightswitch', name: 'ÇALIŞMA ODASI — switch (L3a)', rect: [789, 1510, 791, 1516], back: 'E', z: 1.1, gangs: ['L3a'], only: 'stacked' },
   // The passage is too narrow for a coffer round the router, so one flush
   // ceiling light, on the living room's lighting circuit L1 as group L1c
   // (owner), switched two-way

@@ -182,6 +182,13 @@ CORRIDOR_LIGHT = {'lamp': (118386, -78660), 'circuit': 'L1c',
                                ((118226, -78608), 180, (118238, -78586))],
                   'feed': (118181, -78640)}
 
+# ÇALIŞMA ODASI: spots ~1 m apart all round a 20 cm dropped band (the
+# model's `coffer` with `pitch`), circuit L3, its switch inside by the door
+# on the latch side. In sheet px, as floorplan.js has it; spot positions are
+# worked out the same way the model does.
+STUDY = {'rect_px': (412, 1416, 799, 1584), 'pitch': 1.0, 'circuit': 'L3a',
+         'switch': (118203, -78828), 'rot': 90, 'feed': (118173, -78650)}
+
 # The ADT (ana dağıtım tablosu) where the owner marked it, on ANA KORIDOR's
 # west side: since 30/10 the cupboard niche there, on its back wall. Single
 # phase, in a two-row board (Hager Gamma type, ~40 x 50 x 12 cm), bottom edge
@@ -679,6 +686,42 @@ def corridor_light(msp, c):
     msp.add_line(adt_sw, c['feed'], dxfattribs=hat)
 
 
+def study_light(msp, st):
+    """ÇALIŞMA ODASI's ring of spots, its switch and the run to the ADT."""
+    k, (tx, ty) = 0.6194348931697857, (-72427.42615769588, -47315.049526463874)
+    dwg = lambda x, y: ((x - tx) / k, -(y - ty) / k)
+    mpp = 0.01614374667986135
+    x0, y0, x1, y1 = st['rect_px']
+    inset, band = 0.1 / mpp, 0.2 / mpp                  # ROOM_INSET and the band, px
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    hx = (x1 - x0) / 2 - inset - band / 2
+    hz = (y1 - y0) / 2 - inset - band / 2
+    nx = max(1, round(hx * 2 * mpp / st['pitch']))
+    nz = max(1, round(hz * 2 * mpp / st['pitch']))
+    pts = []
+    for i in range(nx):
+        x = -hx + hx * 2 * i / nx
+        pts += [(x, -hz), (-x, hz)]
+    for i in range(nz):
+        z = -hz + hz * 2 * i / nz
+        pts += [(hx, z), (-hx, -z)]
+    spots = [dwg(cx + x, cy + z) for x, z in pts]
+    hat = {'layer': 'VK_AYDINLATMA_HATTI'}
+    for p in spots:
+        msp.add_blockref('VK_spot', p, dxfattribs={'layer': 'VK_SPOT'})
+    ring = sorted(spots, key=lambda p: math.atan2(p[1] - dwg(cx, cy)[1], p[0] - dwg(cx, cy)[0]))
+    msp.add_lwpolyline(ring, close=True, dxfattribs=hat)
+    text(msp, f"{st['circuit']}: {len(spots)} x 7W LED SPOT, asma tavan bandı 20 cm",
+         dwg(cx - 60, cy + 52), h=7, color=1)
+    sw = st['switch']
+    msp.add_blockref('VK_switch', sw, dxfattribs={'layer': 'VK_ANAHTAR', 'rotation': st['rot']})
+    text(msp, st['circuit'], (sw[0] - 14, sw[1] + 16), h=8, align='MIDDLE_RIGHT')
+    near = min(spots, key=lambda q: (q[0] - sw[0]) ** 2 + (q[1] - sw[1]) ** 2)
+    msp.add_line(sw, near, dxfattribs=hat)
+    msp.add_lwpolyline([sw, (st['feed'][0], sw[1]), st['feed']], dxfattribs=hat)
+    return len(spots)
+
+
 def adt(msp, a):
     """The main board: the usual pano symbol, a box half hatched."""
     x0, y0, x1, y1 = a['rect']
@@ -1027,7 +1070,7 @@ def title_block(fig, size, origin, pafta, scales, width=474):
              'hesap ve imzası gerekir.', fontsize=7, style='italic', color='#555555')
 
 
-def sheet(doc, living, kitchen, kitchen_led_m, n_shutters, detail_origin, legend_origin):
+def sheet(doc, living, kitchen, kitchen_led_m, n_shutters, detail_origin, legend_origin, study_spots=0):
     """One A0: the whole ground floor at 1/25 with every room's electrics on it."""
     W, H = 1189, 841
     fig, mm = new_sheet(W, H)
@@ -1084,6 +1127,8 @@ def sheet(doc, living, kitchen, kitchen_led_m, n_shutters, detail_origin, legend
         '12a. Güney tezgahın batı ucunda 1,50 m cihaz dolabı (sürgülü kapaklı): tam otomatik',
         '    kahve mak., Türk kahvesi mak., tost mak.; arka panelde 2 ikili priz h:136, P4.',
         'ANA KORİDOR',
+        '11c. ÇALIŞMA ODASI: 20 cm bantta ~1 m aralıkla spot (L3a), anahtar kapının kilit',
+        '    tarafında içeride h:110.',
         '11b. ANA KORİDOR tavan lambası L1c, VAVİYEN: ana kapı girişinde solda (hol batı',
         '    duvarı) ve ADT nişinin ağzında sağ yanda, h:110.',
         '12. ADT koridorun batısındaki dolap nişinde, arka duvarda, alt kenarı h:120 (üst 170):',
@@ -1111,6 +1156,7 @@ def sheet(doc, living, kitchen, kitchen_led_m, n_shutters, detail_origin, legend
          round(s1 * spot + led_kw + .015, 3), .4),
         ('L2', '10A', '1,5', 'Mutfak + kiler aydınlatma (L2a-L2f)', 1 + s5 + s6 + 1 + 2, '-',
          round(CHANDELIER_W / 1000 + kled_kw + (s5 + s6) * spot + .015, 3), .5),
+        ('L3', '10A', '1,5', 'Çalışma odası spotlar (L3a)', study_spots, spot, round(study_spots * spot, 3), .6),
         ('P1', '16A', '2,5', 'Oturma od. TV ün., projektör, perde, AP', living['cinema_sockets'] + 1,
          '-', media_kw, .5),
         ('P2', '16A', '2,5', 'Ana koridor router prizi', 1, ROUTER_W / 1000, ROUTER_W / 1000, 1.0),
@@ -1183,6 +1229,7 @@ def main():
     appliances(msp, APPLIANCES)
     kiler_led_m = kiler_light(msp, KILER_LIGHT)
     corridor_light(msp, CORRIDOR_LIGHT)
+    study_spots = study_light(msp, STUDY)
     adt(msp, ADT)
     ka, za = shaft(msp, SHAFT)
     first_network(msp, FIRST_NET, ka, za)
@@ -1194,7 +1241,8 @@ def main():
     legend(msp, legend_origin)
 
     doc.saveas(os.path.join(OUT, 'VILLA KHAN ELEKTRIK.dxf'))
-    fig = sheet(doc, living, kitchen, kitchen_led_m + kiler_led_m, n_shutters, detail_origin, legend_origin)
+    fig = sheet(doc, living, kitchen, kitchen_led_m + kiler_led_m, n_shutters, detail_origin, legend_origin,
+                study_spots)
     fig2 = sheet_first(doc, n_first, legend_origin)
     with PdfPages(os.path.join(OUT, 'VILLA KHAN ELEKTRIK.pdf')) as pdf:
         pdf.savefig(fig)

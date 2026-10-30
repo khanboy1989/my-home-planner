@@ -614,9 +614,9 @@ would not reproduce.
     - **Switched groups and circuits** (`src/circuits.js`, `CIRCUITS` in
       `floorplan.js`). **One lighting circuit (breaker) per area, not per
       fitting type** (owner): **L1** = OTURMA ODASI + ANA KORIDOR, **L2** =
-      MUTFAK + KILER. (ÇALIŞMA ODASI's coffer carries `pitch: 1.0`: spots
-      ~1 m apart all round its band, not just the corners — `coffer` takes
-      a `pitch` now.) Each id is a switched group on its circuit, lettered:
+      MUTFAK + KILER, **L3** = ÇALIŞMA ODASI (L3a: its coffer carries
+      `pitch: 1.0`, spots ~1 m apart all round the band, and a `circuit`;
+      switch inside by its door on the latch side). Each id is a switched group on its circuit, lettered:
       L1a living spots, L1b hidden LED, L1c corridor ceiling light; L2a
       chandelier, L2b kitchen under-cabinet LED, L2c/L2d kitchen/dining
       spots, L2e KILER ceiling lamp, L2f KILER under-cabinet LED. The load
